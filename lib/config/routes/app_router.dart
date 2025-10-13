@@ -25,7 +25,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isLoading = authState.status == AuthStatus.loading;
       final isInitial = authState.status == AuthStatus.initial;
       final hasError = authState.status == AuthStatus.error;
-      final current = state.matchedLocation;
+      final currentLocation = state.matchedLocation;
 
       print(
         '🔄 Router redirect: location=$currentLocation, auth=${authState.status}, loading=$isLoading, error=$hasError',
@@ -82,6 +82,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (isAuthenticated && currentLocation == RouteNames.login) {
         print('🔄 Usuario ya autenticado - redirigiendo a home');
         return RouteNames.home;
+      }
 
       return null;
     },
