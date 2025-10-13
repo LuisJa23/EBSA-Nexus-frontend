@@ -36,11 +36,11 @@ class ServerException extends BaseException {
   final Map<String, dynamic>? response;
 
   const ServerException({
-    required String message,
+    required super.message,
     this.statusCode,
     this.response,
-    String? code,
-  }) : super(message: message, code: code);
+    super.code,
+  });
 
   @override
   String toString() =>
@@ -50,9 +50,9 @@ class ServerException extends BaseException {
 /// Excepción de conexión de red
 class NetworkException extends BaseException {
   const NetworkException({
-    String message = 'Network connection failed',
-    String? code,
-  }) : super(message: message, code: code);
+    super.message = 'Network connection failed',
+    super.code,
+  });
 }
 
 /// Excepción de timeout
@@ -61,10 +61,10 @@ class TimeoutException extends BaseException {
   final int? timeoutDuration;
 
   const TimeoutException({
-    String message = 'Request timeout',
+    super.message = 'Request timeout',
     this.timeoutDuration,
-    String? code,
-  }) : super(message: message, code: code);
+    super.code,
+  });
 
   @override
   String toString() =>
@@ -78,17 +78,17 @@ class TimeoutException extends BaseException {
 /// Excepción de autenticación
 class AuthenticationException extends BaseException {
   const AuthenticationException({
-    String message = 'Authentication failed',
-    String? code,
-  }) : super(message: message, code: code);
+    super.message = 'Authentication failed',
+    super.code,
+  });
 }
 
 /// Excepción de autorización
 class AuthorizationException extends BaseException {
   const AuthorizationException({
-    String message = 'Authorization failed',
-    String? code,
-  }) : super(message: message, code: code);
+    super.message = 'Authorization failed',
+    super.code,
+  });
 }
 
 /// Excepción de token inválido o expirado
@@ -97,10 +97,10 @@ class TokenException extends BaseException {
   final bool isExpired;
 
   const TokenException({
-    String message = 'Token is invalid',
+    super.message = 'Token is invalid',
     this.isExpired = false,
-    String? code,
-  }) : super(message: message, code: code);
+    super.code,
+  });
 
   @override
   String toString() =>
@@ -117,10 +117,10 @@ class CacheException extends BaseException {
   final String? operation;
 
   const CacheException({
-    String message = 'Cache operation failed',
+    super.message = 'Cache operation failed',
     this.operation,
-    String? code,
-  }) : super(message: message, code: code);
+    super.code,
+  });
 
   @override
   String toString() =>
@@ -130,9 +130,9 @@ class CacheException extends BaseException {
 /// Excepción de storage seguro
 class SecureStorageException extends BaseException {
   const SecureStorageException({
-    String message = 'Secure storage operation failed',
-    String? code,
-  }) : super(message: message, code: code);
+    super.message = 'Secure storage operation failed',
+    super.code,
+  });
 }
 
 // ============================================================================
@@ -148,11 +148,11 @@ class ValidationException extends BaseException {
   final List<String>? errors;
 
   const ValidationException({
-    String message = 'Validation failed',
+    super.message = 'Validation failed',
     this.field,
     this.errors,
-    String? code,
-  }) : super(message: message, code: code);
+    super.code,
+  });
 
   @override
   String toString() =>
@@ -165,10 +165,10 @@ class ParseException extends BaseException {
   final String? dataType;
 
   const ParseException({
-    String message = 'Parse operation failed',
+    super.message = 'Parse operation failed',
     this.dataType,
-    String? code,
-  }) : super(message: message, code: code);
+    super.code,
+  });
 
   @override
   String toString() =>
@@ -185,10 +185,10 @@ class LocationException extends BaseException {
   final String? locationType;
 
   const LocationException({
-    String message = 'Location service failed',
+    super.message = 'Location service failed',
     this.locationType,
-    String? code,
-  }) : super(message: message, code: code);
+    super.code,
+  });
 
   @override
   String toString() =>
@@ -201,10 +201,10 @@ class PermissionException extends BaseException {
   final String? permissionType;
 
   const PermissionException({
-    String message = 'Permission denied',
+    super.message = 'Permission denied',
     this.permissionType,
-    String? code,
-  }) : super(message: message, code: code);
+    super.code,
+  });
 
   @override
   String toString() =>
@@ -224,11 +224,11 @@ class FileException extends BaseException {
   final String? operation;
 
   const FileException({
-    String message = 'File operation failed',
+    super.message = 'File operation failed',
     this.filePath,
     this.operation,
-    String? code,
-  }) : super(message: message, code: code);
+    super.code,
+  });
 
   @override
   String toString() =>
@@ -241,10 +241,10 @@ class UploadException extends BaseException {
   final int? fileSize;
 
   const UploadException({
-    String message = 'Upload failed',
+    super.message = 'Upload failed',
     this.fileSize,
-    String? code,
-  }) : super(message: message, code: code);
+    super.code,
+  });
 
   @override
   String toString() =>
