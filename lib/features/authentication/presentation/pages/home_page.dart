@@ -1,33 +1,16 @@
-// home_page.dart
-//
-// Página principal de la aplicación
-//
-// PROPÓSITO:
-// - Pantalla principal después del login
-// - Dashboard con información general
-// - Navegación hacia otras secciones
-// - Menú principal de la aplicación
-//
-// CAPA: PRESENTATION LAYER
+﻿// home_page.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../config/routes/route_names.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/home_action_card.dart';
+import '../../domain/entities/user.dart';
 import '../providers/auth_provider.dart';
-import 'login_page.dart';
 
-/// Página principal de la aplicación Nexus EBSA
-///
-/// Dashboard principal que se muestra después de un login exitoso.
-/// Proporciona acceso a las principales funcionalidades del sistema.
-///
-/// **Características**:
-/// - Dashboard con información general
-/// - Navegación hacia módulos principales
-/// - Información del usuario logueado
-/// - Opciones de logout
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
@@ -61,261 +44,95 @@ class HomePage extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Saludo al usuario
-            _buildWelcomeCard(
-              user?.fullName ?? 'Usuario',
-              user?.role.displayName ?? 'Usuario',
-            ),
-
-            const SizedBox(height: 24),
-
-            // Dashboard principal
-            _buildDashboard(),
-
-            const SizedBox(height: 24),
-
-            // Módulos principales
-            _buildMainModules(context),
+            _buildWelcomeHeader(),
+            const SizedBox(height: 32),
+            _buildActionCards(context, user),
           ],
         ),
       ),
     );
   }
 
-  /// Construye la tarjeta de bienvenida
-  Widget _buildWelcomeCard(String userName, String userRole) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20.0),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          gradient: LinearGradient(
-            colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.person, color: Colors.white, size: 30),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '¡Bienvenido!',
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: Colors.white70,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    userName,
-                    style: AppTextStyles.heading3.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    userRole,
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: Colors.white70,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Construye el dashboard con métricas
-  Widget _buildDashboard() {
+  Widget _buildWelcomeHeader() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Resumen General',
-          style: AppTextStyles.heading3.copyWith(
+          'Bienvenido',
+          style: AppTextStyles.heading1.copyWith(
             color: AppColors.textPrimary,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildMetricCard(
-                'Reportes',
-                '12',
-                Icons.report_problem,
-                AppColors.warning,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildMetricCard(
-                'Incidentes',
-                '8',
-                Icons.error,
-                AppColors.error,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildMetricCard(
-                'Completados',
-                '45',
-                Icons.check_circle,
-                AppColors.success,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildMetricCard(
-                'Pendientes',
-                '5',
-                Icons.schedule,
-                AppColors.info,
-              ),
-            ),
-          ],
+        const SizedBox(height: 8),
+        Text(
+          '¿Qué deseas hacer hoy?',
+          style: AppTextStyles.bodyLarge.copyWith(
+            color: AppColors.textSecondary,
+          ),
         ),
       ],
     );
   }
 
-  /// Construye una tarjeta de métrica
-  Widget _buildMetricCard(
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 32),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: AppTextStyles.heading2.copyWith(
-                color: color,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              title,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textSecondary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget _buildActionCards(BuildContext context, User? user) {
+    // Debug: Imprimir información del usuario
+    print('🔍 DEBUG Home - User: ${user?.email}');
+    print('🔍 DEBUG Home - Role: ${user?.role}');
 
-  /// Construye los módulos principales
-  Widget _buildMainModules(BuildContext context) {
+    // Verificar permisos según rol
+    final isAdmin = user?.role == UserRole.admin;
+    final isAreaManager = user?.role == UserRole.areaManager;
+    final hasFullAccess = isAdmin || isAreaManager;
+
+    print('🔍 DEBUG Home - isAdmin: $isAdmin');
+    print('🔍 DEBUG Home - isAreaManager: $isAreaManager');
+    print('🔍 DEBUG Home - hasFullAccess: $hasFullAccess');
+
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Módulos Principales',
-          style: AppTextStyles.heading3.copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w600,
-          ),
+        // 1. Gestionar Novedad (Todos los roles)
+        HomeActionCard(
+          icon: Icons.notifications_active,
+          title: 'Gestionar Novedad',
+          subtitle: 'Gestiona Novedad del Sistema',
+          onTap: () => context.push(RouteNames.manageIncident),
         ),
         const SizedBox(height: 16),
-        GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 2,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 1.2,
-          children: [
-            _buildModuleCard(
-              'Reportes',
-              Icons.assignment,
-              () => _showComingSoon(context),
-            ),
-            _buildModuleCard(
-              'Incidentes',
-              Icons.warning,
-              () => _showComingSoon(context),
-            ),
-            _buildModuleCard(
-              'Cuadrillas',
-              Icons.groups,
-              () => _showComingSoon(context),
-            ),
-            _buildModuleCard(
-              'Configuración',
-              Icons.settings,
-              () => _showComingSoon(context),
-            ),
-          ],
+
+        // 2. Hacer Reporte (Todos los roles)
+        HomeActionCard(
+          icon: Icons.description,
+          title: 'Hacer Reporte',
+          subtitle: 'Hacer reporte de Novedad',
+          onTap: () => context.push(RouteNames.createReport),
         ),
+
+        // 3. Consultas (Solo Admin y Jefe de Área)
+        if (hasFullAccess) ...[
+          const SizedBox(height: 16),
+          HomeActionCard(
+            icon: Icons.bar_chart,
+            title: 'Consultas',
+            subtitle: 'Consultar Novedades asignadas',
+            onTap: () => context.push(RouteNames.incidentList),
+          ),
+        ],
+
+        // 4. Gestionar Usuarios (Admin y Jefe de Área)
+        if (hasFullAccess) ...[
+          const SizedBox(height: 16),
+          HomeActionCard(
+            icon: Icons.people,
+            title: 'Gestionar Usuarios',
+            subtitle: 'Hacer gestión de usuarios',
+            onTap: () => context.push(RouteNames.manageUsers),
+          ),
+        ],
       ],
     );
   }
 
-  /// Construye una tarjeta de módulo
-  Widget _buildModuleCard(String title, IconData icon, VoidCallback onTap) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 40, color: AppColors.primary),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                style: AppTextStyles.bodyLarge.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w500,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Muestra el diálogo de logout
   void _showLogoutDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
@@ -331,12 +148,6 @@ class HomePage extends ConsumerWidget {
             onPressed: () {
               Navigator.of(context).pop();
               ref.read(authNotifierProvider.notifier).logout();
-
-              // Navegar de vuelta al login
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const LoginPage()),
-                (route) => false,
-              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.error,
@@ -345,16 +156,6 @@ class HomePage extends ConsumerWidget {
             child: const Text('Cerrar Sesión'),
           ),
         ],
-      ),
-    );
-  }
-
-  /// Muestra mensaje de "Próximamente"
-  void _showComingSoon(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Módulo próximamente disponible'),
-        duration: Duration(seconds: 2),
       ),
     );
   }
