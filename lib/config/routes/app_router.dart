@@ -59,24 +59,21 @@ final routerProvider = Provider<GoRouter>((ref) {
         '🔄 Router redirect: location=$currentLocation, auth=${authState.status}, loading=$isLoading, error=$hasError',
       );
 
-      // REGLA #1: Si estás en LOGIN y está LOADING, NO MOVER - quedarse en login
-      if (currentLocation == RouteNames.login && isLoading) {
-        print('🔄 EN LOGIN + LOADING = NO REDIRIGIR, quedarse en login');
+      // =====================================================================
+      // REGLA CRÍTICA: BLOQUEAR TODOS LOS REDIRECTS MIENTRAS SE CARGA
+      // =====================================================================
+      // Si estamos en estado loading O initial, NO redirigir NADA
+      // Esto evita que GoRouter intente navegar mientras checkAuthStatus() corre
+      if (isLoading || isInitial) {
+        print(
+          '🔒 Estado ${isInitial ? "INITIAL" : "LOADING"} en $currentLocation - BLOQUEANDO redirects',
+        );
         return null;
       }
 
-      // REGLA #2: Si está en estado inicial (solo al abrir la app), ir a splash
-      if (isInitial && currentLocation != RouteNames.splash) {
-        print('🔄 Estado inicial - redirigiendo a splash');
-        return RouteNames.splash;
-      }
-
-      // REGLA #3: Si está loading PERO NO está en login, no hacer nada tampoco
-      if (isLoading) {
-        print('🔄 Loading en otra ubicación - no redirigir');
-        return null;
-      }
-
+      // =====================================================================
+      // MANEJO DE ERRORES
+      // =====================================================================
       // Si hay error y está en splash, redirigir a login para mostrar el error
       if (hasError && currentLocation == RouteNames.splash) {
         print('🔄 Error detectado - redirigiendo a login para mostrar error');
@@ -89,13 +86,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         return null;
       }
 
+      // =====================================================================
+      // NAVEGACIÓN POST-VERIFICACIÓN (solo cuando !isLoading && !isInitial)
+      // =====================================================================
       // Si está en splash y ya terminó de cargar (sin error), redirigir según autenticación
-      if (currentLocation == RouteNames.splash && !isLoading && !hasError) {
+      if (currentLocation == RouteNames.splash && !hasError) {
         if (isAuthenticated) {
-          print('🔄 Usuario autenticado - redirigiendo a home');
+          print('🔄 ✅ Verificación completa - Usuario autenticado → HOME');
           return RouteNames.home;
         } else {
-          print('🔄 Usuario no autenticado - redirigiendo a login');
+          print('🔄 ❌ Verificación completa - No autenticado → LOGIN');
           return RouteNames.login;
         }
       }

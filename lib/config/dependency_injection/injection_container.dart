@@ -55,8 +55,17 @@ Future<void> init() async {
   sl.registerLazySingleton<SharedPreferences>(() => sharedPreferences);
 
   // FlutterSecureStorage - Para almacenamiento seguro de tokens
+  // Configurado con opciones de compatibilidad para Android
   sl.registerLazySingleton<FlutterSecureStorage>(
-    () => const FlutterSecureStorage(),
+    () => const FlutterSecureStorage(
+      aOptions: AndroidOptions(
+        encryptedSharedPreferences: true, // Fallback si no hay keystore
+        resetOnError: true, // Limpiar storage corrupto automáticamente
+      ),
+      iOptions: IOSOptions(
+        accessibility: KeychainAccessibility.first_unlock_this_device,
+      ),
+    ),
   );
 
   // Dio HTTP Client - Para requests HTTP
