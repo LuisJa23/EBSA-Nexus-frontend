@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum ButtonType { primary }
+enum ButtonType { primary, secondary }
 
 class CustomButton extends StatefulWidget {
   final String text;
@@ -14,8 +14,8 @@ class CustomButton extends StatefulWidget {
     required this.text,
     required this.onPressed,
     this.type = ButtonType.primary,
-    this.width = 200,
-    this.height = 60,
+    this.width = 90,
+    this.height = 35,
   }) : super(key: key);
 
   @override
@@ -27,10 +27,20 @@ class _CustomButtonState extends State<CustomButton> {
 
   @override
   Widget build(BuildContext context) {
-    final Color normalColor = const Color(0xFFF5C24B); // amarillo
-    final Color pressedColor = Colors.white;
-    final Color borderColor = Colors.black;
-    final double borderRadius = 16;
+    final bool isPrimary = widget.type == ButtonType.primary;
+
+    // Colores según el tipo y estado
+    final Color bgColor = isPrimary
+        ? (_isPressed ? Colors.white : const Color(0xFFF5C24B))
+        : (_isPressed ? Colors.white : Colors.black);
+
+    final Color borderColor = isPrimary
+        ? const Color(0xFFF5C24B)
+        : Colors.black;
+
+    final Color textColor = isPrimary
+        ? (_isPressed ? const Color(0xFFF5C24B).withOpacity(0.6) : Colors.black)
+        : (_isPressed ? Colors.black : Colors.white);
 
     return GestureDetector(
       onTap: widget.onPressed,
@@ -38,28 +48,28 @@ class _CustomButtonState extends State<CustomButton> {
       onTapUp: (_) => setState(() => _isPressed = false),
       onTapCancel: () => setState(() => _isPressed = false),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 100),
+        duration: const Duration(milliseconds: 150),
         width: widget.width,
         height: widget.height,
         decoration: BoxDecoration(
-          color: _isPressed ? pressedColor : normalColor,
-          border: Border.all(color: borderColor, width: 3),
-          borderRadius: BorderRadius.circular(borderRadius),
+          color: bgColor,
+          border: Border.all(color: borderColor, width: 2),
+          borderRadius: BorderRadius.circular(8),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 8,
-              offset: const Offset(2, 4),
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
         alignment: Alignment.center,
         child: Text(
           widget.text,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: 28,
-            color: Colors.black,
+            fontSize: 16,
+            color: textColor,
           ),
         ),
       ),

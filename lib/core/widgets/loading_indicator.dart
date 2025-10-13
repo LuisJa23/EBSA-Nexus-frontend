@@ -10,6 +10,7 @@
 
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_text_styles.dart';
 
 /// Tipos de indicadores de carga disponibles
 enum LoadingType {
@@ -117,7 +118,7 @@ class LoadingIndicator extends StatelessWidget {
   Widget _buildMessage() {
     return Text(
       message!,
-      style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+      style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
       textAlign: TextAlign.center,
     );
   }

@@ -16,20 +16,20 @@ class AppColors {
   // COLORES CORPORATIVOS EBSA
   // ============================================================================
 
-  /// Color primario EBSA (Azul corporativo)
-  static const Color primary = Color.fromARGB(255, 255, 198, 16);
+  /// Color primario EBSA (Amarillo corporativo)
+  static const Color primary = Color.fromARGB(255, 255, 198, 41);
 
   /// Variantes del color primario
   static const Color primaryLight = Color(0xFF5E92F3);
   static const Color primaryDark = Color(0xFF003C8F);
 
-  /// Color secundario (Naranja complementario)
-  static const Color secondary = Color(0xFFFF8F00);
-  static const Color secondaryLight = Color(0xFFFFC046);
-  static const Color secondaryDark = Color(0xFFC56000);
+  /// Color secundario (Negro de fondo)
+  static const Color secondary = Color(0xFF000000);
+  static const Color secondaryLight = Color(0xFFF6F6F6);
+  static const Color secondaryDark = Color(0xFFC0C0C0);
 
-  /// Color de acento (Verde EBSA)
-  static const Color accent = Color(0xFF2E7D32);
+  /// Color de acento (Blanco de texto)
+  static const Color accent = Color(0xFFFFFFFF);
   static const Color accentLight = Color(0xFF60AD5E);
   static const Color accentDark = Color(0xFF005005);
 
@@ -72,16 +72,16 @@ class AppColors {
   // COLORES DE ESTADOS DE REPORTES
   // ============================================================================
 
-  /// Estado: Borrador/Sin enviar
-  static const Color statusDraft = Color(0xFF9E9E9E);
+  /// Estado: Por asignar
+  static const Color statusDraft = Color(0xFF2196F3);
 
-  /// Estado: Pendiente de envío
-  static const Color statusPending = Color(0xFFFF8F00);
+  /// Estado: En curso
+  static const Color statusPending = Color(0xFFFF9800);
 
-  /// Estado: Enviado exitosamente
+  /// Estado: Completado
   static const Color statusSent = Color(0xFF4CAF50);
 
-  /// Estado: Error al enviar
+  /// Estado: Cerrada
   static const Color statusError = Color(0xFFF44336);
 
   /// Estado: Sincronizando
@@ -200,14 +200,18 @@ class AppColors {
     switch (status.toLowerCase()) {
       case 'draft':
       case 'borrador':
+      case 'por asignar':
         return statusDraft;
       case 'pending':
       case 'pendiente':
+      case 'en curso':
         return statusPending;
       case 'sent':
       case 'enviado':
+      case 'completado':
         return statusSent;
       case 'error':
+      case 'cerrada':
         return statusError;
       case 'syncing':
       case 'sincronizando':
@@ -225,9 +229,3 @@ class AppColors {
     return connectionOffline;
   }
 }
-
-// - static const Color kError = Colors.red;
-// - static const Color kWarning = Colors.orange;
-// - static const Color kOffline = Colors.grey;
-// - static const Color kSyncing = Colors.blue;
-// - Colores para severidad: kCritical, kHigh, kMedium, kLow

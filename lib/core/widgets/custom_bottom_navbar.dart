@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_text_styles.dart';
 
 class CustomBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -24,10 +26,10 @@ class CustomBottomNavBar extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        boxShadow: [
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        boxShadow: const [
           BoxShadow(color: Colors.black12, blurRadius: 10, spreadRadius: 2),
         ],
       ),
@@ -46,23 +48,24 @@ class CustomBottomNavBar extends StatelessWidget {
                   duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: isActive
-                        ? const Color(0xFFF2C94C)
-                        : Colors.transparent,
+                    color: isActive ? AppColors.primary : Colors.transparent,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     icons[index],
                     size: 22,
-                    color: isActive ? Colors.white : Colors.black54,
+                    color: isActive
+                        ? AppColors.textOnPrimary
+                        : AppColors.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   labels[index],
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isActive ? Colors.black : Colors.black54,
+                  style: AppTextStyles.caption.copyWith(
+                    color: isActive
+                        ? AppColors.textPrimary
+                        : AppColors.textSecondary,
                   ),
                 ),
               ],
