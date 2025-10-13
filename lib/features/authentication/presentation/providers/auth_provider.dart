@@ -17,7 +17,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:equatable/equatable.dart';
 
 import '../../../../config/dependency_injection/injection_container.dart';
+import '../../../../core/utils/app_logger.dart';
 import '../../data/datasources/auth_local_datasource.dart';
+import '../../data/models/user_model.dart';
 import '../../domain/entities/credentials.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/usecases/get_current_user_usecase.dart';
@@ -182,7 +184,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     bool rememberMe = false,
   }) async {
     try {
-      print('🔍 AuthProvider: Iniciando login para $email');
+      AppLogger.loginAttempt(email);
+
       // Cambiar a estado de carga
       state = AuthState.loading();
 
@@ -193,41 +196,63 @@ class AuthNotifier extends StateNotifier<AuthState> {
         rememberMe: rememberMe,
       );
 
-      print('🔍 AuthProvider: Ejecutando use case de login');
+      AppLogger.debug('Ejecutando login use case...');
+
       // Ejecutar login use case
       final result = await _loginUseCase.call(credentials);
 
       result.fold(
         (failure) {
           // Login falló
-          print(
-            '❌ AuthProvider: Login falló con failure: ${failure.message} (código: ${failure.code})',
-          );
+          AppLogger.loginFailure(email, failure.message);
+
           state = AuthState.error(
             message: failure.message,
             code: failure.code,
             rememberedEmail: rememberMe ? email : null,
             rememberMe: rememberMe,
           );
-          print(
-            '❌ AuthProvider: Estado actualizado a error: ${state.errorMessage}',
-          );
+
           // Limpiar el error automáticamente después de 5 segundos
           _clearErrorAfterDelay();
         },
         (user) async {
           // Login exitoso
-          print('✅ AuthProvider: Login exitoso para: ${user.email}');
+          AppLogger.loginSuccess(email, user.id);
 
-          // Guardar preferencias de "recordar sesión"
+          // VERIFICACIÓN POST-LOGIN: Asegurar que todo se guardó correctamente
           try {
             final localDataSource = sl<AuthLocalDataSource>();
+
+            // Guardar preferencias
             await localDataSource.saveRememberMe(rememberMe);
             if (rememberMe) {
               await localDataSource.saveRememberedEmail(email);
             }
+
+            // VERIFICAR que el token se guardó correctamente
+            final savedToken = await localDataSource.getAccessToken();
+            if (savedToken == null || savedToken.isEmpty) {
+              AppLogger.error(
+                '⚠️ CRITICAL: Token no persistió después de login',
+              );
+              throw Exception('Fallo en persistencia de token');
+            }
+
+            // VERIFICAR que el usuario se guardó en cache
+            final cachedUser = await localDataSource.getCachedUser();
+            if (cachedUser == null) {
+              AppLogger.warning('⚠️ Usuario no se guardó en cache');
+            } else {
+              AppLogger.debug('✅ Usuario guardado en cache correctamente');
+            }
+
+            AppLogger.debug(
+              '✅ Verificación post-login completada exitosamente',
+            );
           } catch (e) {
-            print('Error guardando preferencias: $e');
+            AppLogger.error('Error en verificación post-login', error: e);
+            // No forzamos error porque el login fue exitoso, solo advertimos
           }
 
           state = AuthState.authenticated(user).copyWith(
@@ -236,9 +261,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
           );
         },
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
       // Error inesperado
-      print('❌ AuthProvider: Error inesperado: $e');
+      AppLogger.error(
+        'Error inesperado durante login',
+        error: e,
+        stackTrace: stackTrace,
+      );
+
       state = AuthState.error(
         message: 'Error inesperado durante el login: $e',
         code: 'UNEXPECTED_ERROR',
@@ -249,6 +279,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
   /// Cierra sesión del usuario
   Future<void> logout() async {
     try {
+      final userId = state.user?.id ?? 'unknown';
+      AppLogger.logout(userId);
+
       // Cambiar a estado de carga
       state = AuthState.loading();
 
@@ -262,74 +295,127 @@ class AuthNotifier extends StateNotifier<AuthState> {
       result.fold(
         (failure) {
           // Logout falló - pero continuar con limpieza local
-          print('Error en logout: ${failure.message}');
+          AppLogger.warning(
+            'Error en logout (continuando limpieza)',
+            error: failure.message,
+          );
 
           // Limpiar estado de autenticación de todos modos
           state = AuthState.unauthenticated(
             rememberedEmail: currentRememberedEmail,
             rememberMe: currentRememberMe,
           );
+
+          AppLogger.authStateUnauthenticated();
         },
         (_) {
           // Logout exitoso
+          AppLogger.info('✅ Logout completado exitosamente');
+
           state = AuthState.unauthenticated(
             rememberedEmail: currentRememberedEmail,
             rememberMe: currentRememberMe,
           );
+
+          AppLogger.authStateUnauthenticated();
         },
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
       // Error inesperado - forzar limpieza
-      print('Error inesperado en logout: $e');
+      AppLogger.error(
+        'Error crítico en logout',
+        error: e,
+        stackTrace: stackTrace,
+      );
       state = AuthState.unauthenticated();
     }
   }
 
   /// Verifica el estado de autenticación actual
+  ///
+  /// Este método se llama al iniciar la app para determinar si hay
+  /// una sesión activa válida. Flujo mejorado:
+  ///
+  /// 1. Lee token directamente de SecureStorage
+  /// 2. Valida el token con JwtValidator
+  /// 3. Intenta obtener usuario del cache local
+  /// 4. Solo si falla, intenta obtener del servidor
+  /// 5. Si todo falla, marca como no autenticado
   Future<void> checkAuthStatus() async {
     try {
+      AppLogger.checkAuthStatus();
+
       // Cambiar a estado de carga solo si no estamos ya autenticados
       if (!state.isAuthenticated) {
         state = AuthState.loading();
       }
 
-      // Cargar preferencias de rememberMe y email recordado primero
+      // Obtener localDataSource para verificación directa
+      final localDataSource = sl<AuthLocalDataSource>();
+
+      // PASO 1: Cargar preferencias (email recordado, rememberMe)
       String? rememberedEmail;
       bool rememberMe = false;
 
       try {
-        // Cargar desde local storage a través del data source
-        // Estos datos se usan incluso si no hay sesión activa
-        final localDataSource = sl<AuthLocalDataSource>();
         rememberedEmail = await localDataSource.getRememberedEmail();
         rememberMe = await localDataSource.getRememberMe();
-
-        // Verificar rápidamente si hay un token válido
-        final hasValidToken = await localDataSource.hasValidToken();
-
-        if (!hasValidToken) {
-          print('❌ No hay token válido - usuario no autenticado');
-          state = AuthState.unauthenticated(
-            rememberedEmail: rememberedEmail,
-            rememberMe: rememberMe,
-          );
-          return;
-        }
-
-        print('✅ Token válido encontrado - verificando usuario');
+        AppLogger.debug(
+          'Preferencias cargadas - Email: $rememberedEmail, RememberMe: $rememberMe',
+        );
       } catch (e) {
-        print('Error cargando preferencias de rememberMe: $e');
+        AppLogger.warning('Error cargando preferencias', error: e);
       }
 
-      // Verificar si hay usuario autenticado
+      // PASO 2: Verificar si hay un token válido en SecureStorage
+      final hasValidToken = await localDataSource.hasValidToken();
+
+      if (!hasValidToken) {
+        AppLogger.authStateUnauthenticated();
+        state = AuthState.unauthenticated(
+          rememberedEmail: rememberedEmail,
+          rememberMe: rememberMe,
+        );
+        return;
+      }
+
+      AppLogger.info('✅ Token válido encontrado - recuperando usuario...');
+
+      // PASO 3: Intentar obtener usuario del cache local primero
+      UserModel? cachedUser;
+      try {
+        cachedUser = await localDataSource.getCachedUser();
+
+        if (cachedUser != null) {
+          AppLogger.info('✅ Usuario recuperado del cache: ${cachedUser.email}');
+
+          // El UserModel ya es un User (herencia), podemos usarlo directamente
+          state = AuthState.authenticated(
+            cachedUser,
+          ).copyWith(rememberedEmail: rememberedEmail, rememberMe: rememberMe);
+
+          AppLogger.authStateAuthenticated(cachedUser.email);
+          return;
+        }
+      } catch (e) {
+        AppLogger.warning('Error leyendo cache de usuario', error: e);
+      }
+
+      // PASO 4: Si no hay cache, intentar obtener del servidor
+      AppLogger.debug('No hay cache de usuario, obteniendo del servidor...');
+
       final result = await _getCurrentUserUseCase.call();
 
       result.fold(
         (failure) {
-          // No hay usuario autenticado o hay error
-          print('❌ Error obteniendo usuario actual: ${failure.message}');
+          // Error obteniendo usuario del servidor
+          AppLogger.warning(
+            'Error obteniendo usuario del servidor: ${failure.message}',
+          );
+
           if (failure.code == 'USER_NOT_AUTHENTICATED' ||
               failure.code == 'SESSION_EXPIRED') {
+            AppLogger.authStateUnauthenticated();
             state = AuthState.unauthenticated(
               rememberedEmail: rememberedEmail,
               rememberMe: rememberMe,
@@ -344,15 +430,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
           }
         },
         (user) {
-          // Usuario autenticado
-          print('✅ Usuario autenticado encontrado: ${user.email}');
+          // Usuario autenticado exitosamente
+          AppLogger.authStateAuthenticated(user.email);
           state = AuthState.authenticated(
             user,
           ).copyWith(rememberedEmail: rememberedEmail, rememberMe: rememberMe);
         },
       );
-    } catch (e) {
-      print('Error verificando estado de autenticación: $e');
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Error crítico verificando estado de autenticación',
+        error: e,
+        stackTrace: stackTrace,
+      );
+
       state = AuthState.error(
         message: 'Error verificando estado de autenticación: $e',
         code: 'CHECK_AUTH_ERROR',

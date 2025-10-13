@@ -19,6 +19,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/constants/storage_constants.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/utils/jwt_validator.dart';
+import '../../../../core/utils/app_logger.dart';
 import '../models/user_model.dart';
 
 /// Contrato para la fuente de datos local de autenticación
@@ -109,6 +110,8 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   @override
   Future<void> saveAccessToken(String token) async {
     try {
+      AppLogger.debug('Guardando access token en SecureStorage...');
+
       await _secureStorage.write(
         key: StorageConstants.accessTokenKey,
         value: token,
@@ -119,7 +122,25 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
         StorageConstants.tokenTimestampKey,
         DateTime.now().millisecondsSinceEpoch,
       );
+
+      AppLogger.tokenSaved('ACCESS_TOKEN');
+
+      // Verificar que se guardó correctamente
+      final savedToken = await _secureStorage.read(
+        key: StorageConstants.accessTokenKey,
+      );
+
+      if (savedToken == null || savedToken.isEmpty) {
+        AppLogger.error('⚠️ CRITICAL: Token no se guardó correctamente');
+        throw CacheException(
+          message: 'Fallo crítico: token no persistió',
+          code: 'TOKEN_PERSISTENCE_FAILED',
+        );
+      }
+
+      AppLogger.debug('✅ Verificación: Token guardado correctamente');
     } catch (e) {
+      AppLogger.cacheError('saveAccessToken', e);
       throw CacheException(
         message: 'Error guardando token de acceso: $e',
         code: 'SAVE_ACCESS_TOKEN_ERROR',
@@ -130,8 +151,17 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   @override
   Future<String?> getAccessToken() async {
     try {
-      return await _secureStorage.read(key: StorageConstants.accessTokenKey);
+      AppLogger.debug('Leyendo access token de SecureStorage...');
+
+      final token = await _secureStorage.read(
+        key: StorageConstants.accessTokenKey,
+      );
+
+      AppLogger.tokenRead('ACCESS_TOKEN', token != null && token.isNotEmpty);
+
+      return token;
     } catch (e) {
+      AppLogger.cacheError('getAccessToken', e);
       throw CacheException(
         message: 'Error leyendo token de acceso: $e',
         code: 'READ_ACCESS_TOKEN_ERROR',
@@ -142,11 +172,16 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   @override
   Future<void> saveRefreshToken(String refreshToken) async {
     try {
+      AppLogger.debug('Guardando refresh token en SecureStorage...');
+
       await _secureStorage.write(
         key: StorageConstants.refreshTokenKey,
         value: refreshToken,
       );
+
+      AppLogger.tokenSaved('REFRESH_TOKEN');
     } catch (e) {
+      AppLogger.cacheError('saveRefreshToken', e);
       throw CacheException(
         message: 'Error guardando refresh token: $e',
         code: 'SAVE_REFRESH_TOKEN_ERROR',
@@ -157,8 +192,17 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   @override
   Future<String?> getRefreshToken() async {
     try {
-      return await _secureStorage.read(key: StorageConstants.refreshTokenKey);
+      AppLogger.debug('Leyendo refresh token de SecureStorage...');
+
+      final token = await _secureStorage.read(
+        key: StorageConstants.refreshTokenKey,
+      );
+
+      AppLogger.tokenRead('REFRESH_TOKEN', token != null && token.isNotEmpty);
+
+      return token;
     } catch (e) {
+      AppLogger.cacheError('getRefreshToken', e);
       throw CacheException(
         message: 'Error leyendo refresh token: $e',
         code: 'READ_REFRESH_TOKEN_ERROR',
@@ -169,12 +213,27 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   @override
   Future<bool> hasValidToken() async {
     try {
+      AppLogger.debug('Verificando validez del token...');
+
       final token = await getAccessToken();
-      if (token == null || token.isEmpty) return false;
+
+      if (token == null || token.isEmpty) {
+        AppLogger.tokenRead('ACCESS_TOKEN', false);
+        AppLogger.tokenValidation(false);
+        return false;
+      }
 
       // Usar validación real del JWT (decodifica y verifica expiración)
-      return JwtValidator.isTokenValid(token);
+      final isValid = JwtValidator.isTokenValid(token);
+      final secondsToExpire = isValid
+          ? JwtValidator.getSecondsUntilExpiration(token)
+          : null;
+
+      AppLogger.tokenValidation(isValid, secondsToExpire: secondsToExpire);
+
+      return isValid;
     } catch (e) {
+      AppLogger.error('Error verificando token', error: e);
       return false;
     }
   }
@@ -186,6 +245,8 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   @override
   Future<void> saveUser(UserModel user) async {
     try {
+      AppLogger.debug('Guardando usuario en cache: ${user.email}');
+
       final userJson = jsonEncode(user.toCacheJson());
 
       await _sharedPreferences.setString(
@@ -198,7 +259,10 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
         StorageConstants.userCacheTimestampKey,
         DateTime.now().millisecondsSinceEpoch,
       );
+
+      AppLogger.cacheSaved('USER (${user.email})');
     } catch (e) {
+      AppLogger.cacheError('saveUser', e);
       throw CacheException(
         message: 'Error guardando usuario en cache: $e',
         code: 'SAVE_USER_CACHE_ERROR',
@@ -209,11 +273,16 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   @override
   Future<UserModel?> getCachedUser() async {
     try {
+      AppLogger.debug('Leyendo usuario de cache...');
+
       final userJson = _sharedPreferences.getString(
         StorageConstants.cachedUserKey,
       );
 
-      if (userJson == null || userJson.isEmpty) return null;
+      if (userJson == null || userJson.isEmpty) {
+        AppLogger.cacheRead('USER', false);
+        return null;
+      }
 
       // Verificar que el cache no esté muy viejo
       final timestamp = _sharedPreferences.getInt(
@@ -227,15 +296,21 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
 
         // Cache válido por 24 horas
         if (difference.inHours > 24) {
+          AppLogger.warning('Cache de usuario expirado (>24h), limpiando...');
           await clearUserCache();
           return null;
         }
       }
 
       final userMap = jsonDecode(userJson) as Map<String, dynamic>;
-      return UserModel.fromCache(userMap);
+      final user = UserModel.fromCache(userMap);
+
+      AppLogger.cacheRead('USER (${user.email})', true);
+
+      return user;
     } catch (e) {
       // Si hay error leyendo cache, limpiar y retornar null
+      AppLogger.cacheError('getCachedUser', e);
       await clearUserCache();
       return null;
     }
@@ -314,6 +389,8 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   @override
   Future<void> clearAuthData() async {
     try {
+      AppLogger.debug('Limpiando todos los datos de autenticación...');
+
       // Limpiar tokens del almacenamiento seguro
       await _secureStorage.delete(key: StorageConstants.accessTokenKey);
       await _secureStorage.delete(key: StorageConstants.refreshTokenKey);
@@ -328,7 +405,10 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
 
       // NO limpiar preferencias del usuario (email recordado, remember me)
       // para mejorar UX en próximo login
+
+      AppLogger.cacheCleared('AUTH_DATA');
     } catch (e) {
+      AppLogger.cacheError('clearAuthData', e);
       throw CacheException(
         message: 'Error limpiando datos de autenticación: $e',
         code: 'CLEAR_AUTH_DATA_ERROR',

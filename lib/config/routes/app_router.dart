@@ -25,20 +25,64 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isLoading = authState.status == AuthStatus.loading;
       final isInitial = authState.status == AuthStatus.initial;
       final hasError = authState.status == AuthStatus.error;
-      final current = state.matchedLocation;
+      final currentLocation = state.matchedLocation;
 
-      if (current == RouteNames.login && isLoading) return null;
-      if (isInitial && current != RouteNames.splash) return RouteNames.splash;
-      if (isLoading) return null;
-      if (hasError && current == RouteNames.splash) return RouteNames.login;
-      if (hasError && current == RouteNames.login) return null;
-      if (current == RouteNames.splash && !isLoading && !hasError) {
-        return isAuthenticated ? RouteNames.home : RouteNames.login;
+      print(
+        '🔄 Router redirect: location=$currentLocation, auth=${authState.status}, loading=$isLoading, error=$hasError',
+      );
+
+      // REGLA #1: Si estás en LOGIN y está LOADING, NO MOVER - quedarse en login
+      if (currentLocation == RouteNames.login && isLoading) {
+        print('🔄 EN LOGIN + LOADING = NO REDIRIGIR, quedarse en login');
+        return null;
       }
-      if (!isAuthenticated && RouteNames.requiresAuth(current))
+
+      // REGLA #2: Si está en estado inicial (solo al abrir la app), ir a splash
+      if (isInitial && currentLocation != RouteNames.splash) {
+        print('🔄 Estado inicial - redirigiendo a splash');
+        return RouteNames.splash;
+      }
+
+      // REGLA #3: Si está loading PERO NO está en login, no hacer nada tampoco
+      if (isLoading) {
+        print('🔄 Loading en otra ubicación - no redirigir');
+        return null;
+      }
+
+      // Si hay error y está en splash, redirigir a login para mostrar el error
+      if (hasError && currentLocation == RouteNames.splash) {
+        print('🔄 Error detectado - redirigiendo a login para mostrar error');
         return RouteNames.login;
-      if (isAuthenticated && current == RouteNames.login)
+      }
+
+      // Si hay error y ya está en login, no redirigir (mantener en login)
+      if (hasError && currentLocation == RouteNames.login) {
+        print('🔄 Error en login - manteniéndose en login');
+        return null;
+      }
+
+      // Si está en splash y ya terminó de cargar (sin error), redirigir según autenticación
+      if (currentLocation == RouteNames.splash && !isLoading && !hasError) {
+        if (isAuthenticated) {
+          print('🔄 Usuario autenticado - redirigiendo a home');
+          return RouteNames.home;
+        } else {
+          print('🔄 Usuario no autenticado - redirigiendo a login');
+          return RouteNames.login;
+        }
+      }
+
+      // Si no está autenticado y trata de acceder a ruta protegida
+      if (!isAuthenticated && RouteNames.requiresAuth(currentLocation)) {
+        print('🔄 Acceso negado a ruta protegida - redirigiendo a login');
+        return RouteNames.login;
+      }
+
+      // Si está autenticado y trata de acceder a login, redirigir a home
+      if (isAuthenticated && currentLocation == RouteNames.login) {
+        print('🔄 Usuario ya autenticado - redirigiendo a home');
         return RouteNames.home;
+      }
 
       return null;
     },
