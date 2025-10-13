@@ -1,12 +1,11 @@
-// create_report_page.dart
+// incident_list_page.dart
 //
-// Página para crear reportes de novedades
+// Página para consultar novedades asignadas
 //
 // PROPÓSITO:
-// - Formulario para crear nuevos reportes
-// - Captura de evidencias (fotos, ubicación)
-// - Selección de tipo de incidente
-// - Guardado y envío de reportes
+// - Listar novedades/incidentes asignados al usuario
+// - Filtrar y buscar novedades
+// - Ver detalles de cada novedad
 //
 // CAPA: PRESENTATION LAYER
 
@@ -15,12 +14,12 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
-/// Página para crear reportes de novedades
+/// Página para consultar novedades/incidentes asignados
 ///
-/// Permite a los usuarios crear nuevos reportes
-/// de incidentes o novedades en el sistema.
-class CreateReportPage extends StatelessWidget {
-  const CreateReportPage({super.key});
+/// Muestra un listado de todas las novedades asignadas
+/// al usuario actual, con opciones de filtrado y búsqueda.
+class IncidentListPage extends StatelessWidget {
+  const IncidentListPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +27,7 @@ class CreateReportPage extends StatelessWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
-          'Hacer Reporte',
+          'Consultas',
           style: AppTextStyles.heading3.copyWith(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -60,7 +59,7 @@ class CreateReportPage extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'La funcionalidad de creación de reportes estará disponible próximamente.',
+                'La funcionalidad de consulta de novedades estará disponible próximamente.',
                 style: AppTextStyles.bodyLarge.copyWith(
                   color: AppColors.textSecondary,
                 ),

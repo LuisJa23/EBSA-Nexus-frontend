@@ -11,6 +11,10 @@ import '../../features/authentication/presentation/pages/notifications_page.dart
 import '../../features/authentication/presentation/pages/assignments_page.dart';
 import '../../features/authentication/presentation/pages/profile_page.dart';
 import '../../features/authentication/presentation/providers/auth_provider.dart';
+import '../../features/incidents/presentation/pages/manage_incident_page.dart';
+import '../../features/incidents/presentation/pages/incident_list_page.dart';
+import '../../features/reports/presentation/pages/create_report_page.dart';
+import '../../features/users/presentation/pages/manage_users_page.dart';
 import 'route_names.dart';
 
 /// Provider global del router
@@ -142,6 +146,38 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, __) => const ProfilePage(),
           ),
         ],
+      ),
+
+      // ========================================================================
+      // RUTAS ADICIONALES (Sin Bottom Navigation)
+      // ========================================================================
+
+      /// Gestionar Novedad
+      GoRoute(
+        path: RouteNames.manageIncident,
+        name: 'manage-incident',
+        builder: (_, __) => const ManageIncidentPage(),
+      ),
+
+      /// Consultar Novedades
+      GoRoute(
+        path: RouteNames.incidentList,
+        name: 'incident-list',
+        builder: (_, __) => const IncidentListPage(),
+      ),
+
+      /// Crear Reporte (ya existe pero puede estar en otra parte)
+      GoRoute(
+        path: RouteNames.createReport,
+        name: 'create-report',
+        builder: (_, __) => const CreateReportPage(),
+      ),
+
+      /// Gestionar Usuarios (Solo Admin)
+      GoRoute(
+        path: RouteNames.manageUsers,
+        name: 'manage-users',
+        builder: (_, __) => const ManageUsersPage(),
       ),
     ],
     errorBuilder: (_, state) =>

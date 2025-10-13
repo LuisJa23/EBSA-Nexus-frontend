@@ -1,12 +1,12 @@
-// create_report_page.dart
+// manage_users_page.dart
 //
-// Página para crear reportes de novedades
+// Página para gestionar usuarios (Solo Admin)
 //
 // PROPÓSITO:
-// - Formulario para crear nuevos reportes
-// - Captura de evidencias (fotos, ubicación)
-// - Selección de tipo de incidente
-// - Guardado y envío de reportes
+// - CRUD de usuarios del sistema
+// - Asignación de roles y permisos
+// - Gestión de usuarios activos/inactivos
+// - Solo accesible para usuarios con rol ADMIN
 //
 // CAPA: PRESENTATION LAYER
 
@@ -15,12 +15,14 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
-/// Página para crear reportes de novedades
+/// Página para gestión de usuarios del sistema
 ///
-/// Permite a los usuarios crear nuevos reportes
-/// de incidentes o novedades en el sistema.
-class CreateReportPage extends StatelessWidget {
-  const CreateReportPage({super.key});
+/// Permite a los administradores crear, editar, eliminar
+/// y gestionar usuarios del sistema Nexus EBSA.
+///
+/// **Restricción**: Solo accesible para usuarios con rol ADMIN
+class ManageUsersPage extends StatelessWidget {
+  const ManageUsersPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +30,7 @@ class CreateReportPage extends StatelessWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
-          'Hacer Reporte',
+          'Gestionar Usuarios',
           style: AppTextStyles.heading3.copyWith(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -60,11 +62,29 @@ class CreateReportPage extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'La funcionalidad de creación de reportes estará disponible próximamente.',
+                'La funcionalidad de gestión de usuarios estará disponible próximamente.',
                 style: AppTextStyles.bodyLarge.copyWith(
                   color: AppColors.textSecondary,
                 ),
                 textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.info.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '🔒 Solo accesible para Administradores',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.info,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
               const SizedBox(height: 32),
               ElevatedButton.icon(

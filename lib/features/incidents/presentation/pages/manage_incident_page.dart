@@ -1,12 +1,11 @@
-// create_report_page.dart
+// manage_incident_page.dart
 //
-// Página para crear reportes de novedades
+// Página para gestionar novedades/incidentes
 //
 // PROPÓSITO:
-// - Formulario para crear nuevos reportes
-// - Captura de evidencias (fotos, ubicación)
-// - Selección de tipo de incidente
-// - Guardado y envío de reportes
+// - Crear y editar novedades del sistema
+// - Formulario para registro de incidentes
+// - Gestión completa de novedades
 //
 // CAPA: PRESENTATION LAYER
 
@@ -15,12 +14,12 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
-/// Página para crear reportes de novedades
+/// Página para gestionar novedades/incidentes del sistema
 ///
-/// Permite a los usuarios crear nuevos reportes
-/// de incidentes o novedades en el sistema.
-class CreateReportPage extends StatelessWidget {
-  const CreateReportPage({super.key});
+/// Permite crear, editar y gestionar novedades reportadas
+/// por los usuarios del sistema Nexus EBSA.
+class ManageIncidentPage extends StatelessWidget {
+  const ManageIncidentPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +27,7 @@ class CreateReportPage extends StatelessWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
-          'Hacer Reporte',
+          'Gestionar Novedad',
           style: AppTextStyles.heading3.copyWith(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -60,7 +59,7 @@ class CreateReportPage extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'La funcionalidad de creación de reportes estará disponible próximamente.',
+                'La funcionalidad de gestión de novedades estará disponible próximamente.',
                 style: AppTextStyles.bodyLarge.copyWith(
                   color: AppColors.textSecondary,
                 ),

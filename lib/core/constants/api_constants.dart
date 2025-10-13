@@ -19,7 +19,7 @@ class ApiConstants {
   static const String baseUrlLocalhost = 'http://localhost:8080';
 
   /// URL base para desarrollo en red local (para dispositivo físico)
-  static const String baseUrlNetwork = 'http://192.168.1.38:8080';
+  static const String baseUrlNetwork = 'http://192.168.20.44:8080';
 
   /// URL base para producción (configurar cuando esté disponible)
   static const String baseUrlProduction = 'https://api.nexusebsa.com';
