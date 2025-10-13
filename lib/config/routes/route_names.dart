@@ -46,6 +46,8 @@ class RouteNames {
   static const String incidents = '/incidents';
   static String incidentDetail(String id) => '/incidents/$id';
   static const String incidentSelector = '/incidents/selector';
+  static const String manageIncident = '/manage-incident';
+  static const String incidentList = '/incident-list';
 
   // ============================================================================
   // RUTAS DE CUADRILLAS
@@ -54,6 +56,12 @@ class RouteNames {
   static const String crews = '/crews';
   static String crewDetail(String id) => '/crews/$id';
   static const String assignCrew = '/crews/assign';
+
+  // ============================================================================
+  // RUTAS DE GESTIÓN DE USUARIOS (Solo Admin)
+  // ============================================================================
+
+  static const String manageUsers = '/manage-users';
 
   // ============================================================================
   // RUTAS DE PERFIL Y CONFIGURACIÓN

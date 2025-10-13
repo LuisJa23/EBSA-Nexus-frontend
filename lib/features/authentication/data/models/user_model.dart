@@ -85,9 +85,11 @@ class UserModel extends User {
   /// Formato específico que incluye token y permisos adicionales
   factory UserModel.fromLoginResponse(Map<String, dynamic> json) {
     try {
+      print('🔍 DEBUG fromLoginResponse - JSON completo: $json');
+      print('🔍 DEBUG fromLoginResponse - role field: ${json['role']}');
       final now = DateTime.now();
 
-      return UserModel(
+      final userModel = UserModel(
         id: json['username'] ?? 'unknown',
         email: _parseStringField(json, 'email').toLowerCase().trim(),
         fullName: json['username'] ?? 'Usuario',
@@ -99,6 +101,11 @@ class UserModel extends User {
         updatedAt: now,
         lastLoginAt: now,
       );
+
+      print(
+        '✅ DEBUG fromLoginResponse - UserModel creado con role: ${userModel.role}',
+      );
+      return userModel;
     } catch (e) {
       throw FormatException('Error deserializando respuesta de login: $e');
     }
@@ -228,10 +235,18 @@ class UserModel extends User {
 
   /// Parsea UserRole desde string
   static UserRole _parseUserRole(dynamic value) {
+    print(
+      '🔍 DEBUG _parseUserRole - Input value: $value (type: ${value.runtimeType})',
+    );
     if (value == null || value is! String) {
+      print(
+        '⚠️ DEBUG _parseUserRole - Valor nulo o no string, usando fieldWorker por defecto',
+      );
       return UserRole.fieldWorker; // Rol por defecto
     }
-    return UserRole.fromValue(value);
+    final role = UserRole.fromValue(value);
+    print('✅ DEBUG _parseUserRole - Role parseado: $role');
+    return role;
   }
 
   /// Parsea DateTime requerido

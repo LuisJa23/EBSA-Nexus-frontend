@@ -245,10 +245,44 @@ enum UserRole {
 
   /// Obtiene UserRole desde string value
   static UserRole fromValue(String value) {
-    return UserRole.values.firstWhere(
-      (role) => role.value == value,
-      orElse: () => UserRole.fieldWorker,
+    print('🔍 DEBUG UserRole.fromValue - Input: "$value"');
+    // Convertir a minúsculas para hacer case-insensitive
+    final normalizedValue = value.toLowerCase();
+    print('🔍 DEBUG UserRole.fromValue - Normalized: "$normalizedValue"');
+
+    // Mapeo especial para valores del backend
+    final mappedValue = _mapBackendValue(normalizedValue);
+    print('🔍 DEBUG UserRole.fromValue - Mapped: "$mappedValue"');
+
+    final role = UserRole.values.firstWhere(
+      (role) => role.value.toLowerCase() == mappedValue,
+      orElse: () {
+        print(
+          '⚠️ DEBUG UserRole.fromValue - No match found, usando fieldWorker',
+        );
+        return UserRole.fieldWorker;
+      },
     );
+    print('✅ DEBUG UserRole.fromValue - Result: $role');
+    return role;
+  }
+
+  /// Mapea valores del backend a valores esperados del enum
+  static String _mapBackendValue(String value) {
+    switch (value) {
+      case 'admin':
+        return 'admin';
+      case 'jefe_area':
+        return 'area_manager';
+      case 'area_manager':
+        return 'area_manager';
+      case 'field_worker':
+        return 'field_worker';
+      case 'contractor':
+        return 'contractor';
+      default:
+        return value;
+    }
   }
 
   /// Verifica si este rol puede crear reportes
