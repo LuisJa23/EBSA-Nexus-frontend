@@ -34,8 +34,7 @@ class ServerFailure extends Failure {
   /// Código de estado HTTP
   final int? statusCode;
 
-  const ServerFailure({required String message, this.statusCode, String? code})
-    : super(message: message, code: code);
+  const ServerFailure({required super.message, this.statusCode, super.code});
 
   @override
   List<Object?> get props => [message, code, statusCode];
@@ -44,17 +43,17 @@ class ServerFailure extends Failure {
 /// Falla de conexión de red
 class NetworkFailure extends Failure {
   const NetworkFailure({
-    String message = 'Error de conexión a internet',
-    String? code,
-  }) : super(message: message, code: code);
+    super.message = 'Error de conexión a internet',
+    super.code,
+  });
 }
 
 /// Falla de timeout de conexión
 class TimeoutFailure extends Failure {
   const TimeoutFailure({
-    String message = 'Tiempo de espera agotado',
-    String? code,
-  }) : super(message: message, code: code);
+    super.message = 'Tiempo de espera agotado',
+    super.code,
+  });
 }
 
 // ============================================================================
@@ -63,24 +62,23 @@ class TimeoutFailure extends Failure {
 
 /// Falla de autenticación
 class AuthFailure extends Failure {
-  const AuthFailure({String message = 'Error de autenticación', String? code})
-    : super(message: message, code: code);
+  const AuthFailure({super.message = 'Error de autenticación', super.code});
 }
 
 /// Falla de autorización (permisos)
 class AuthorizationFailure extends Failure {
   const AuthorizationFailure({
-    String message = 'No tiene permisos para realizar esta acción',
-    String? code,
-  }) : super(message: message, code: code);
+    super.message = 'No tiene permisos para realizar esta acción',
+    super.code,
+  });
 }
 
 /// Token expirado
 class TokenExpiredFailure extends Failure {
   const TokenExpiredFailure({
-    String message = 'La sesión ha expirado. Inicie sesión nuevamente.',
-    String? code,
-  }) : super(message: message, code: code);
+    super.message = 'La sesión ha expirado. Inicie sesión nuevamente.',
+    super.code,
+  });
 }
 
 // ============================================================================
@@ -90,17 +88,17 @@ class TokenExpiredFailure extends Failure {
 /// Falla de cache/base de datos local
 class CacheFailure extends Failure {
   const CacheFailure({
-    String message = 'Error al acceder al almacenamiento local',
-    String? code,
-  }) : super(message: message, code: code);
+    super.message = 'Error al acceder al almacenamiento local',
+    super.code,
+  });
 }
 
 /// Falla de escritura en storage
 class StorageFailure extends Failure {
   const StorageFailure({
-    String message = 'Error al guardar información',
-    String? code,
-  }) : super(message: message, code: code);
+    super.message = 'Error al guardar información',
+    super.code,
+  });
 }
 
 // ============================================================================
@@ -112,8 +110,7 @@ class ValidationFailure extends Failure {
   /// Campo que falló la validación
   final String? field;
 
-  const ValidationFailure({required String message, this.field, String? code})
-    : super(message: message, code: code);
+  const ValidationFailure({required super.message, this.field, super.code});
 
   @override
   List<Object?> get props => [message, code, field];
@@ -122,9 +119,9 @@ class ValidationFailure extends Failure {
 /// Falla de formato de datos
 class FormatFailure extends Failure {
   const FormatFailure({
-    String message = 'Formato de datos inválido',
-    String? code,
-  }) : super(message: message, code: code);
+    super.message = 'Formato de datos inválido',
+    super.code,
+  });
 }
 
 // ============================================================================
@@ -134,9 +131,9 @@ class FormatFailure extends Failure {
 /// Falla de geolocalización
 class LocationFailure extends Failure {
   const LocationFailure({
-    String message = 'No se pudo obtener la ubicación',
-    String? code,
-  }) : super(message: message, code: code);
+    super.message = 'No se pudo obtener la ubicación',
+    super.code,
+  });
 }
 
 /// Falla de permisos
@@ -145,10 +142,10 @@ class PermissionFailure extends Failure {
   final String? permissionType;
 
   const PermissionFailure({
-    String message = 'Permiso denegado',
+    super.message = 'Permiso denegado',
     this.permissionType,
-    String? code,
-  }) : super(message: message, code: code);
+    super.code,
+  });
 
   @override
   List<Object?> get props => [message, code, permissionType];
@@ -164,10 +161,10 @@ class FileFailure extends Failure {
   final String? filePath;
 
   const FileFailure({
-    String message = 'Error al manejar archivo',
+    super.message = 'Error al manejar archivo',
     this.filePath,
-    String? code,
-  }) : super(message: message, code: code);
+    super.code,
+  });
 
   @override
   List<Object?> get props => [message, code, filePath];
@@ -175,8 +172,7 @@ class FileFailure extends Failure {
 
 /// Falla de carga de archivos
 class UploadFailure extends Failure {
-  const UploadFailure({String message = 'Error al subir archivo', String? code})
-    : super(message: message, code: code);
+  const UploadFailure({super.message = 'Error al subir archivo', super.code});
 }
 
 // ============================================================================
@@ -185,16 +181,15 @@ class UploadFailure extends Failure {
 
 /// Falla desconocida o no categorizada
 class UnknownFailure extends Failure {
-  const UnknownFailure({String message = 'Error inesperado', String? code})
-    : super(message: message, code: code);
+  const UnknownFailure({super.message = 'Error inesperado', super.code});
 }
 
 /// Falla de operación no soportada
 class UnsupportedFailure extends Failure {
   const UnsupportedFailure({
-    String message = 'Operación no soportada',
-    String? code,
-  }) : super(message: message, code: code);
+    super.message = 'Operación no soportada',
+    super.code,
+  });
 }
 // - class ValidationFailure extends Failure
 // - class AuthenticationFailure extends Failure
