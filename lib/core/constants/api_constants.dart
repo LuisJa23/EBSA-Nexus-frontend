@@ -35,7 +35,9 @@ class ApiConstants {
     // if (Platform.isAndroid && kIsWeb == false) {
     //   return _isEmulator() ? baseUrlLocalhost : baseUrlNetwork;
     // }
-  } // ============================================================================
+  }
+
+  // ============================================================================
   // ENDPOINTS DE AUTENTICACIÓN
   // ============================================================================
 
@@ -48,14 +50,15 @@ class ApiConstants {
   /// Endpoint para refresh token
   static const String refreshTokenEndpoint = '/auth/refresh';
 
+  /// Endpoint para obtener/actualizar perfil del usuario (GET/PATCH /api/users/me)
+  /// Este endpoint reemplaza /auth/me que no existe en el backend
+  static const String currentUserEndpoint = '/api/users/me';
+
+  /// Alias para currentUserEndpoint (mismo endpoint, nombres diferentes para compatibilidad)
+  static const String userProfileEndpoint = '/api/users/me';
+
   /// Endpoint para obtener perfil de usuario
   static const String profileEndpoint = '/auth/profile';
-
-  /// Endpoint para obtener usuario actual
-  static const String currentUserEndpoint = '/auth/me';
-
-  /// Endpoint para validar token
-  static const String validateTokenEndpoint = '/auth/validate';
 
   // ============================================================================
   // ENDPOINTS DE REPORTES (para futuro uso)

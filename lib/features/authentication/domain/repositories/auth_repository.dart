@@ -147,9 +147,29 @@ abstract class AuthRepository {
   // OPERACIONES DE PERFIL
   // ============================================================================
 
+  /// Obtiene el perfil completo del usuario desde el servidor
+  ///
+  /// **Diferencia con getCurrentUser**:
+  /// - getCurrentUser: Obtiene datos desde cache local (rápido, offline)
+  /// - getUserProfile: Obtiene datos completos desde servidor (actualizado, completo)
+  ///
+  /// **Comportamiento esperado**:
+  /// 1. Validar que el usuario esté autenticado
+  /// 2. Hacer request GET a /api/users/me
+  /// 3. Obtener datos completos (nombre, apellido, documento, teléfono, etc.)
+  /// 4. Actualizar cache local con datos frescos
+  /// 5. Retornar usuario con información completa
+  ///
+  /// **Casos de error**:
+  /// - [AuthFailure.userNotAuthenticated]: No hay sesión activa
+  /// - [AuthFailure.tokenExpired]: Token expirado
+  /// - [NetworkFailure]: Sin conexión a internet
+  /// - [ServerFailure]: Error del servidor
+  Future<Either<Failure, User>> getUserProfile();
+
   /// Actualiza el perfil del usuario actual
   ///
-  /// **Entrada**: Usuario con datos actualizados
+  /// **Entrada**: Campos editables del perfil (firstName, lastName, phone)
   /// **Comportamiento esperado**:
   /// 1. Validar que el usuario esté autenticado
   /// 2. Actualizar datos en servidor si hay conexión
@@ -159,7 +179,12 @@ abstract class AuthRepository {
   /// **Casos de error**:
   /// - [AuthFailure.userNotAuthenticated]: No hay sesión activa
   /// - [ValidationFailure]: Datos de perfil inválidos
-  Future<Either<Failure, User>> updateUserProfile(User updatedUser);
+  /// - [NetworkFailure]: Sin conexión (no se permite actualizar offline)
+  Future<Either<Failure, User>> updateUserProfile({
+    required String firstName,
+    required String lastName,
+    required String phone,
+  });
 
   /// Cambia la contraseña del usuario actual
   ///

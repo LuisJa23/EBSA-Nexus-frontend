@@ -30,9 +30,14 @@ class UserModel extends User {
   const UserModel({
     required super.id,
     required super.email,
-    required super.fullName,
+    required super.firstName,
+    required super.lastName,
     required super.role,
+    super.uuid,
+    super.username,
     super.workArea,
+    super.workType,
+    super.documentNumber,
     super.phoneNumber,
     super.isActive = true,
     required super.createdAt,
@@ -44,36 +49,46 @@ class UserModel extends User {
   // DESERIALIZACIÓN DESDE JSON (API → Model)
   // ============================================================================
 
-  /// Crea UserModel desde respuesta JSON de la API
+  /// Crea UserModel desde respuesta JSON de la API `/api/users/me`
   ///
   /// **Formato esperado del JSON**:
   /// ```json
   /// {
-  ///   "id": "user_123",
-  ///   "email": "usuario@ebsa.com.co",
-  ///   "full_name": "Juan Pérez",
-  ///   "role": "field_worker",
-  ///   "work_area": "Distribución Norte",
-  ///   "phone_number": "+57 300 123 4567",
-  ///   "is_active": true,
-  ///   "created_at": "2024-01-15T10:30:00Z",
-  ///   "updated_at": "2024-01-20T14:45:00Z",
-  ///   "last_login_at": "2024-01-20T09:15:00Z"
+  ///   "id": 3,
+  ///   "uuid": "40861513-d450-468b-a993-5f7adb6ff710",
+  ///   "username": "test1",
+  ///   "email": "test01@ebsa.com.co",
+  ///   "firstName": "Juan Carlos",
+  ///   "lastName": "Pérez González",
+  ///   "roleName": "JEFE_AREA",
+  ///   "workRoleName": "Desarrollador",
+  ///   "workType": "intern",
+  ///   "documentNumber": "1000951117",
+  ///   "phone": "3125594050",
+  ///   "active": true,
+  ///   "createdAt": "2025-10-13T21:29:50",
+  ///   "updatedAt": "2025-10-13T22:49:32",
+  ///   "lastLogin": "2025-10-13T22:49:32"
   /// }
   /// ```
   factory UserModel.fromJson(Map<String, dynamic> json) {
     try {
       return UserModel(
-        id: _parseStringField(json, 'id'),
+        id: _parseId(json['id']),
+        uuid: _parseOptionalString(json, 'uuid'),
+        username: _parseOptionalString(json, 'username'),
         email: _parseStringField(json, 'email').toLowerCase().trim(),
-        fullName: _parseStringField(json, 'full_name', defaultValue: ''),
-        role: _parseUserRole(json['role']),
-        workArea: _parseStringField(json, 'work_area', defaultValue: ''),
-        phoneNumber: _parseOptionalString(json, 'phone_number'),
-        isActive: _parseBoolField(json, 'is_active', defaultValue: true),
-        createdAt: _parseDateTimeField(json, 'created_at'),
-        updatedAt: _parseDateTimeField(json, 'updated_at'),
-        lastLoginAt: _parseOptionalDateTime(json, 'last_login_at'),
+        firstName: _parseStringField(json, 'firstName', defaultValue: ''),
+        lastName: _parseStringField(json, 'lastName', defaultValue: ''),
+        role: _parseUserRole(json['roleName']),
+        workArea: _parseOptionalString(json, 'workRoleName'),
+        workType: _parseOptionalString(json, 'workType'),
+        documentNumber: _parseOptionalString(json, 'documentNumber'),
+        phoneNumber: _parseOptionalString(json, 'phone'),
+        isActive: _parseBoolField(json, 'active', defaultValue: true),
+        createdAt: _parseDateTimeField(json, 'createdAt'),
+        updatedAt: _parseDateTimeField(json, 'updatedAt'),
+        lastLoginAt: _parseOptionalDateTime(json, 'lastLogin'),
       );
     } catch (e) {
       throw FormatException('Error deserializando UserModel: $e');
@@ -91,8 +106,10 @@ class UserModel extends User {
 
       final userModel = UserModel(
         id: json['username'] ?? 'unknown',
+        username: json['username'] ?? 'unknown',
         email: _parseStringField(json, 'email').toLowerCase().trim(),
-        fullName: json['username'] ?? 'Usuario',
+        firstName: json['username'] ?? 'Usuario',
+        lastName: '',
         role: _parseUserRole(json['role']),
         workArea: json['workRole'] ?? '',
         phoneNumber: null,
@@ -121,25 +138,26 @@ class UserModel extends User {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'uuid': uuid,
+      'username': username,
       'email': email,
-      'full_name': fullName,
-      'role': role.value,
-      'work_area': workArea,
-      'phone_number': phoneNumber,
-      'is_active': isActive,
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
-      'last_login_at': lastLoginAt?.toIso8601String(),
+      'firstName': firstName,
+      'lastName': lastName,
+      'roleName': role.value,
+      'workRoleName': workArea,
+      'workType': workType,
+      'documentNumber': documentNumber,
+      'phone': phoneNumber,
+      'active': isActive,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+      'lastLogin': lastLoginAt?.toIso8601String(),
     };
   }
 
-  /// Convierte a JSON solo con campos editables para actualización
+  /// Convierte a JSON solo con campos editables para actualización (PATCH /api/users/me)
   Map<String, dynamic> toUpdateJson() {
-    return {
-      'full_name': fullName,
-      'work_area': workArea,
-      'phone_number': phoneNumber,
-    };
+    return {'firstName': firstName, 'lastName': lastName, 'phone': phoneNumber};
   }
 
   // ============================================================================
@@ -150,10 +168,15 @@ class UserModel extends User {
   factory UserModel.fromEntity(User user) {
     return UserModel(
       id: user.id,
+      uuid: user.uuid,
+      username: user.username,
       email: user.email,
-      fullName: user.fullName,
+      firstName: user.firstName,
+      lastName: user.lastName,
       role: user.role,
       workArea: user.workArea,
+      workType: user.workType,
+      documentNumber: user.documentNumber,
       phoneNumber: user.phoneNumber,
       isActive: user.isActive,
       createdAt: user.createdAt,
@@ -166,10 +189,15 @@ class UserModel extends User {
   User toEntity() {
     return User(
       id: id,
+      uuid: uuid,
+      username: username,
       email: email,
-      fullName: fullName,
+      firstName: firstName,
+      lastName: lastName,
       role: role,
       workArea: workArea,
+      workType: workType,
+      documentNumber: documentNumber,
       phoneNumber: phoneNumber,
       isActive: isActive,
       createdAt: createdAt,
@@ -195,6 +223,16 @@ class UserModel extends User {
   // ============================================================================
   // UTILIDADES DE PARSING SEGURO
   // ============================================================================
+
+  /// Parsea ID (puede ser int o string)
+  static String _parseId(dynamic value) {
+    if (value == null) {
+      throw FormatException('Campo "id" es requerido');
+    }
+    if (value is int) return value.toString();
+    if (value is String) return value.trim();
+    throw FormatException('Campo "id" tiene formato inválido');
+  }
 
   /// Parsea campo string requerido
   static String _parseStringField(
@@ -282,7 +320,8 @@ class UserModel extends User {
     return UserModel(
       id: '',
       email: '',
-      fullName: '',
+      firstName: '',
+      lastName: '',
       role: UserRole.fieldWorker,
       workArea: '',
       createdAt: now,
@@ -295,7 +334,8 @@ class UserModel extends User {
     return UserModel(
       id: id ?? 'mock_user_123',
       email: email ?? 'test@ebsa.com.co',
-      fullName: 'Usuario de Prueba',
+      firstName: 'Usuario',
+      lastName: 'de Prueba',
       role: role ?? UserRole.fieldWorker,
       workArea: 'Área de Desarrollo',
       phoneNumber: '+57 300 123 4567',

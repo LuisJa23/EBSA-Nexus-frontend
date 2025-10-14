@@ -28,6 +28,8 @@ import '../../features/authentication/domain/repositories/auth_repository.dart';
 import '../../features/authentication/domain/usecases/login_usecase.dart';
 import '../../features/authentication/domain/usecases/logout_usecase.dart';
 import '../../features/authentication/domain/usecases/get_current_user_usecase.dart';
+import '../../features/authentication/domain/usecases/get_user_profile_usecase.dart';
+import '../../features/authentication/domain/usecases/update_user_profile_usecase.dart';
 
 /// Service Locator global
 final GetIt sl = GetIt.instance;
@@ -127,6 +129,16 @@ Future<void> init() async {
   // Get Current User Use Case
   sl.registerLazySingleton<GetCurrentUserUseCase>(
     () => GetCurrentUserUseCase(sl()),
+  );
+
+  // Get User Profile Use Case (obtiene perfil completo desde servidor)
+  sl.registerLazySingleton<GetUserProfileUseCase>(
+    () => GetUserProfileUseCase(sl()),
+  );
+
+  // Update User Profile Use Case
+  sl.registerLazySingleton<UpdateUserProfileUseCase>(
+    () => UpdateUserProfileUseCase(sl()),
   );
 }
 

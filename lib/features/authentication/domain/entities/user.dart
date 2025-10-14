@@ -18,20 +18,38 @@ import 'package:equatable/equatable.dart';
 
 /// Entidad de dominio que representa un usuario del sistema Nexus EBSA
 class User extends Equatable {
-  /// Identificador único del usuario
+  /// Identificador único del usuario (ID numérico del backend)
   final String id;
+
+  /// UUID único del usuario (identificador universal)
+  final String? uuid;
+
+  /// Nombre de usuario (username)
+  final String? username;
 
   /// Email del usuario (usado para login)
   final String email;
 
-  /// Nombre completo del usuario
-  final String fullName;
+  /// Nombres del usuario
+  final String firstName;
+
+  /// Apellidos del usuario
+  final String lastName;
+
+  /// Nombre completo del usuario (computado)
+  String get fullName => '$firstName $lastName'.trim();
 
   /// Rol del usuario en el sistema
   final UserRole role;
 
-  /// Área de trabajo asignada
+  /// Área de trabajo asignada (workRoleName del backend)
   final String? workArea;
+
+  /// Tipo de contratación (intern/extern)
+  final String? workType;
+
+  /// Número de documento de identidad
+  final String? documentNumber;
 
   /// Número de teléfono
   final String? phoneNumber;
@@ -51,12 +69,17 @@ class User extends Equatable {
   const User({
     required this.id,
     required this.email,
-    required this.fullName,
+    required this.firstName,
+    required this.lastName,
     required this.role,
     required this.isActive,
     required this.createdAt,
     required this.updatedAt,
+    this.uuid,
+    this.username,
     this.workArea,
+    this.workType,
+    this.documentNumber,
     this.phoneNumber,
     this.lastLoginAt,
   });
@@ -65,9 +88,14 @@ class User extends Equatable {
   factory User.create({
     required String id,
     required String email,
-    required String fullName,
+    required String firstName,
+    required String lastName,
     required UserRole role,
+    String? uuid,
+    String? username,
     String? workArea,
+    String? workType,
+    String? documentNumber,
     String? phoneNumber,
     bool isActive = true,
   }) {
@@ -75,9 +103,14 @@ class User extends Equatable {
     return User(
       id: id,
       email: email,
-      fullName: fullName,
+      firstName: firstName,
+      lastName: lastName,
       role: role,
+      uuid: uuid,
+      username: username,
       workArea: workArea,
+      workType: workType,
+      documentNumber: documentNumber,
       phoneNumber: phoneNumber,
       isActive: isActive,
       createdAt: now,
@@ -90,11 +123,11 @@ class User extends Equatable {
     return copyWith(lastLoginAt: DateTime.now(), updatedAt: DateTime.now());
   }
 
-  /// Actualiza información del usuario
-  User updateInfo({String? fullName, String? workArea, String? phoneNumber}) {
+  /// Actualiza información del usuario (perfil)
+  User updateInfo({String? firstName, String? lastName, String? phoneNumber}) {
     return copyWith(
-      fullName: fullName ?? this.fullName,
-      workArea: workArea ?? this.workArea,
+      firstName: firstName ?? this.firstName,
+      lastName: lastName ?? this.lastName,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       updatedAt: DateTime.now(),
     );
@@ -108,10 +141,15 @@ class User extends Equatable {
   /// Crea una copia del usuario con campos actualizados
   User copyWith({
     String? id,
+    String? uuid,
+    String? username,
     String? email,
-    String? fullName,
+    String? firstName,
+    String? lastName,
     UserRole? role,
     String? workArea,
+    String? workType,
+    String? documentNumber,
     String? phoneNumber,
     bool? isActive,
     DateTime? createdAt,
@@ -120,10 +158,15 @@ class User extends Equatable {
   }) {
     return User(
       id: id ?? this.id,
+      uuid: uuid ?? this.uuid,
+      username: username ?? this.username,
       email: email ?? this.email,
-      fullName: fullName ?? this.fullName,
+      firstName: firstName ?? this.firstName,
+      lastName: lastName ?? this.lastName,
       role: role ?? this.role,
       workArea: workArea ?? this.workArea,
+      workType: workType ?? this.workType,
+      documentNumber: documentNumber ?? this.documentNumber,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
@@ -204,10 +247,15 @@ class User extends Equatable {
   @override
   List<Object?> get props => [
     id,
+    uuid,
+    username,
     email,
-    fullName,
+    firstName,
+    lastName,
     role,
     workArea,
+    workType,
+    documentNumber,
     phoneNumber,
     isActive,
     createdAt,
@@ -229,8 +277,8 @@ enum UserRole {
   /// Contratista
   contractor('contractor', 'Contratista'),
 
-  /// Gerente de área
-  areaManager('area_manager', 'Gerente de Área'),
+  /// Jefe de área
+  areaManager('area_manager', 'Jefe de Área'),
 
   /// Administrador del sistema
   admin('admin', 'Administrador');

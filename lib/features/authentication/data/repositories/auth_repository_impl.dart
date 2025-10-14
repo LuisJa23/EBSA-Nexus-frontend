@@ -277,31 +277,9 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, bool>> isTokenValid() async {
     try {
-      // Verificación local primero
+      // SOLO validación local del JWT - NO llamar al servidor
+      // El token se valida únicamente por su expiración
       final hasValidToken = await _localDataSource.hasValidToken();
-
-      if (!hasValidToken) {
-        return const Right(false);
-      }
-
-      // Si hay conexión, verificar con el servidor
-      final isConnected = await _networkInfo.isConnected;
-
-      if (isConnected) {
-        final token = await _localDataSource.getAccessToken();
-
-        if (token != null) {
-          try {
-            final isValid = await _remoteDataSource.validateToken(token);
-            return Right(isValid);
-          } catch (e) {
-            // Error verificando remotamente - usar validación local
-            return Right(hasValidToken);
-          }
-        }
-      }
-
-      // Sin conexión - usar validación local
       return Right(hasValidToken);
     } catch (e) {
       return const Right(false);
@@ -323,17 +301,122 @@ class AuthRepositoryImpl implements AuthRepository {
   // ============================================================================
 
   @override
-  Future<Either<Failure, User>> updateUserProfile(User updatedUser) async {
+  Future<Either<Failure, User>> getUserProfile() async {
     try {
-      // TODO: Implementar actualización de perfil
-      // Por ahora, solo actualizar cache local
-      final userModel = UserModel.fromEntity(updatedUser);
-      await _localDataSource.saveUser(userModel);
+      // Verificar conectividad
+      final isConnected = await _networkInfo.isConnected;
+      if (!isConnected) {
+        // Sin conexión - retornar usuario desde cache
+        print('⚠️ Sin conexión, obteniendo perfil desde cache...');
+        final cachedUser = await _localDataSource.getCachedUser();
+        if (cachedUser == null) {
+          return const Left(
+            CacheFailure(message: 'No hay datos de perfil en cache'),
+          );
+        }
+        return Right(cachedUser);
+      }
 
+      // Obtener token actual
+      final token = await _localDataSource.getAccessToken();
+      if (token == null || token.isEmpty) {
+        return const Left(
+          TokenExpiredFailure(
+            message: 'Sesión expirada, inicie sesión nuevamente',
+          ),
+        );
+      }
+
+      print('🔄 Obteniendo perfil completo desde servidor...');
+
+      // Obtener perfil completo desde el servidor
+      final userProfile = await _remoteDataSource.getUserProfile(token);
+
+      // Guardar en cache local
+      await _localDataSource.saveUser(userProfile);
+
+      // Actualizar stream de autenticación
+      _authStateController.add(userProfile);
+
+      print('✅ Perfil cargado exitosamente desde servidor');
+      print('📋 Datos: ${userProfile.firstName} ${userProfile.lastName}');
+      print('📞 Teléfono: ${userProfile.phoneNumber}');
+      print('🆔 Documento: ${userProfile.documentNumber}');
+
+      return Right(userProfile);
+    } on AuthenticationException catch (e) {
+      print('❌ Error de autenticación: ${e.message}');
+      return Left(AuthFailure(message: e.message, code: e.code));
+    } on ServerException catch (e) {
+      print('❌ Error de servidor: ${e.message}');
+      return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
+    } on NetworkException catch (e) {
+      print('❌ Error de red: ${e.message}');
+      return Left(NetworkFailure(message: e.message));
+    } catch (e) {
+      print('❌ Error inesperado en getUserProfile: $e');
+      return Left(_mapExceptionToFailure(e));
+    }
+  }
+
+  @override
+  Future<Either<Failure, User>> updateUserProfile({
+    required String firstName,
+    required String lastName,
+    required String phone,
+  }) async {
+    try {
+      // Verificar conectividad
+      final isConnected = await _networkInfo.isConnected;
+      if (!isConnected) {
+        return const Left(
+          NetworkFailure(
+            message: 'No se puede actualizar el perfil sin conexión a internet',
+          ),
+        );
+      }
+
+      // Obtener token actual
+      final token = await _localDataSource.getAccessToken();
+      if (token == null || token.isEmpty) {
+        return const Left(
+          TokenExpiredFailure(
+            message: 'Sesión expirada, inicie sesión nuevamente',
+          ),
+        );
+      }
+
+      // Actualizar en el servidor
+      final updatedUser = await _remoteDataSource.updateUserProfile(
+        token: token,
+        firstName: firstName,
+        lastName: lastName,
+        phone: phone,
+      );
+
+      // Guardar en cache local
+      await _localDataSource.saveUser(updatedUser);
+
+      // Actualizar stream de autenticación
       _authStateController.add(updatedUser);
 
+      print('✅ Perfil actualizado exitosamente en repositorio');
+
       return Right(updatedUser);
+    } on AuthenticationException catch (e) {
+      print('❌ Error de autenticación: ${e.message}');
+      return Left(AuthFailure(message: e.message, code: e.code));
+    } on ValidationException catch (e) {
+      print('❌ Error de validación: ${e.message}');
+      return Left(ValidationFailure(message: e.message, field: e.field));
+    } on ServerException catch (e) {
+      print('❌ Error de servidor: ${e.message}');
+      return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
+    } on NetworkException catch (e) {
+      print('❌ Error de red: ${e.message}');
+      return Left(NetworkFailure(message: e.message));
     } catch (e) {
+      print('❌ Error inesperado en repositorio: $e');
       return Left(_mapExceptionToFailure(e));
     }
   }
