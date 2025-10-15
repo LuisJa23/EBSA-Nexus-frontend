@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/widgets/custom_bottom_navbar.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_text_styles.dart';
 import '../../features/authentication/presentation/pages/home_page.dart';
 import '../../features/authentication/presentation/pages/login_page.dart';
 import '../../features/authentication/presentation/pages/splash_page.dart';
@@ -93,6 +95,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
+      // ========================================================================
+      // RUTAS PÚBLICAS (Sin AppBar ni autenticación)
+      // ========================================================================
       GoRoute(
         path: RouteNames.splash,
         name: 'splash',
@@ -104,29 +109,49 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, __) => const LoginPage(),
       ),
 
-      /// ShellRoute for Bottom Navigation
+      // ========================================================================
+      // SHELL ROUTE GLOBAL - Todas las rutas autenticadas con AppBar
+      // ========================================================================
       ShellRoute(
         builder: (context, state, child) {
           final currentPath = state.matchedLocation;
 
-          final tabs = [
+          // Rutas que usan bottom navigation
+          final bottomNavRoutes = [
             RouteNames.home,
             RouteNames.notifications,
             RouteNames.assignments,
             RouteNames.profile,
           ];
 
-          final currentIndex = tabs.indexWhere((path) => currentPath == path);
+          // Determinar si mostrar bottom nav
+          final showBottomNav = bottomNavRoutes.any(
+            (route) => currentPath == route,
+          );
+          final currentIndex = bottomNavRoutes.indexWhere(
+            (path) => currentPath == path,
+          );
 
-          return Scaffold(
-            body: child,
-            bottomNavigationBar: CustomBottomNavBar(
-              currentIndex: currentIndex == -1 ? 0 : currentIndex,
-              onTabSelected: (index) => context.go(tabs[index]),
-            ),
+          return Consumer(
+            builder: (context, ref, _) {
+              return Scaffold(
+                appBar: _buildAppBar(context, state, ref),
+                body: child,
+                bottomNavigationBar: showBottomNav
+                    ? CustomBottomNavBar(
+                        currentIndex: currentIndex == -1 ? 0 : currentIndex,
+                        onTabSelected: (index) =>
+                            context.go(bottomNavRoutes[index]),
+                      )
+                    : null,
+              );
+            },
           );
         },
         routes: [
+          // ==================================================================
+          // RUTAS PRINCIPALES CON BOTTOM NAV
+          // ==================================================================
           GoRoute(
             path: RouteNames.home,
             name: 'home',
@@ -147,59 +172,168 @@ final routerProvider = Provider<GoRouter>((ref) {
             name: 'profile',
             builder: (_, __) => const ProfilePage(),
           ),
+
+          // ==================================================================
+          // RUTAS ADICIONALES (Sin Bottom Nav pero con AppBar)
+          // ==================================================================
+
+          /// Gestionar Novedad
+          GoRoute(
+            path: RouteNames.manageIncident,
+            name: 'manage-incident',
+            builder: (_, __) => const ManageIncidentPage(),
+          ),
+
+          /// Consultar Novedades
+          GoRoute(
+            path: RouteNames.incidentList,
+            name: 'incident-list',
+            builder: (_, __) => const IncidentListPage(),
+          ),
+
+          /// Crear Reporte
+          GoRoute(
+            path: RouteNames.createReport,
+            name: 'create-report',
+            builder: (_, __) => const CreateReportPage(),
+          ),
+
+          /// Gestionar Usuarios (Solo Admin)
+          GoRoute(
+            path: RouteNames.manageUsers,
+            name: 'manage-users',
+            builder: (_, __) => const ManageUsersPage(),
+          ),
+
+          /// Crear Usuario (Solo Admin)
+          GoRoute(
+            path: RouteNames.createUser,
+            name: 'create-user',
+            builder: (_, __) => const CreateUserPage(),
+          ),
+
+          /// Lista de Usuarios (Solo Admin)
+          GoRoute(
+            path: RouteNames.listUsers,
+            name: 'list-users',
+            builder: (_, __) => const ListUsersPage(),
+          ),
         ],
-      ),
-
-      // ========================================================================
-      // RUTAS ADICIONALES (Sin Bottom Navigation)
-      // ========================================================================
-
-      /// Gestionar Novedad
-      GoRoute(
-        path: RouteNames.manageIncident,
-        name: 'manage-incident',
-        builder: (_, __) => const ManageIncidentPage(),
-      ),
-
-      /// Consultar Novedades
-      GoRoute(
-        path: RouteNames.incidentList,
-        name: 'incident-list',
-        builder: (_, __) => const IncidentListPage(),
-      ),
-
-      /// Crear Reporte (ya existe pero puede estar en otra parte)
-      GoRoute(
-        path: RouteNames.createReport,
-        name: 'create-report',
-        builder: (_, __) => const CreateReportPage(),
-      ),
-
-      /// Gestionar Usuarios (Solo Admin)
-      GoRoute(
-        path: RouteNames.manageUsers,
-        name: 'manage-users',
-        builder: (_, __) => const ManageUsersPage(),
-      ),
-
-      /// Crear Usuario (Solo Admin)
-      GoRoute(
-        path: RouteNames.createUser,
-        name: 'create-user',
-        builder: (_, __) => const CreateUserPage(),
-      ),
-
-      /// Lista de Usuarios (Solo Admin)
-      GoRoute(
-        path: RouteNames.listUsers,
-        name: 'list-users',
-        builder: (_, __) => const ListUsersPage(),
       ),
     ],
     errorBuilder: (_, state) =>
         Scaffold(body: Center(child: Text("Error 404: ${state.uri}"))),
   );
 });
+
+// ==============================================================================
+// FUNCIONES AUXILIARES PARA EL APPBAR GLOBAL
+// ==============================================================================
+
+/// Construye el AppBar dinámico según la ruta
+///
+/// Proporciona un AppBar consistente en todas las rutas autenticadas
+/// con título dinámico, color corporativo y botón de retroceso automático
+PreferredSizeWidget? _buildAppBar(
+  BuildContext context,
+  GoRouterState state,
+  WidgetRef ref,
+) {
+  final currentPath = state.matchedLocation;
+
+  // Obtener título según ruta
+  final title = _getTitleForRoute(currentPath);
+
+  // Definir actions según la ruta
+  List<Widget>? actions;
+
+  // Botón de logout solo en HomePage
+  if (currentPath == RouteNames.home) {
+    actions = [
+      IconButton(
+        onPressed: () => _showLogoutDialog(context, ref),
+        icon: const Icon(Icons.logout, color: Colors.white),
+        tooltip: 'Cerrar Sesión',
+      ),
+    ];
+  }
+  // Nota: El botón de editar perfil se manejará directamente en ProfilePage
+  // ya que requiere acceso a su estado local (_isEditing)
+
+  return AppBar(
+    title: Text(
+      title,
+      style: AppTextStyles.heading3.copyWith(
+        color: Colors.white,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+    backgroundColor: AppColors.primary,
+    elevation: 0,
+    iconTheme: const IconThemeData(color: Colors.white),
+    actions: actions,
+    // El botón back se muestra automáticamente por GoRouter cuando hay historial
+  );
+}
+
+/// Obtiene el título del AppBar según la ruta actual
+///
+/// Mapea cada ruta a su título correspondiente para mostrar
+/// en el AppBar de forma consistente
+String _getTitleForRoute(String path) {
+  // Rutas principales con bottom navigation
+  if (path == RouteNames.home) return 'Nexus EBSA';
+  if (path == RouteNames.notifications) return 'Notificaciones';
+  if (path == RouteNames.assignments) return 'Asignaciones';
+  if (path == RouteNames.profile) return 'Mi Perfil';
+
+  // Rutas de incidentes y reportes
+  if (path == RouteNames.manageIncident) return 'Gestionar Novedad';
+  if (path == RouteNames.incidentList) return 'Consultas';
+  if (path == RouteNames.createReport) return 'Hacer Reporte';
+
+  // Rutas de administración de usuarios
+  if (path == RouteNames.manageUsers) return 'Gestionar Usuarios';
+  if (path == RouteNames.createUser) return 'Crear Usuario';
+  if (path == RouteNames.listUsers) return 'Lista de Usuarios';
+
+  // Por defecto
+  return 'Nexus EBSA';
+}
+
+/// Muestra el diálogo de confirmación para cerrar sesión
+///
+/// Solo se muestra en la HomePage a través del botón de logout en el AppBar
+void _showLogoutDialog(BuildContext context, WidgetRef ref) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Cerrar Sesión'),
+      content: const Text('¿Está seguro que desea cerrar sesión?'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+            ref.read(authNotifierProvider.notifier).logout();
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.error,
+            foregroundColor: Colors.white,
+          ),
+          child: const Text('Cerrar Sesión'),
+        ),
+      ],
+    ),
+  );
+}
+
+// ==============================================================================
+// EXTENSIONES DE NAVEGACIÓN
+// ==============================================================================
 
 /// Navigation extensions
 extension NavigationExtension on BuildContext {

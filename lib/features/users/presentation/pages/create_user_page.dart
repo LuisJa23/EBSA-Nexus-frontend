@@ -104,52 +104,33 @@ class _CreateUserPageState extends ConsumerState<CreateUserPage> {
       }
     });
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: _buildAppBar(),
-      body: state.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildHeader(),
-                    const SizedBox(height: 24),
-                    // Solo mostrar banner si es un error general, NO si son errores de campos
-                    if (state.shouldShowErrorBanner) ...[
-                      _buildErrorBanner(state.errorMessage!),
-                      const SizedBox(height: 16),
-                    ],
-                    _buildPersonalInfoSection(state),
-                    const SizedBox(height: 24),
-                    _buildContactSection(state),
-                    const SizedBox(height: 24),
-                    _buildRoleSection(state),
-                    const SizedBox(height: 32),
-                    _buildCreateButton(state),
+    return state.isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildHeader(),
+                  const SizedBox(height: 24),
+                  // Solo mostrar banner si es un error general, NO si son errores de campos
+                  if (state.shouldShowErrorBanner) ...[
+                    _buildErrorBanner(state.errorMessage!),
+                    const SizedBox(height: 16),
                   ],
-                ),
+                  _buildPersonalInfoSection(state),
+                  const SizedBox(height: 24),
+                  _buildContactSection(state),
+                  const SizedBox(height: 24),
+                  _buildRoleSection(state),
+                  const SizedBox(height: 32),
+                  _buildCreateButton(state),
+                ],
               ),
             ),
-    );
-  }
-
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      title: Text(
-        'Crear Usuario',
-        style: AppTextStyles.heading3.copyWith(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      backgroundColor: AppColors.primary,
-      elevation: 0,
-      iconTheme: const IconThemeData(color: Colors.white),
-    );
+          );
   }
 
   Widget _buildHeader() {
@@ -157,15 +138,15 @@ class _CreateUserPageState extends ConsumerState<CreateUserPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Nuevo Usuario',
-          style: AppTextStyles.heading2.copyWith(
+          'Crear Nuevo Usuario',
+          style: AppTextStyles.heading1.copyWith(
             color: AppColors.textPrimary,
             fontWeight: FontWeight.bold,
           ),
         ),
         const SizedBox(height: 8),
         Text(
-          'Complete la información del usuario',
+          'Complete el formulario para registrar un nuevo usuario',
           style: AppTextStyles.bodyLarge.copyWith(
             color: AppColors.textSecondary,
           ),

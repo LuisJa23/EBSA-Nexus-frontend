@@ -19,36 +19,15 @@ class HomePage extends ConsumerWidget {
     final authState = ref.watch(authNotifierProvider);
     final user = authState.user;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(
-          'Nexus EBSA',
-          style: AppTextStyles.heading3.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: AppColors.primary,
-        elevation: 0,
-        actions: [
-          IconButton(
-            onPressed: () => _showLogoutDialog(context, ref),
-            icon: const Icon(Icons.logout, color: Colors.white),
-            tooltip: 'Cerrar Sesión',
-          ),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildWelcomeHeader(),
+          const SizedBox(height: 32),
+          _buildActionCards(context, user),
         ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildWelcomeHeader(),
-            const SizedBox(height: 32),
-            _buildActionCards(context, user),
-          ],
-        ),
       ),
     );
   }
@@ -130,33 +109,6 @@ class HomePage extends ConsumerWidget {
           ),
         ],
       ],
-    );
-  }
-
-  void _showLogoutDialog(BuildContext context, WidgetRef ref) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Cerrar Sesión'),
-        content: const Text('¿Está seguro que desea cerrar sesión?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              ref.read(authNotifierProvider.notifier).logout();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Cerrar Sesión'),
-          ),
-        ],
-      ),
     );
   }
 }
