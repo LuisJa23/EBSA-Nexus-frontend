@@ -98,21 +98,13 @@ class CreateUserUseCase {
     }
 
     // Validar rol y tipo de trabajador
-    if (dto.roleName == 'TRABAJADOR') {
-      // Rol Trabajador requiere workType y workRoleName
+    if (dto.roleName == 'TRABAJADOR' || dto.roleName == 'JEFE_AREA') {
+      // Rol Trabajador y Jefe de Área requieren workType y workRoleName
       if (dto.workType == null || dto.workType!.isEmpty) {
         errors['workType'] = 'El tipo de trabajador es requerido';
       }
       if (dto.workRoleName == null) {
         errors['workRoleName'] = 'El rol de trabajo es requerido';
-      }
-    } else if (dto.roleName == 'JEFE_AREA') {
-      // Jefe de Área NO debe tener workType ni workRoleName
-      if (dto.workType != null) {
-        errors['workType'] = 'Jefe de Área no debe tener tipo de trabajador';
-      }
-      if (dto.workRoleName != null) {
-        errors['workRoleName'] = 'Jefe de Área no debe tener rol de trabajo';
       }
     }
 
