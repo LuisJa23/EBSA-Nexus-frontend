@@ -134,35 +134,38 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     final profileState = ref.watch(profileProvider);
     _initializeControllers();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mi Perfil'),
-        actions: [
-          if (!_isEditing && profileState.user != null)
-            IconButton(
-              icon: const Icon(Icons.edit),
+    return Stack(
+      children: [
+        _buildBody(profileState),
+        // Botón flotante de editar solo si no está en modo edición y hay usuario
+        if (!_isEditing && profileState.user != null)
+          Positioned(
+            top: 16,
+            right: 16,
+            child: FloatingActionButton(
+              mini: true,
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
               onPressed: () {
                 setState(() {
                   _isEditing = true;
                 });
                 // Hacer scroll al formulario de edición después de un pequeño delay
-                // para permitir que el widget se renderice
                 Future.delayed(const Duration(milliseconds: 300), () {
                   if (_editableSectionKey.currentContext != null) {
                     Scrollable.ensureVisible(
                       _editableSectionKey.currentContext!,
                       duration: const Duration(milliseconds: 500),
                       curve: Curves.easeInOut,
-                      alignment: 0.1, // Posiciona el formulario cerca del top
+                      alignment: 0.1,
                     );
                   }
                 });
               },
-              tooltip: 'Editar perfil',
+              child: const Icon(Icons.edit),
             ),
-        ],
-      ),
-      body: _buildBody(profileState),
+          ),
+      ],
     );
   }
 
