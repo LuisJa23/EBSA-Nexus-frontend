@@ -15,6 +15,8 @@ import '../../features/incidents/presentation/pages/manage_incident_page.dart';
 import '../../features/incidents/presentation/pages/incident_list_page.dart';
 import '../../features/reports/presentation/pages/create_report_page.dart';
 import '../../features/users/presentation/pages/manage_users_page.dart';
+import '../../features/users/presentation/pages/create_user_page.dart';
+import '../../features/users/presentation/pages/list_users_page.dart';
 import 'route_names.dart';
 
 /// Provider global del router
@@ -178,6 +180,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RouteNames.manageUsers,
         name: 'manage-users',
         builder: (_, __) => const ManageUsersPage(),
+      ),
+
+      /// Crear Usuario (Solo Admin)
+      GoRoute(
+        path: RouteNames.createUser,
+        name: 'create-user',
+        builder: (_, __) => const CreateUserPage(),
+      ),
+
+      /// Lista de Usuarios (Solo Admin)
+      GoRoute(
+        path: RouteNames.listUsers,
+        name: 'list-users',
+        builder: (_, __) => const ListUsersPage(),
       ),
     ],
     errorBuilder: (_, state) =>

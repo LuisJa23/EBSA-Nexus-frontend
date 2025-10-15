@@ -62,6 +62,8 @@ class RouteNames {
   // ============================================================================
 
   static const String manageUsers = '/manage-users';
+  static const String createUser = '/manage-users/create';
+  static const String listUsers = '/manage-users/list';
 
   // ============================================================================
   // RUTAS DE PERFIL Y CONFIGURACIÓN

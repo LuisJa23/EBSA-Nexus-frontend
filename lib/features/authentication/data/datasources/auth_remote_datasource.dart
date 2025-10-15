@@ -53,11 +53,29 @@ abstract class AuthRemoteDataSource {
   /// **Salida**: Datos actualizados del usuario
   Future<UserModel> getCurrentUser(String token);
 
-  /// Valida token en el servidor
+  /// Obtiene perfil completo del usuario actual desde /api/users/me
   ///
-  /// **Entrada**: Token a validar
-  /// **Salida**: true si el token es válido
-  Future<bool> validateToken(String token);
+  /// **Entrada**: Token de acceso válido
+  /// **Salida**: Usuario con datos completos del perfil
+  /// **Excepciones**:
+  /// - [AuthenticationException]: Token inválido o expirado
+  /// - [ServerException]: Error del servidor
+  Future<UserModel> getUserProfile(String token);
+
+  /// Actualiza perfil del usuario actual en /api/users/me
+  ///
+  /// **Entrada**: Token y datos a actualizar (firstName, lastName, phone)
+  /// **Salida**: Usuario actualizado
+  /// **Excepciones**:
+  /// - [AuthenticationException]: Token inválido
+  /// - [ValidationException]: Datos inválidos
+  /// - [ServerException]: Error del servidor
+  Future<UserModel> updateUserProfile({
+    required String token,
+    required String firstName,
+    required String lastName,
+    required String phone,
+  });
 }
 
 /// Implementación de la fuente de datos remota de autenticación
@@ -278,23 +296,83 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<bool> validateToken(String token) async {
+  Future<UserModel> getUserProfile(String token) async {
     try {
       final response = await _apiClient.get(
-        ApiConstants.validateTokenEndpoint,
+        ApiConstants.userProfileEndpoint,
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
       if (response.statusCode != 200) {
-        return false;
+        throw AuthenticationException(
+          message: 'Error obteniendo perfil de usuario',
+          code: 'GET_PROFILE_FAILED',
+        );
       }
 
       final responseData = response.data as Map<String, dynamic>;
-      return responseData['success'] == true &&
-          responseData['data']['valid'] == true;
+      return UserModel.fromJson(responseData);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
     } catch (e) {
-      // Cualquier error significa token inválido
-      return false;
+      if (e is AuthenticationException) rethrow;
+      throw ServerException(
+        message: 'Error obteniendo perfil: $e',
+        statusCode: 500,
+      );
+    }
+  }
+
+  @override
+  Future<UserModel> updateUserProfile({
+    required String token,
+    required String firstName,
+    required String lastName,
+    required String phone,
+  }) async {
+    try {
+      // Preparar datos para enviar
+      final requestData = {
+        'firstName': firstName,
+        'lastName': lastName,
+        'phone': phone,
+      };
+
+      print('📤 Actualizando perfil con datos: $requestData');
+
+      // Realizar request PATCH
+      final response = await _apiClient.patch(
+        ApiConstants.userProfileEndpoint,
+        data: requestData,
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      print('📥 Respuesta de actualización: ${response.statusCode}');
+
+      if (response.statusCode != 200) {
+        throw ServerException(
+          message: 'Error actualizando perfil',
+          statusCode: response.statusCode,
+        );
+      }
+
+      // Parsear respuesta
+      final responseData = response.data as Map<String, dynamic>;
+      print('✅ Perfil actualizado exitosamente');
+
+      return UserModel.fromJson(responseData);
+    } on DioException catch (e) {
+      print('❌ Error Dio actualizando perfil: ${e.message}');
+      throw _handleDioError(e);
+    } catch (e) {
+      print('❌ Error inesperado actualizando perfil: $e');
+      if (e is ServerException || e is AuthenticationException) {
+        rethrow;
+      }
+      throw ServerException(
+        message: 'Error inesperado actualizando perfil: $e',
+        statusCode: 500,
+      );
     }
   }
 

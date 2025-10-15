@@ -147,10 +147,14 @@ class ValidationException extends BaseException {
   /// Lista de errores de validación
   final List<String>? errors;
 
+  /// Mapa de errores por campo (campo -> mensaje de error)
+  final Map<String, String>? fieldErrors;
+
   const ValidationException({
     super.message = 'Validation failed',
     this.field,
     this.errors,
+    this.fieldErrors,
     super.code,
   });
 

@@ -110,10 +110,18 @@ class ValidationFailure extends Failure {
   /// Campo que falló la validación
   final String? field;
 
-  const ValidationFailure({required super.message, this.field, super.code});
+  /// Mapa de errores por campo (campo -> mensaje de error)
+  final Map<String, String>? fieldErrors;
+
+  const ValidationFailure({
+    required super.message,
+    this.field,
+    this.fieldErrors,
+    super.code,
+  });
 
   @override
-  List<Object?> get props => [message, code, field];
+  List<Object?> get props => [message, code, field, fieldErrors];
 }
 
 /// Falla de formato de datos

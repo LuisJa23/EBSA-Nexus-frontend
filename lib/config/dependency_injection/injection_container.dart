@@ -28,6 +28,16 @@ import '../../features/authentication/domain/repositories/auth_repository.dart';
 import '../../features/authentication/domain/usecases/login_usecase.dart';
 import '../../features/authentication/domain/usecases/logout_usecase.dart';
 import '../../features/authentication/domain/usecases/get_current_user_usecase.dart';
+import '../../features/authentication/domain/usecases/get_user_profile_usecase.dart';
+import '../../features/authentication/domain/usecases/update_user_profile_usecase.dart';
+
+// Users Feature - Data Layer
+import '../../features/users/data/datasources/user_remote_datasource.dart';
+import '../../features/users/data/repositories/user_repository_impl.dart';
+
+// Users Feature - Domain Layer
+import '../../features/users/domain/repositories/user_repository.dart';
+import '../../features/users/domain/usecases/create_user_usecase.dart';
 
 /// Service Locator global
 final GetIt sl = GetIt.instance;
@@ -128,6 +138,37 @@ Future<void> init() async {
   sl.registerLazySingleton<GetCurrentUserUseCase>(
     () => GetCurrentUserUseCase(sl()),
   );
+
+  // Get User Profile Use Case (obtiene perfil completo desde servidor)
+  sl.registerLazySingleton<GetUserProfileUseCase>(
+    () => GetUserProfileUseCase(sl()),
+  );
+
+  // Update User Profile Use Case
+  sl.registerLazySingleton<UpdateUserProfileUseCase>(
+    () => UpdateUserProfileUseCase(sl()),
+  );
+
+  // ============================================================================
+  // USERS FEATURE - DATA LAYER
+  // ============================================================================
+
+  // Remote Data Source - API calls de usuarios
+  sl.registerLazySingleton<UserRemoteDataSource>(
+    () => UserRemoteDataSourceImpl(dio: sl()),
+  );
+
+  // Repository Implementation - Coordina remote
+  sl.registerLazySingleton<UserRepository>(
+    () => UserRepositoryImpl(remoteDataSource: sl()),
+  );
+
+  // ============================================================================
+  // USERS FEATURE - DOMAIN LAYER (USE CASES)
+  // ============================================================================
+
+  // Create User Use Case
+  sl.registerLazySingleton<CreateUserUseCase>(() => CreateUserUseCase(sl()));
 }
 
 /// Reinicia el container de dependencias
