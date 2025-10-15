@@ -338,6 +338,7 @@ class _CreateUserPageState extends ConsumerState<CreateUserPage> {
         ),
         const SizedBox(height: 16),
         _buildRoleSelector(),
+        // Para TRABAJADOR: mostrar selector de tipo (interno/externo)
         if (_selectedRoleName == 'TRABAJADOR') ...[
           const SizedBox(height: 16),
           _buildWorkTypeSelector(),
@@ -345,6 +346,11 @@ class _CreateUserPageState extends ConsumerState<CreateUserPage> {
             const SizedBox(height: 16),
             _buildWorkRoleDropdown(),
           ],
+        ],
+        // Para JEFE_AREA: mostrar directamente roles internos (sin selector de tipo)
+        if (_selectedRoleName == 'JEFE_AREA') ...[
+          const SizedBox(height: 16),
+          _buildWorkRoleDropdown(),
         ],
       ],
     );
@@ -410,7 +416,12 @@ class _CreateUserPageState extends ConsumerState<CreateUserPage> {
       onChanged: (value) {
         setState(() {
           _selectedRoleName = value!;
-          _selectedWorkType = null;
+          // Si es JEFE_AREA, automáticamente establecer como interno
+          if (_selectedRoleName == 'JEFE_AREA') {
+            _selectedWorkType = WorkType.intern;
+          } else {
+            _selectedWorkType = null;
+          }
           _selectedWorkRoleName = null;
         });
       },
@@ -511,7 +522,7 @@ class _CreateUserPageState extends ConsumerState<CreateUserPage> {
   void _handleSubmit() {
     if (!_formKey.currentState!.validate()) return;
 
-    // Validar rol de trabajo si es necesario
+    // Validar tipo de trabajador solo para TRABAJADOR (JEFE_AREA es automáticamente interno)
     if (_selectedRoleName == 'TRABAJADOR') {
       if (_selectedWorkType == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -519,6 +530,10 @@ class _CreateUserPageState extends ConsumerState<CreateUserPage> {
         );
         return;
       }
+    }
+
+    // Validar rol de trabajo para TRABAJADOR y JEFE_AREA
+    if (_selectedRoleName == 'TRABAJADOR' || _selectedRoleName == 'JEFE_AREA') {
       if (_selectedWorkRoleName == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Seleccione el rol de trabajo')),
