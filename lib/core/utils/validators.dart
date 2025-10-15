@@ -293,6 +293,44 @@ class Validators {
 
     return null;
   }
+
+  // ============================================================================
+  // UTILIDADES DE TEXTO
+  // ============================================================================
+
+  /// Normaliza una cadena removiendo acentos y caracteres especiales
+  ///
+  /// Útil para enviar datos al backend que no acepta caracteres con tildes.
+  ///
+  /// Ejemplos:
+  /// - "Coordinación de distribución" → "Coordinacion de distribucion"
+  /// - "Administración" → "Administracion"
+  /// - "José Pérez" → "Jose Perez"
+  static String normalizeAccents(String text) {
+    const accents = {
+      'á': 'a',
+      'é': 'e',
+      'í': 'i',
+      'ó': 'o',
+      'ú': 'u',
+      'Á': 'A',
+      'É': 'E',
+      'Í': 'I',
+      'Ó': 'O',
+      'Ú': 'U',
+      'ñ': 'n',
+      'Ñ': 'N',
+      'ü': 'u',
+      'Ü': 'U',
+    };
+
+    var normalized = text;
+    accents.forEach((accented, normalized_char) {
+      normalized = normalized.replaceAll(accented, normalized_char);
+    });
+
+    return normalized;
+  }
 }
 
 // - static String? validateDescription(String? description)

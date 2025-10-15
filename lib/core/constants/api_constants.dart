@@ -61,6 +61,16 @@ class ApiConstants {
   static const String profileEndpoint = '/auth/profile';
 
   // ============================================================================
+  // ENDPOINTS DE USUARIOS
+  // ============================================================================
+
+  /// Endpoint para gestión de usuarios (CRUD)
+  static const String usersEndpoint = '/api/users';
+
+  /// Endpoint para crear usuario
+  static const String createUserEndpoint = '/api/users';
+
+  // ============================================================================
   // ENDPOINTS DE REPORTES (para futuro uso)
   // ============================================================================
 
