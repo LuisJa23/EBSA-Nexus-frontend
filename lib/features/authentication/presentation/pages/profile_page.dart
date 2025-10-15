@@ -17,6 +17,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/user.dart';
 import '../providers/profile_provider.dart';
+import '../widgets/change_password_dialog.dart';
 
 /// Página que muestra y permite editar el perfil del usuario
 class ProfilePage extends ConsumerStatefulWidget {
@@ -452,8 +453,31 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               },
               onChanged: (_) => _onFieldChanged(),
             ),
+            const SizedBox(height: 24),
+            const Divider(),
+            const SizedBox(height: 16),
+            _buildChangePasswordButton(),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Botón para cambiar contraseña
+  Widget _buildChangePasswordButton() {
+    return OutlinedButton.icon(
+      onPressed: () {
+        showDialog(
+          context: context,
+          builder: (context) => const ChangePasswordDialog(),
+        );
+      },
+      icon: const Icon(Icons.lock_reset),
+      label: const Text('Cambiar Contraseña'),
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        side: BorderSide(color: AppColors.primary),
+        foregroundColor: AppColors.primary,
       ),
     );
   }

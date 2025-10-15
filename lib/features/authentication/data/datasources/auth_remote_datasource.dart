@@ -76,6 +76,21 @@ abstract class AuthRemoteDataSource {
     required String lastName,
     required String phone,
   });
+
+  /// Cambia la contraseña del usuario actual
+  ///
+  /// **Entrada**: Token, contraseña actual y nueva contraseña
+  /// **Salida**: void (respuesta 204 No Content)
+  /// **Excepciones**:
+  /// - [AuthenticationException]: Token inválido o contraseña actual incorrecta
+  /// - [ValidationException]: Datos inválidos
+  /// - [ServerException]: Error del servidor
+  Future<void> changePassword({
+    required String token,
+    required String currentPassword,
+    required String newPassword,
+    required String confirmPassword,
+  });
 }
 
 /// Implementación de la fuente de datos remota de autenticación
@@ -371,6 +386,88 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       }
       throw ServerException(
         message: 'Error inesperado actualizando perfil: $e',
+        statusCode: 500,
+      );
+    }
+  }
+
+  @override
+  Future<void> changePassword({
+    required String token,
+    required String currentPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    try {
+      // Preparar datos para enviar
+      final requestData = {
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+        'confirmPassword': confirmPassword,
+      };
+
+      print('📤 Cambiando contraseña...');
+
+      // Realizar request PATCH al endpoint de cambio de contraseña
+      final response = await _apiClient.patch(
+        ApiConstants.changePasswordEndpoint,
+        data: requestData,
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      print('📥 Respuesta de cambio de contraseña: ${response.statusCode}');
+
+      // El servidor responde con 204 No Content si es exitoso
+      if (response.statusCode != 204 && response.statusCode != 200) {
+        throw ServerException(
+          message: 'Error cambiando contraseña',
+          statusCode: response.statusCode,
+        );
+      }
+
+      print('✅ Contraseña cambiada exitosamente');
+    } on DioException catch (e) {
+      print('❌ Error Dio cambiando contraseña: ${e.message}');
+
+      // Manejar casos específicos de cambio de contraseña
+      if (e.response?.statusCode == 400) {
+        final responseData = e.response?.data;
+        String errorMessage = 'Datos inválidos';
+
+        if (responseData is Map) {
+          errorMessage =
+              responseData['message'] ?? responseData['error'] ?? errorMessage;
+        }
+
+        throw AuthenticationException(
+          message: errorMessage,
+          code: 'INVALID_PASSWORD_CHANGE_DATA',
+        );
+      }
+
+      if (e.response?.statusCode == 401) {
+        final responseData = e.response?.data;
+        String errorMessage = 'Contraseña actual incorrecta';
+
+        if (responseData is Map) {
+          errorMessage =
+              responseData['message'] ?? responseData['error'] ?? errorMessage;
+        }
+
+        throw AuthenticationException(
+          message: errorMessage,
+          code: 'INVALID_CURRENT_PASSWORD',
+        );
+      }
+
+      throw _handleDioError(e);
+    } catch (e) {
+      print('❌ Error inesperado cambiando contraseña: $e');
+      if (e is ServerException || e is AuthenticationException) {
+        rethrow;
+      }
+      throw ServerException(
+        message: 'Error inesperado cambiando contraseña: $e',
         statusCode: 500,
       );
     }

@@ -427,14 +427,67 @@ class AuthRepositoryImpl implements AuthRepository {
     required String newPassword,
   }) async {
     try {
-      // TODO: Implementar cambio de contraseña
-      return const Left(
-        ServerFailure(
-          message: 'Cambio de contraseña no implementado aún',
-          code: 'NOT_IMPLEMENTED',
-        ),
+      print('🔐 Iniciando cambio de contraseña...');
+
+      // Verificar conectividad (el cambio de contraseña requiere servidor)
+      final isConnected = await _networkInfo.isConnected;
+      if (!isConnected) {
+        return const Left(
+          NetworkFailure(
+            message:
+                'No se puede cambiar la contraseña sin conexión a internet',
+            code: 'NO_CONNECTION',
+          ),
+        );
+      }
+
+      // Obtener token actual
+      final token = await _localDataSource.getAccessToken();
+      if (token == null || token.isEmpty) {
+        return const Left(
+          TokenExpiredFailure(
+            message: 'Sesión expirada, inicie sesión nuevamente',
+          ),
+        );
+      }
+
+      // Cambiar contraseña en el servidor
+      await _remoteDataSource.changePassword(
+        token: token,
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+        confirmPassword: newPassword, // El use case ya validó que coincidan
       );
+
+      print('✅ Contraseña cambiada exitosamente en el servidor');
+
+      // La sesión permanece activa, no es necesario actualizar el token
+      return const Right(null);
+    } on AuthenticationException catch (e) {
+      print('❌ Error de autenticación: ${e.message}');
+
+      // Mapear códigos específicos de contraseña incorrecta
+      if (e.code == 'INVALID_CURRENT_PASSWORD') {
+        return Left(
+          AuthFailure(
+            message: 'La contraseña actual es incorrecta',
+            code: 'INVALID_CURRENT_PASSWORD',
+          ),
+        );
+      }
+
+      return Left(AuthFailure(message: e.message, code: e.code));
+    } on ValidationException catch (e) {
+      print('❌ Error de validación: ${e.message}');
+      return Left(ValidationFailure(message: e.message, field: e.field));
+    } on ServerException catch (e) {
+      print('❌ Error de servidor: ${e.message}');
+      return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
+    } on NetworkException catch (e) {
+      print('❌ Error de red: ${e.message}');
+      return Left(NetworkFailure(message: e.message, code: e.code));
     } catch (e) {
+      print('❌ Error inesperado en changePassword: $e');
       return Left(_mapExceptionToFailure(e));
     }
   }
