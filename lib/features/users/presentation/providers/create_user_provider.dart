@@ -87,8 +87,11 @@ class CreateUserNotifier extends StateNotifier<CreateUserState> {
         final serverErrors = _extractServerErrors(failure);
 
         // Si hay errores específicos de campos, NO mostrar mensaje general
-        // Solo mostrar los errores en los campos correspondientes
-        final shouldShowGeneralError = serverErrors.isEmpty;
+        // Solo mostrar mensaje general si:
+        // 1. NO hay errores de campos Y
+        // 2. El mensaje del failure no está vacío
+        final shouldShowGeneralError =
+            serverErrors.isEmpty && failure.message.isNotEmpty;
 
         // Error (mantiene formData para persistir datos)
         state = state.copyWithError(
@@ -116,6 +119,11 @@ class CreateUserNotifier extends StateNotifier<CreateUserState> {
   /// Limpia errores
   void clearErrors() {
     state = state.copyWithClearedErrors();
+  }
+
+  /// Limpia el error de un campo específico
+  void clearFieldError(String fieldName) {
+    state = state.copyWithClearedFieldError(fieldName);
   }
 
   /// Reinicia el estado

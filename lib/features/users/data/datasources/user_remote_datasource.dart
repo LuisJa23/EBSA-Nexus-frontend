@@ -140,8 +140,15 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
     if (statusCode == 400) {
       if (responseData != null && responseData is Map<String, dynamic>) {
         final errorModel = UserErrorResponseModel.fromJson(responseData);
+
+        // Si hay errores específicos de campos, NO pasar mensaje general
+        // Solo pasar el mensaje general si NO hay errores de campos
+        final hasFieldErrors = errorModel.validationErrors.isNotEmpty;
+
         return ValidationException(
-          message: errorModel.message,
+          message: hasFieldErrors
+              ? ''
+              : errorModel.message, // Vacío si hay errores de campos
           field: errorModel.fieldsWithErrors.isNotEmpty
               ? errorModel.fieldsWithErrors.first
               : null,

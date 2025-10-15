@@ -64,10 +64,40 @@ class UserErrorResponseModel extends Equatable {
 
     final result = <String, String>{};
     errors.forEach((key, value) {
-      result[_normalizeFieldName(key.toString())] = value.toString();
+      final fieldName = _normalizeFieldName(key.toString());
+      final errorMessage = _normalizeErrorMessage(fieldName, value.toString());
+      result[fieldName] = errorMessage;
     });
 
     return result;
+  }
+
+  /// Normaliza el mensaje de error para que sea consistente
+  /// Elimina valores específicos y usa mensajes genéricos
+  static String _normalizeErrorMessage(
+    String fieldName,
+    String originalMessage,
+  ) {
+    // Si el mensaje ya es genérico, devolverlo tal cual
+    if (!originalMessage.contains(':') &&
+        !originalMessage.contains('con email') &&
+        !originalMessage.contains('con documento') &&
+        !originalMessage.contains('con teléfono') &&
+        !originalMessage.contains('con username')) {
+      return originalMessage;
+    }
+
+    // Mensajes genéricos por campo
+    final genericMessages = {
+      'email': 'Ya existe un usuario con este email',
+      'username': 'Ya existe un usuario con este username',
+      'phone': 'Ya existe un usuario con este teléfono',
+      'documentNumber': 'Ya existe un usuario con este número de documento',
+      'firstName': 'Ya existe un usuario con este nombre',
+      'lastName': 'Ya existe un usuario con este apellido',
+    };
+
+    return genericMessages[fieldName] ?? 'Este valor ya está en uso';
   }
 
   /// Normaliza nombres de campos para coincidir con los del formulario

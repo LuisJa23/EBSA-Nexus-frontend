@@ -118,7 +118,8 @@ class _CreateUserPageState extends ConsumerState<CreateUserPage> {
                   children: [
                     _buildHeader(),
                     const SizedBox(height: 24),
-                    if (state.errorMessage != null) ...[
+                    // Solo mostrar banner si es un error general, NO si son errores de campos
+                    if (state.shouldShowErrorBanner) ...[
                       _buildErrorBanner(state.errorMessage!),
                       const SizedBox(height: 16),
                     ],
@@ -213,6 +214,7 @@ class _CreateUserPageState extends ConsumerState<CreateUserPage> {
           label: 'Nombre',
           hint: 'Ingrese el nombre',
           icon: Icons.person,
+          fieldName: 'firstName',
           errorText: state.getFieldError('firstName'),
           validator: (value) {
             if (value?.trim().isEmpty ?? true) return 'Campo requerido';
@@ -226,6 +228,7 @@ class _CreateUserPageState extends ConsumerState<CreateUserPage> {
           label: 'Apellido',
           hint: 'Ingrese el apellido',
           icon: Icons.person_outline,
+          fieldName: 'lastName',
           errorText: state.getFieldError('lastName'),
           validator: (value) {
             if (value?.trim().isEmpty ?? true) return 'Campo requerido';
@@ -254,6 +257,7 @@ class _CreateUserPageState extends ConsumerState<CreateUserPage> {
           label: 'Correo Electrónico',
           hint: 'usuario@ebsa.com',
           icon: Icons.email,
+          fieldName: 'email',
           keyboardType: TextInputType.emailAddress,
           errorText: state.getFieldError('email'),
           validator: (value) {
@@ -269,6 +273,7 @@ class _CreateUserPageState extends ConsumerState<CreateUserPage> {
           label: 'Número de Documento',
           hint: '1234567890',
           icon: Icons.badge,
+          fieldName: 'documentNumber',
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           errorText: state.getFieldError('documentNumber'),
@@ -286,6 +291,7 @@ class _CreateUserPageState extends ConsumerState<CreateUserPage> {
           label: 'Teléfono',
           hint: '3001234567',
           icon: Icons.phone,
+          fieldName: 'phone',
           keyboardType: TextInputType.phone,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           errorText: state.getFieldError('phone'),
@@ -302,6 +308,7 @@ class _CreateUserPageState extends ConsumerState<CreateUserPage> {
           label: 'Nombre de Usuario',
           hint: 'usuario.ebsa',
           icon: Icons.account_circle,
+          fieldName: 'username',
           errorText: state.getFieldError('username'),
           validator: (value) {
             if (value?.trim().isEmpty ?? true) return 'Campo requerido';
@@ -348,6 +355,8 @@ class _CreateUserPageState extends ConsumerState<CreateUserPage> {
     required String label,
     required String hint,
     required IconData icon,
+    required String
+    fieldName, // Identificador del campo para limpiar su error específico
     String? errorText,
     String? Function(String?)? validator,
     TextInputType? keyboardType,
@@ -358,9 +367,9 @@ class _CreateUserPageState extends ConsumerState<CreateUserPage> {
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
       onChanged: (value) {
-        // Limpiar errores cuando el usuario empieza a escribir
+        // Limpiar SOLO el error de este campo específico cuando el usuario escribe
         if (errorText != null) {
-          ref.read(createUserProvider.notifier).clearErrors();
+          ref.read(createUserProvider.notifier).clearFieldError(fieldName);
         }
       },
       decoration: InputDecoration(

@@ -96,9 +96,35 @@ class CreateUserState extends Equatable {
     );
   }
 
+  /// Limpiar error de un campo específico (mantiene otros errores)
+  CreateUserState copyWithClearedFieldError(String fieldName) {
+    final newFieldErrors = Map<String, String>.from(fieldErrors);
+    final newServerErrors = Map<String, String>.from(serverErrors);
+
+    // Remover error del campo específico de ambos mapas
+    newFieldErrors.remove(fieldName);
+    newServerErrors.remove(fieldName);
+
+    return CreateUserState(
+      status: status,
+      createdUser: createdUser,
+      errorMessage: errorMessage,
+      fieldErrors: newFieldErrors,
+      serverErrors: newServerErrors,
+      formData: formData,
+    );
+  }
+
   /// Verifica si hay errores
   bool get hasErrors =>
       fieldErrors.isNotEmpty || serverErrors.isNotEmpty || errorMessage != null;
+
+  /// Verifica si hay errores de campos (NO mostrar banner general en este caso)
+  bool get hasFieldErrors => fieldErrors.isNotEmpty || serverErrors.isNotEmpty;
+
+  /// Verifica si debe mostrar el banner de error general
+  /// Solo se muestra si hay errorMessage Y NO hay errores específicos de campos
+  bool get shouldShowErrorBanner => errorMessage != null && !hasFieldErrors;
 
   /// Verifica si está cargando
   bool get isLoading => status == CreateUserStatus.loading;
