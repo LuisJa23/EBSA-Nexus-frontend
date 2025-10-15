@@ -30,6 +30,7 @@ import '../../features/authentication/domain/usecases/logout_usecase.dart';
 import '../../features/authentication/domain/usecases/get_current_user_usecase.dart';
 import '../../features/authentication/domain/usecases/get_user_profile_usecase.dart';
 import '../../features/authentication/domain/usecases/update_user_profile_usecase.dart';
+import '../../features/authentication/domain/usecases/change_password_usecase.dart';
 
 // Users Feature - Data Layer
 import '../../features/users/data/datasources/user_remote_datasource.dart';
@@ -147,6 +148,11 @@ Future<void> init() async {
   // Update User Profile Use Case
   sl.registerLazySingleton<UpdateUserProfileUseCase>(
     () => UpdateUserProfileUseCase(sl()),
+  );
+
+  // Change Password Use Case
+  sl.registerLazySingleton<ChangePasswordUseCase>(
+    () => ChangePasswordUseCase(sl()),
   );
 
   // ============================================================================
