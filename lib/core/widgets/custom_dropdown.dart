@@ -11,7 +11,7 @@
 // CAPA: PRESENTATION LAYER - WIDGETS
 
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../theme/app_colors.dart';
 
 /// Dropdown personalizado con validación y estilo consistente
 class CustomDropdown<T> extends StatelessWidget {

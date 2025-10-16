@@ -11,8 +11,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../domain/entities/work_role.dart';
-import '../providers/work_roles_provider.dart';
+import '../../features/users/domain/entities/work_role.dart';
+import '../../features/users/presentation/providers/work_roles_provider.dart';
 import 'custom_dropdown.dart';
 
 /// Dropdown especializado para selección de roles de trabajo
