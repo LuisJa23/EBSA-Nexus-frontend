@@ -13,21 +13,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/work_role_model.dart';
 import '../../domain/entities/work_role.dart';
 
-/// Provider de roles internos
-final internWorkRolesProvider = Provider<List<WorkRoleModel>>((ref) {
-  return WorkRolesData.internRoles;
+/// Provider asíncrono de roles internos
+final internWorkRolesProvider = FutureProvider<List<WorkRoleModel>>((
+  ref,
+) async {
+  return await WorkRolesService.fetchByType(WorkType.intern);
 });
 
-/// Provider de roles externos
-final externWorkRolesProvider = Provider<List<WorkRoleModel>>((ref) {
-  return WorkRolesData.externRoles;
+/// Provider asíncrono de roles externos
+final externWorkRolesProvider = FutureProvider<List<WorkRoleModel>>((
+  ref,
+) async {
+  return await WorkRolesService.fetchByType(WorkType.extern);
 });
 
 /// Provider de roles según tipo de trabajador
 final workRolesByTypeProvider =
-    Provider.family<List<WorkRoleModel>, WorkType?>((ref, workType) {
-  if (workType == null) return [];
-  return workType == WorkType.intern
-      ? ref.watch(internWorkRolesProvider)
-      : ref.watch(externWorkRolesProvider);
-});
+    FutureProvider.family<List<WorkRoleModel>, WorkType?>((
+      ref,
+      workType,
+    ) async {
+      if (workType == null) return [];
+      return await WorkRolesService.fetchByType(workType);
+    });

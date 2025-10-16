@@ -19,8 +19,7 @@ class ApiConstants {
   static const String baseUrlLocalhost = 'http://localhost:8080';
 
   /// URL base para desarrollo en red local (para dispositivo físico)
-  /// IP del hotspot WiFi compartido desde PC
-  static const String baseUrlNetwork = 'http://192.168.137.1:8080';
+  static const String baseUrlNetwork = 'http://192.168.20.44:8080';
 
   /// URL base para producción (configurar cuando esté disponible)
   static const String baseUrlProduction = 'https://api.nexusebsa.com';
@@ -60,9 +59,6 @@ class ApiConstants {
 
   /// Endpoint para obtener perfil de usuario
   static const String profileEndpoint = '/auth/profile';
-
-  /// Endpoint para cambiar contraseña del usuario actual
-  static const String changePasswordEndpoint = '/api/users/me/change-password';
 
   // ============================================================================
   // ENDPOINTS DE USUARIOS
@@ -161,6 +157,8 @@ class ApiConstants {
 
   /// Construye URL de perfil
   static String get profileUrl => buildUrl(profileEndpoint);
+
+  static String get workrolesUrl => buildUrl(workroles);
 }
 
 // CONTENIDO ESPERADO:
