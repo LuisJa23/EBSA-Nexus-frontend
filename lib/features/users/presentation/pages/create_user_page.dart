@@ -18,9 +18,13 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/work_role.dart';
 import '../providers/create_user_provider.dart';
-import '../providers/work_roles_provider.dart';
 import '../state/create_user_state.dart';
 import '../widgets/user_created_success_card.dart';
+import '../widgets/custom_text_field.dart';
+import '../widgets/custom_button.dart';
+import '../widgets/custom_dropdown.dart';
+import '../widgets/work_role_dropdown.dart';
+import '../widgets/form_section.dart';
 
 /// Página para crear nuevos usuarios del sistema
 class CreateUserPage extends ConsumerStatefulWidget {
@@ -179,38 +183,41 @@ class _CreateUserPageState extends ConsumerState<CreateUserPage> {
   }
 
   Widget _buildPersonalInfoSection(CreateUserState state) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return FormSection(
+      title: 'Información Personal',
       children: [
-        Text(
-          'Información Personal',
-          style: AppTextStyles.heading4.copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 16),
-        _buildTextField(
+        CustomTextField(
           controller: _firstNameController,
           label: 'Nombre',
           hint: 'Ingrese el nombre',
           icon: Icons.person,
           fieldName: 'firstName',
           errorText: state.getFieldError('firstName'),
+          onChanged: (value) {
+            if (state.getFieldError('firstName') != null) {
+              ref
+                  .read(createUserProvider.notifier)
+                  .clearFieldError('firstName');
+            }
+          },
           validator: (value) {
             if (value?.trim().isEmpty ?? true) return 'Campo requerido';
             if (value!.length < 2) return 'Mínimo 2 caracteres';
             return null;
           },
         ),
-        const SizedBox(height: 16),
-        _buildTextField(
+        CustomTextField(
           controller: _lastNameController,
           label: 'Apellido',
           hint: 'Ingrese el apellido',
           icon: Icons.person_outline,
           fieldName: 'lastName',
           errorText: state.getFieldError('lastName'),
+          onChanged: (value) {
+            if (state.getFieldError('lastName') != null) {
+              ref.read(createUserProvider.notifier).clearFieldError('lastName');
+            }
+          },
           validator: (value) {
             if (value?.trim().isEmpty ?? true) return 'Campo requerido';
             if (value!.length < 2) return 'Mínimo 2 caracteres';
@@ -222,18 +229,10 @@ class _CreateUserPageState extends ConsumerState<CreateUserPage> {
   }
 
   Widget _buildContactSection(CreateUserState state) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return FormSection(
+      title: 'Información de Contacto',
       children: [
-        Text(
-          'Información de Contacto',
-          style: AppTextStyles.heading4.copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 16),
-        _buildTextField(
+        CustomTextField(
           controller: _emailController,
           label: 'Correo Electrónico',
           hint: 'usuario@ebsa.com',
@@ -241,6 +240,11 @@ class _CreateUserPageState extends ConsumerState<CreateUserPage> {
           fieldName: 'email',
           keyboardType: TextInputType.emailAddress,
           errorText: state.getFieldError('email'),
+          onChanged: (value) {
+            if (state.getFieldError('email') != null) {
+              ref.read(createUserProvider.notifier).clearFieldError('email');
+            }
+          },
           validator: (value) {
             if (value?.trim().isEmpty ?? true) return 'Campo requerido';
             final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
@@ -248,8 +252,7 @@ class _CreateUserPageState extends ConsumerState<CreateUserPage> {
             return null;
           },
         ),
-        const SizedBox(height: 16),
-        _buildTextField(
+        CustomTextField(
           controller: _documentController,
           label: 'Número de Documento',
           hint: '1234567890',
@@ -258,6 +261,13 @@ class _CreateUserPageState extends ConsumerState<CreateUserPage> {
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           errorText: state.getFieldError('documentNumber'),
+          onChanged: (value) {
+            if (state.getFieldError('documentNumber') != null) {
+              ref
+                  .read(createUserProvider.notifier)
+                  .clearFieldError('documentNumber');
+            }
+          },
           validator: (value) {
             if (value?.trim().isEmpty ?? true) return 'Campo requerido';
             if (value!.length < 6 || value.length > 12) {
@@ -266,8 +276,7 @@ class _CreateUserPageState extends ConsumerState<CreateUserPage> {
             return null;
           },
         ),
-        const SizedBox(height: 16),
-        _buildTextField(
+        CustomTextField(
           controller: _phoneController,
           label: 'Teléfono',
           hint: '3001234567',
@@ -276,6 +285,11 @@ class _CreateUserPageState extends ConsumerState<CreateUserPage> {
           keyboardType: TextInputType.phone,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           errorText: state.getFieldError('phone'),
+          onChanged: (value) {
+            if (state.getFieldError('phone') != null) {
+              ref.read(createUserProvider.notifier).clearFieldError('phone');
+            }
+          },
           validator: (value) {
             if (value?.trim().isEmpty ?? true) return 'Campo requerido';
             if (value!.length != 10) return 'Debe tener 10 dígitos';
@@ -283,18 +297,21 @@ class _CreateUserPageState extends ConsumerState<CreateUserPage> {
             return null;
           },
         ),
-        const SizedBox(height: 16),
-        _buildTextField(
+        CustomTextField(
           controller: _usernameController,
           label: 'Nombre de Usuario',
           hint: 'usuario.ebsa',
           icon: Icons.account_circle,
           fieldName: 'username',
           errorText: state.getFieldError('username'),
+          onChanged: (value) {
+            if (state.getFieldError('username') != null) {
+              ref.read(createUserProvider.notifier).clearFieldError('username');
+            }
+          },
           validator: (value) {
             if (value?.trim().isEmpty ?? true) return 'Campo requerido';
             if (value!.length < 4) return 'Mínimo 4 caracteres';
-            // Validar caracteres permitidos (alfanuméricos, puntos, guiones bajos)
             final usernameRegex = RegExp(r'^[a-zA-Z0-9._]+$');
             if (!usernameRegex.hasMatch(value)) {
               return 'Solo letras, números, puntos y guiones bajos';
@@ -307,89 +324,39 @@ class _CreateUserPageState extends ConsumerState<CreateUserPage> {
   }
 
   Widget _buildRoleSection(CreateUserState state) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return FormSection(
+      title: 'Rol y Funciones',
       children: [
-        Text(
-          'Rol y Funciones',
-          style: AppTextStyles.heading4.copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 16),
         _buildRoleSelector(),
         // Para TRABAJADOR: mostrar selector de tipo (interno/externo)
         if (_selectedRoleName == 'TRABAJADOR') ...[
-          const SizedBox(height: 16),
           _buildWorkTypeSelector(),
-          if (_selectedWorkType != null) ...[
-            const SizedBox(height: 16),
-            _buildWorkRoleDropdown(),
-          ],
+          if (_selectedWorkType != null)
+            WorkRoleDropdown(
+              workType: _selectedWorkType,
+              selectedValue: _selectedWorkRoleName,
+              onChanged: (value) =>
+                  setState(() => _selectedWorkRoleName = value),
+              validator: (value) => value == null ? 'Seleccione un rol' : null,
+            ),
         ],
         // Para JEFE_AREA: mostrar directamente roles internos (sin selector de tipo)
-        if (_selectedRoleName == 'JEFE_AREA') ...[
-          const SizedBox(height: 16),
-          _buildWorkRoleDropdown(),
-        ],
+        if (_selectedRoleName == 'JEFE_AREA')
+          WorkRoleDropdown(
+            workType: WorkType.intern,
+            selectedValue: _selectedWorkRoleName,
+            onChanged: (value) => setState(() => _selectedWorkRoleName = value),
+            validator: (value) => value == null ? 'Seleccione un rol' : null,
+          ),
       ],
     );
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    required IconData icon,
-    required String
-    fieldName, // Identificador del campo para limpiar su error específico
-    String? errorText,
-    String? Function(String?)? validator,
-    TextInputType? keyboardType,
-    List<TextInputFormatter>? inputFormatters,
-  }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      inputFormatters: inputFormatters,
-      onChanged: (value) {
-        // Limpiar SOLO el error de este campo específico cuando el usuario escribe
-        if (errorText != null) {
-          ref.read(createUserProvider.notifier).clearFieldError(fieldName);
-        }
-      },
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        prefixIcon: Icon(icon, color: AppColors.primary),
-        errorText: errorText,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.primary, width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.error),
-        ),
-      ),
-      validator: validator,
-    );
-  }
-
   Widget _buildRoleSelector() {
-    return DropdownButtonFormField<String>(
+    return CustomDropdown<String>(
       value: _selectedRoleName,
-      decoration: InputDecoration(
-        labelText: 'Rol del Sistema',
-        prefixIcon: Icon(Icons.admin_panel_settings, color: AppColors.primary),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      ),
+      label: 'Rol del Sistema',
+      icon: Icons.admin_panel_settings,
       items: const [
         DropdownMenuItem(value: 'TRABAJADOR', child: Text('Trabajador')),
         DropdownMenuItem(value: 'JEFE_AREA', child: Text('Jefe de Área')),
@@ -420,83 +387,43 @@ class _CreateUserPageState extends ConsumerState<CreateUserPage> {
         const SizedBox(height: 8),
         Row(
           children: [
-            Expanded(child: _buildWorkTypeButton(WorkType.intern, 'Interno')),
+            Expanded(
+              child: WorkTypeButton(
+                label: 'Interno',
+                isSelected: _selectedWorkType == WorkType.intern,
+                onPressed: () {
+                  setState(() {
+                    _selectedWorkType = WorkType.intern;
+                    _selectedWorkRoleName = null;
+                  });
+                },
+              ),
+            ),
             const SizedBox(width: 12),
-            Expanded(child: _buildWorkTypeButton(WorkType.extern, 'Externo')),
+            Expanded(
+              child: WorkTypeButton(
+                label: 'Externo',
+                isSelected: _selectedWorkType == WorkType.extern,
+                onPressed: () {
+                  setState(() {
+                    _selectedWorkType = WorkType.extern;
+                    _selectedWorkRoleName = null;
+                  });
+                },
+              ),
+            ),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildWorkTypeButton(WorkType type, String label) {
-    final isSelected = _selectedWorkType == type;
-    return ElevatedButton(
-      onPressed: () {
-        setState(() {
-          _selectedWorkType = type;
-          _selectedWorkRoleName = null;
-        });
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: isSelected
-            ? const Color(0xFFFFC107)
-            : Colors.grey.shade200,
-        foregroundColor: isSelected ? Colors.white : Colors.black87,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-      child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-    );
-  }
-
-  Widget _buildWorkRoleDropdown() {
-    final roles = ref.watch(workRolesByTypeProvider(_selectedWorkType));
-
-    return DropdownButtonFormField<String>(
-      value: _selectedWorkRoleName,
-      decoration: InputDecoration(
-        labelText: 'Rol de Trabajo',
-        prefixIcon: Icon(Icons.work, color: AppColors.primary),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-      items: roles
-          .map(
-            (role) =>
-                DropdownMenuItem(value: role.name, child: Text(role.name)),
-          )
-          .toList(),
-      onChanged: (value) => setState(() => _selectedWorkRoleName = value),
-      validator: (value) => value == null ? 'Seleccione un rol' : null,
-    );
-  }
-
   Widget _buildCreateButton(CreateUserState state) {
-    return ElevatedButton(
+    return CustomButton(
+      text: 'Crear Usuario',
+      type: ButtonType.primary,
+      isLoading: state.isLoading,
       onPressed: state.isLoading ? null : _handleSubmit,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFFFFC107),
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        elevation: 2,
-      ),
-      child: state.isLoading
-          ? const SizedBox(
-              height: 20,
-              width: 20,
-              child: CircularProgressIndicator(
-                color: Colors.white,
-                strokeWidth: 2,
-              ),
-            )
-          : Text(
-              'Crear Usuario',
-              style: AppTextStyles.heading4.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
     );
   }
 
