@@ -47,6 +47,7 @@ class RouteNames {
   static String incidentDetail(String id) => '/incidents/$id';
   static const String incidentSelector = '/incidents/selector';
   static const String manageIncident = '/manage-incident';
+  static const String createIncident = '/manage-incident/create';
   static const String incidentList = '/incident-list';
 
   // ============================================================================

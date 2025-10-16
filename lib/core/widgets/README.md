@@ -18,6 +18,7 @@ Este directorio contiene componentes de interfaz de usuario reutilizables global
 ## 🎯 Propósito
 
 Estos widgets están diseñados para:
+
 - ✅ **Reutilización global** en toda la aplicación
 - ✅ **Consistencia visual** y de comportamiento
 - ✅ **Mantenibilidad** centralizada
@@ -26,11 +27,13 @@ Estos widgets están diseñados para:
 ## 📦 Uso Recomendado
 
 ### Importación Simplificada (Barrel Export)
+
 ```dart
 import '../../../../core/widgets/widgets.dart';
 ```
 
 ### Importación Individual
+
 ```dart
 import '../../../../core/widgets/custom_text_field.dart';
 import '../../../../core/widgets/custom_button.dart';
@@ -39,7 +42,8 @@ import '../../../../core/widgets/custom_button.dart';
 
 ## 🧩 Componentes Disponibles
 
-### 1. `CustomTextField` 
+### 1. `CustomTextField`
+
 Componente para campos de texto con validación y manejo de errores:
 
 ```dart
@@ -55,6 +59,7 @@ CustomTextField(
 ```
 
 ### 2. `CustomButton`
+
 Sistema completo de botones con múltiples variantes:
 
 ```dart
@@ -75,6 +80,7 @@ WorkTypeButton(
 ```
 
 ### 3. `CustomDropdown`
+
 Dropdown con estados de loading y error:
 
 ```dart
@@ -89,6 +95,7 @@ CustomDropdown<String>(
 ```
 
 ### 4. `WorkRoleDropdown`
+
 Dropdown especializado que se conecta automáticamente a la API:
 
 ```dart
@@ -101,6 +108,7 @@ WorkRoleDropdown(
 ```
 
 ### 5. `FormSection`
+
 Agrupador de campos con título y espaciado consistente:
 
 ```dart
@@ -116,21 +124,25 @@ FormSection(
 ## 🚀 Ventajas de la Ubicación en `/core/widgets`
 
 ### ✅ **Reutilización Global**
+
 - Disponibles para cualquier feature de la app
 - No limitados al módulo de usuarios
 - Fácil acceso desde cualquier parte del código
 
 ### ✅ **Arquitectura Limpia**
+
 - Separación clara entre widgets core y específicos
 - Seguimiento de principios de Clean Architecture
 - Componentes como parte de la infraestructura
 
 ### ✅ **Mantenimiento Centralizado**
+
 - Un solo lugar para cambios de estilo global
 - Debugging y testing simplificado
 - Versionado y evolución controlada
 
 ### ✅ **Productividad**
+
 - Import simplificado con barrel export
 - Componentes listos para usar
 - Documentación centralizada
@@ -138,6 +150,7 @@ FormSection(
 ## 📋 Casos de Uso
 
 Estos widgets son ideales para:
+
 - 📝 **Formularios** de cualquier feature
 - 🔍 **Páginas de búsqueda** con filtros
 - ⚙️ **Configuraciones** de usuario
@@ -156,7 +169,7 @@ Para agregar nuevos widgets core:
 ## 🎯 Próximos Componentes Sugeridos
 
 - `CustomCard` - Tarjetas consistentes
-- `CustomDialog` - Diálogos estandarizados  
+- `CustomDialog` - Diálogos estandarizados
 - `CustomAppBar` - AppBar personalizada
 - `LoadingState` - Estados de carga globales
 - `ErrorState` - Manejo de errores consistente

@@ -16,3 +16,4 @@ export 'form_section.dart';
 
 // Widgets especializados
 export 'work_role_dropdown.dart';
+export 'evidence_capture_widget.dart';

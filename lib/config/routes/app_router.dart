@@ -14,6 +14,7 @@ import '../../features/authentication/presentation/pages/assignments_page.dart';
 import '../../features/authentication/presentation/pages/profile_page.dart';
 import '../../features/authentication/presentation/providers/auth_provider.dart';
 import '../../features/incidents/presentation/pages/manage_incident_page.dart';
+import '../../features/incidents/presentation/pages/create_incident_page.dart';
 import '../../features/incidents/presentation/pages/incident_list_page.dart';
 import '../../features/reports/presentation/pages/create_report_page.dart';
 import '../../features/users/presentation/pages/manage_users_page.dart';
@@ -184,6 +185,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, __) => const ManageIncidentPage(),
           ),
 
+          /// Crear Incidente
+          GoRoute(
+            path: RouteNames.createIncident,
+            name: 'create-incident',
+            builder: (_, __) => const CreateIncidentPage(),
+          ),
+
           /// Consultar Novedades
           GoRoute(
             path: RouteNames.incidentList,
@@ -289,6 +297,7 @@ String _getTitleForRoute(String path) {
 
   // Rutas de incidentes y reportes
   if (path == RouteNames.manageIncident) return 'Gestionar Novedad';
+  if (path == RouteNames.createIncident) return 'Crear Incidente';
   if (path == RouteNames.incidentList) return 'Consultas';
   if (path == RouteNames.createReport) return 'Hacer Reporte';
 
