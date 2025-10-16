@@ -1,68 +1,189 @@
+// custom_button.dart
+//
+// Componente reutilizable de botones
+//
+// PROPÓSITO:
+// - Botones personalizados con estilos consistentes
+// - Estados de carga y deshabilitado
+// - Variantes de diseño (primario, secundario, etc.)
+//
+// CAPA: PRESENTATION LAYER - WIDGETS
+
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_text_styles.dart';
 
-enum ButtonType { primary }
+/// Tipos de botón disponibles
+enum ButtonType { primary, secondary, outline, toggle }
 
-class CustomButton extends StatefulWidget {
+/// Botón personalizado con diferentes variantes de estilo
+class CustomButton extends StatelessWidget {
+  /// Texto del botón
   final String text;
+
+  /// Callback cuando se presiona
   final VoidCallback? onPressed;
+
+  /// Tipo de botón
   final ButtonType type;
-  final double width;
-  final double height;
+
+  /// Si está en estado de carga
+  final bool isLoading;
+
+  /// Icono opcional
+  final IconData? icon;
+
+  /// Si está seleccionado (para toggle buttons)
+  final bool isSelected;
+
+  /// Padding personalizado
+  final EdgeInsets? padding;
 
   const CustomButton({
-    Key? key,
+    super.key,
     required this.text,
-    required this.onPressed,
+    this.onPressed,
     this.type = ButtonType.primary,
-    this.width = 200,
-    this.height = 60,
-  }) : super(key: key);
-
-  @override
-  State<CustomButton> createState() => _CustomButtonState();
-}
-
-class _CustomButtonState extends State<CustomButton> {
-  bool _isPressed = false;
+    this.isLoading = false,
+    this.icon,
+    this.isSelected = false,
+    this.padding,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final Color normalColor = const Color(0xFFF5C24B); // amarillo
-    final Color pressedColor = Colors.white;
-    final Color borderColor = Colors.black;
-    final double borderRadius = 16;
+    final effectivePadding =
+        padding ?? const EdgeInsets.symmetric(vertical: 16);
 
-    return GestureDetector(
-      onTap: widget.onPressed,
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) => setState(() => _isPressed = false),
-      onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 100),
-        width: widget.width,
-        height: widget.height,
-        decoration: BoxDecoration(
-          color: _isPressed ? pressedColor : normalColor,
-          border: Border.all(color: borderColor, width: 3),
-          borderRadius: BorderRadius.circular(borderRadius),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 8,
-              offset: const Offset(2, 4),
-            ),
-          ],
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          widget.text,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 28,
-            color: Colors.black,
-          ),
-        ),
+    switch (type) {
+      case ButtonType.primary:
+        return _buildPrimaryButton(effectivePadding);
+      case ButtonType.secondary:
+        return _buildSecondaryButton(effectivePadding);
+      case ButtonType.outline:
+        return _buildOutlineButton(effectivePadding);
+      case ButtonType.toggle:
+        return _buildToggleButton(effectivePadding);
+    }
+  }
+
+  Widget _buildPrimaryButton(EdgeInsets padding) {
+    return ElevatedButton(
+      onPressed: (isLoading || onPressed == null) ? null : onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFFFFC107),
+        foregroundColor: Colors.white,
+        padding: padding,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 2,
+        disabledBackgroundColor: Colors.grey.shade300,
+        disabledForegroundColor: Colors.grey.shade600,
       ),
+      child: _buildButtonContent(),
+    );
+  }
+
+  Widget _buildSecondaryButton(EdgeInsets padding) {
+    return ElevatedButton(
+      onPressed: (isLoading || onPressed == null) ? null : onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.grey.shade200,
+        foregroundColor: Colors.black87,
+        padding: padding,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 1,
+      ),
+      child: _buildButtonContent(),
+    );
+  }
+
+  Widget _buildOutlineButton(EdgeInsets padding) {
+    return OutlinedButton(
+      onPressed: (isLoading || onPressed == null) ? null : onPressed,
+      style: OutlinedButton.styleFrom(
+        side: BorderSide(color: AppColors.primary),
+        foregroundColor: AppColors.primary,
+        padding: padding,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      child: _buildButtonContent(),
+    );
+  }
+
+  Widget _buildToggleButton(EdgeInsets padding) {
+    return ElevatedButton(
+      onPressed: (isLoading || onPressed == null) ? null : onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: isSelected
+            ? const Color(0xFFFFC107)
+            : Colors.grey.shade200,
+        foregroundColor: isSelected ? Colors.white : Colors.black87,
+        padding: padding,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: isSelected ? 2 : 1,
+      ),
+      child: _buildButtonContent(),
+    );
+  }
+
+  Widget _buildButtonContent() {
+    if (isLoading) {
+      return const SizedBox(
+        height: 20,
+        width: 20,
+        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+      );
+    }
+
+    if (icon != null) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 18),
+          const SizedBox(width: 8),
+          Text(text, style: _getTextStyle()),
+        ],
+      );
+    }
+
+    return Text(text, style: _getTextStyle());
+  }
+
+  TextStyle _getTextStyle() {
+    switch (type) {
+      case ButtonType.primary:
+        return AppTextStyles.heading4.copyWith(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        );
+      case ButtonType.secondary:
+      case ButtonType.outline:
+      case ButtonType.toggle:
+        return const TextStyle(fontWeight: FontWeight.w600);
+    }
+  }
+}
+
+/// Botón específico para selección de tipo de trabajador
+class WorkTypeButton extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback? onPressed;
+
+  const WorkTypeButton({
+    super.key,
+    required this.label,
+    required this.isSelected,
+    this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomButton(
+      text: label,
+      type: ButtonType.toggle,
+      isSelected: isSelected,
+      onPressed: onPressed,
     );
   }
 }

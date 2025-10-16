@@ -12,7 +12,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../theme/app_colors.dart';
 
 /// Campo de texto personalizado con validación y estilo consistente
 class CustomTextField extends StatelessWidget {

@@ -16,15 +16,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../domain/entities/work_role.dart';
 import '../providers/create_user_provider.dart';
 import '../state/create_user_state.dart';
 import '../widgets/user_created_success_card.dart';
-import '../widgets/custom_text_field.dart';
-import '../widgets/custom_button.dart';
-import '../widgets/custom_dropdown.dart';
-import '../widgets/work_role_dropdown.dart';
-import '../widgets/form_section.dart';
 
 /// Página para crear nuevos usuarios del sistema
 class CreateUserPage extends ConsumerStatefulWidget {
@@ -163,9 +159,9 @@ class _CreateUserPageState extends ConsumerState<CreateUserPage> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.error.withOpacity(0.1),
+        color: AppColors.error.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.error.withOpacity(0.3)),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
