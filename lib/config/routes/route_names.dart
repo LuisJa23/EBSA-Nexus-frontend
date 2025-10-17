@@ -57,6 +57,7 @@ class RouteNames {
   static const String crews = '/crews';
   static String crewDetail(String id) => '/crews/$id';
   static const String assignCrew = '/crews/assign';
+  static const String manageCrews = '/manage-crews';
 
   // ============================================================================
   // RUTAS DE GESTIÓN DE USUARIOS (Solo Admin)

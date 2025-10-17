@@ -108,6 +108,15 @@ class HomePage extends ConsumerWidget {
             onTap: () => context.push(RouteNames.manageUsers),
           ),
         ],
+
+        // 5. Gestionar Cuadrillas
+        const SizedBox(height: 16),
+        HomeActionCard(
+          icon: Icons.groups,
+          title: 'Gestionar Cuadrillas',
+          subtitle: 'Administración de cuadrillas',
+          onTap: () => context.push(RouteNames.manageCrews),
+        ),
       ],
     );
   }
