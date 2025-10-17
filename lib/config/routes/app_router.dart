@@ -21,6 +21,9 @@ import '../../features/users/presentation/pages/manage_users_page.dart';
 import '../../features/users/presentation/pages/create_user_page.dart';
 import '../../features/users/presentation/pages/list_users_page.dart';
 import '../../features/crews/presentation/pages/manage_crews_page.dart';
+import '../../features/crews/presentation/pages/create_crew_page.dart';
+import '../../features/crews/presentation/pages/list_crews_page.dart';
+import '../../features/crews/presentation/pages/crew_detail_page.dart';
 import 'route_names.dart';
 
 /// Provider global del router
@@ -270,6 +273,40 @@ final routerProvider = Provider<GoRouter>((ref) {
               child: const ManageCrewsPage(),
             ),
           ),
+
+          /// Crear Cuadrilla
+          GoRoute(
+            path: RouteNames.createCrew,
+            name: 'create-crew',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const CreateCrewPage(),
+            ),
+          ),
+
+          /// Lista de Cuadrillas
+          GoRoute(
+            path: RouteNames.listCrews,
+            name: 'list-crews',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const ListCrewsPage(),
+            ),
+          ),
+
+          /// Detalle de Cuadrilla
+          GoRoute(
+            path: '/crews/:id',
+            name: 'crew-detail',
+            pageBuilder: (context, state) {
+              final crewId =
+                  int.tryParse(state.pathParameters['id'] ?? '0') ?? 0;
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: CrewDetailPage(crewId: crewId),
+              );
+            },
+          ),
         ],
       ),
     ],
@@ -375,6 +412,8 @@ String _getTitleForRoute(String path) {
 
   // Rutas de cuadrillas
   if (path == RouteNames.manageCrews) return 'Gestionar Cuadrillas';
+  if (path == RouteNames.createCrew) return 'Crear Cuadrilla';
+  if (path == RouteNames.listCrews) return 'Lista de Cuadrillas';
 
   // Por defecto
   return 'Nexus EBSA';

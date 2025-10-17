@@ -19,6 +19,7 @@ class ApiConstants {
   static const String baseUrlLocalhost = 'http://localhost:8080';
 
   /// URL base para desarrollo en red local (para dispositivo físico)
+  /// IP del hotspot WiFi compartido desde PC
   static const String baseUrlNetwork = 'http://192.168.20.44:8080';
 
   /// URL base para producción (configurar cuando esté disponible)
@@ -59,6 +60,10 @@ class ApiConstants {
 
   /// Endpoint para obtener perfil de usuario
   static const String profileEndpoint = '/auth/profile';
+  static const String workroles = '/api/work-roles';
+
+  /// Endpoint para cambiar contraseña del usuario actual
+  static const String changePasswordEndpoint = '/api/users/me/change-password';
 
   // ============================================================================
   // ENDPOINTS DE USUARIOS
