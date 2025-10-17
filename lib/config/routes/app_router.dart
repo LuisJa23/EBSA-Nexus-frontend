@@ -20,6 +20,10 @@ import '../../features/reports/presentation/pages/create_report_page.dart';
 import '../../features/users/presentation/pages/manage_users_page.dart';
 import '../../features/users/presentation/pages/create_user_page.dart';
 import '../../features/users/presentation/pages/list_users_page.dart';
+import '../../features/crews/presentation/pages/manage_crews_page.dart';
+import '../../features/crews/presentation/pages/create_crew_page.dart';
+import '../../features/crews/presentation/pages/list_crews_page.dart';
+import '../../features/crews/presentation/pages/crew_detail_page.dart';
 import 'route_names.dart';
 
 /// Provider global del router
@@ -102,12 +106,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteNames.splash,
         name: 'splash',
-        builder: (_, __) => const SplashPage(),
+        pageBuilder: (context, state) =>
+            NoTransitionPage(key: state.pageKey, child: const SplashPage()),
       ),
       GoRoute(
         path: RouteNames.login,
         name: 'login',
-        builder: (_, __) => const LoginPage(),
+        pageBuilder: (context, state) =>
+            NoTransitionPage(key: state.pageKey, child: const LoginPage()),
       ),
 
       // ========================================================================
@@ -156,22 +162,32 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: RouteNames.home,
             name: 'home',
-            builder: (_, __) => const HomePage(),
+            pageBuilder: (context, state) =>
+                NoTransitionPage(key: state.pageKey, child: const HomePage()),
           ),
           GoRoute(
             path: RouteNames.notifications,
             name: 'notifications',
-            builder: (_, __) => const NotificationsPage(),
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const NotificationsPage(),
+            ),
           ),
           GoRoute(
             path: RouteNames.assignments,
             name: 'assignments',
-            builder: (_, __) => const AssignmentsPage(),
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const AssignmentsPage(),
+            ),
           ),
           GoRoute(
             path: RouteNames.profile,
             name: 'profile',
-            builder: (_, __) => const ProfilePage(),
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const ProfilePage(),
+            ),
           ),
 
           // ==================================================================
@@ -182,49 +198,114 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: RouteNames.manageIncident,
             name: 'manage-incident',
-            builder: (_, __) => const ManageIncidentPage(),
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const ManageIncidentPage(),
+            ),
           ),
 
           /// Crear Incidente
           GoRoute(
             path: RouteNames.createIncident,
             name: 'create-incident',
-            builder: (_, __) => const CreateIncidentPage(),
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const CreateIncidentPage(),
+            ),
           ),
 
           /// Consultar Novedades
           GoRoute(
             path: RouteNames.incidentList,
             name: 'incident-list',
-            builder: (_, __) => const IncidentListPage(),
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const IncidentListPage(),
+            ),
           ),
 
           /// Crear Reporte
           GoRoute(
             path: RouteNames.createReport,
             name: 'create-report',
-            builder: (_, __) => const CreateReportPage(),
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const CreateReportPage(),
+            ),
           ),
 
           /// Gestionar Usuarios (Solo Admin)
           GoRoute(
             path: RouteNames.manageUsers,
             name: 'manage-users',
-            builder: (_, __) => const ManageUsersPage(),
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const ManageUsersPage(),
+            ),
           ),
 
           /// Crear Usuario (Solo Admin)
           GoRoute(
             path: RouteNames.createUser,
             name: 'create-user',
-            builder: (_, __) => const CreateUserPage(),
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const CreateUserPage(),
+            ),
           ),
 
           /// Lista de Usuarios (Solo Admin)
           GoRoute(
             path: RouteNames.listUsers,
             name: 'list-users',
-            builder: (_, __) => const ListUsersPage(),
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const ListUsersPage(),
+            ),
+          ),
+
+          /// Gestionar Cuadrillas
+          GoRoute(
+            path: RouteNames.manageCrews,
+            name: 'manage-crews',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const ManageCrewsPage(),
+            ),
+          ),
+
+          /// Crear Cuadrilla
+          GoRoute(
+            path: RouteNames.createCrew,
+            name: 'create-crew',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const CreateCrewPage(),
+            ),
+          ),
+
+          /// Lista de Cuadrillas
+          GoRoute(
+            path: RouteNames.listCrews,
+            name: 'list-crews',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const ListCrewsPage(),
+            ),
+          ),
+
+          /// Detalle de Cuadrilla
+          GoRoute(
+            path: '/crews/:id',
+            name: 'crew-detail',
+            pageBuilder: (context, state) {
+              final crewId =
+                  int.tryParse(state.pathParameters['id'] ?? '0') ?? 0;
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: CrewDetailPage(crewId: crewId),
+              );
+            },
           ),
         ],
       ),
@@ -252,6 +333,28 @@ PreferredSizeWidget? _buildAppBar(
   // Obtener título según ruta
   final title = _getTitleForRoute(currentPath);
 
+  // Rutas principales que NO deberían mostrar botón de retroceso
+  final mainRoutes = [
+    RouteNames.home,
+    RouteNames.notifications,
+    RouteNames.assignments,
+    RouteNames.profile,
+  ];
+
+  final isMainRoute = mainRoutes.contains(currentPath);
+  final canPop = GoRouter.of(context).canPop();
+
+  // Definir leading (botón izquierdo)
+  Widget? leading;
+  if (!isMainRoute && canPop) {
+    // Mostrar botón de retroceso en rutas secundarias
+    leading = IconButton(
+      onPressed: () => context.pop(),
+      icon: const Icon(Icons.arrow_back, color: Colors.white),
+      tooltip: 'Volver',
+    );
+  }
+
   // Definir actions según la ruta
   List<Widget>? actions;
 
@@ -269,6 +372,8 @@ PreferredSizeWidget? _buildAppBar(
   // ya que requiere acceso a su estado local (_isEditing)
 
   return AppBar(
+    leading: leading,
+    automaticallyImplyLeading: !isMainRoute, // Solo en rutas secundarias
     title: Text(
       title,
       style: AppTextStyles.heading3.copyWith(
@@ -280,7 +385,6 @@ PreferredSizeWidget? _buildAppBar(
     elevation: 0,
     iconTheme: const IconThemeData(color: Colors.white),
     actions: actions,
-    // El botón back se muestra automáticamente por GoRouter cuando hay historial
   );
 }
 
@@ -305,6 +409,11 @@ String _getTitleForRoute(String path) {
   if (path == RouteNames.manageUsers) return 'Gestionar Usuarios';
   if (path == RouteNames.createUser) return 'Crear Usuario';
   if (path == RouteNames.listUsers) return 'Lista de Usuarios';
+
+  // Rutas de cuadrillas
+  if (path == RouteNames.manageCrews) return 'Gestionar Cuadrillas';
+  if (path == RouteNames.createCrew) return 'Crear Cuadrilla';
+  if (path == RouteNames.listCrews) return 'Lista de Cuadrillas';
 
   // Por defecto
   return 'Nexus EBSA';
@@ -338,6 +447,33 @@ void _showLogoutDialog(BuildContext context, WidgetRef ref) {
       ],
     ),
   );
+}
+
+// ==============================================================================
+// PÁGINA SIN TRANSICIÓN (Para evitar lag visual)
+// ==============================================================================
+
+/// Página personalizada sin animaciones de transición
+///
+/// Elimina el efecto de superposición/lag al cambiar entre páginas
+/// proporcionando una transición instantánea
+class NoTransitionPage<T> extends CustomTransitionPage<T> {
+  const NoTransitionPage({required super.child, super.key})
+    : super(
+        transitionsBuilder: _transitionsBuilder,
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+      );
+
+  static Widget _transitionsBuilder(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    // Sin animación - transición instantánea
+    return child;
+  }
 }
 
 // ==============================================================================
