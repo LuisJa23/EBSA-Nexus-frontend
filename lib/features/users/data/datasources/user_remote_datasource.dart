@@ -16,6 +16,7 @@ import '../../../../core/errors/exceptions.dart';
 import '../../../authentication/data/models/user_model.dart';
 import '../models/user_creation_model.dart';
 import '../models/user_error_response_model.dart';
+import '../models/worker_model.dart';
 
 /// Data source remoto para operaciones de usuarios
 ///
@@ -29,6 +30,9 @@ abstract class UserRemoteDataSource {
 
   /// Obtiene un usuario por ID
   Future<UserModel> getUserById(int userId);
+
+  /// Obtiene lista de trabajadores desde el endpoint público
+  Future<List<WorkerModel>> getWorkers();
 }
 
 /// Implementación del data source remoto
@@ -195,5 +199,25 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
       message:
           'Error del servidor: ${error.response?.statusMessage ?? "Desconocido"}',
     );
+  }
+
+  @override
+  Future<List<WorkerModel>> getWorkers() async {
+    try {
+      final response = await dio.get(ApiConstants.workersEndpoint);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data as List<dynamic>;
+        return data
+            .map((json) => WorkerModel.fromJson(json as Map<String, dynamic>))
+            .toList();
+      } else {
+        throw ServerException(message: 'Error al obtener trabajadores');
+      }
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    } catch (e) {
+      throw ServerException(message: 'Error inesperado: $e');
+    }
   }
 }

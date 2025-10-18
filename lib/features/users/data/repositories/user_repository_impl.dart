@@ -16,6 +16,7 @@ import '../../../../core/errors/exceptions.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../authentication/domain/entities/user.dart';
 import '../../domain/entities/user_creation_dto.dart';
+import '../../domain/entities/worker.dart';
 import '../../domain/repositories/user_repository.dart';
 import '../datasources/user_remote_datasource.dart';
 import '../models/user_creation_model.dart';
@@ -108,5 +109,19 @@ class UserRepositoryImpl implements UserRepository {
   Future<Either<Failure, void>> deleteUser(int userId) async {
     // TODO: Implementar cuando sea necesario
     return Left(UnsupportedFailure(message: 'Eliminación no implementada aún'));
+  }
+
+  @override
+  Future<Either<Failure, List<Worker>>> getWorkers() async {
+    try {
+      final workers = await remoteDataSource.getWorkers();
+      return Right(workers);
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(message: e.message));
+    } on ServerException catch (e) {
+      return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
+    } catch (e) {
+      return Left(UnknownFailure(message: 'Error al obtener trabajadores: $e'));
+    }
   }
 }

@@ -39,6 +39,7 @@ import '../../features/users/data/repositories/user_repository_impl.dart';
 // Users Feature - Domain Layer
 import '../../features/users/domain/repositories/user_repository.dart';
 import '../../features/users/domain/usecases/create_user_usecase.dart';
+import '../../features/users/domain/usecases/get_workers_usecase.dart';
 
 /// Service Locator global
 final GetIt sl = GetIt.instance;
@@ -175,6 +176,11 @@ Future<void> init() async {
 
   // Create User Use Case
   sl.registerLazySingleton<CreateUserUseCase>(() => CreateUserUseCase(sl()));
+
+  // Get Workers Use Case
+  sl.registerLazySingleton<GetWorkersUseCase>(
+    () => GetWorkersUseCase(repository: sl()),
+  );
 }
 
 /// Reinicia el container de dependencias

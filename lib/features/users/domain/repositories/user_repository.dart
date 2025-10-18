@@ -14,6 +14,7 @@ import 'package:dartz/dartz.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../authentication/domain/entities/user.dart';
 import '../entities/user_creation_dto.dart';
+import '../entities/worker.dart';
 
 /// Repositorio abstracto para gestión de usuarios
 ///
@@ -67,4 +68,11 @@ abstract class UserRepository {
   /// - [Right(void)]: Usuario eliminado exitosamente
   /// - [Left(Failure)]: Error en la eliminación
   Future<Either<Failure, void>> deleteUser(int userId);
+
+  /// Obtiene lista de trabajadores desde el endpoint público
+  ///
+  /// **Retorna:**
+  /// - [Right(List<Worker>)]: Lista de trabajadores
+  /// - [Left(Failure)]: Error al obtener trabajadores
+  Future<Either<Failure, List<Worker>>> getWorkers();
 }

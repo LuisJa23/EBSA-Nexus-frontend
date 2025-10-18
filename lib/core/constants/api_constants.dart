@@ -75,6 +75,9 @@ class ApiConstants {
   /// Endpoint para crear usuario
   static const String createUserEndpoint = '/api/users';
 
+  /// Endpoint para obtener lista de trabajadores (público)
+  static const String workersEndpoint = '/api/public/workers';
+
   // ============================================================================
   // ENDPOINTS DE REPORTES (para futuro uso)
   // ============================================================================
