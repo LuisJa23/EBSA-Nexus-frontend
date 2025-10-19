@@ -18,7 +18,7 @@ class AvailableUserModel extends AvailableUser {
     required super.firstName,
     required super.lastName,
     required super.roleName,
-    required super.workRoleName,
+    super.workRoleName, // Opcional
     required super.workType,
     required super.documentNumber,
     required super.phone,
@@ -34,7 +34,7 @@ class AvailableUserModel extends AvailableUser {
       firstName: json['firstName'] as String,
       lastName: json['lastName'] as String,
       roleName: json['roleName'] as String,
-      workRoleName: json['workRoleName'] as String,
+      workRoleName: json['workRoleName'] as String?,
       workType: json['workType'] as String,
       documentNumber: json['documentNumber'] as String,
       phone: json['phone'] as String,

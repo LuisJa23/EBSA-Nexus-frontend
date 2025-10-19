@@ -238,7 +238,7 @@ class _MemberCard extends ConsumerWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    member.workRoleName,
+                    member.workRoleName ?? 'Sin rol asignado',
                     style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 2),

@@ -228,7 +228,7 @@ class _AddMemberDialogState extends ConsumerState<AddMemberDialog> {
                                       ),
                                       const SizedBox(width: 4),
                                       Text(
-                                        user.workRoleName,
+                                        user.workRoleName ?? 'Sin rol asignado',
                                         style: const TextStyle(fontSize: 13),
                                       ),
                                     ],
@@ -348,7 +348,7 @@ class _AddMemberDialogState extends ConsumerState<AddMemberDialog> {
     return users.where((user) {
       return user.fullName.toLowerCase().contains(_searchQuery) ||
           user.email.toLowerCase().contains(_searchQuery) ||
-          user.workRoleName.toLowerCase().contains(_searchQuery);
+          (user.workRoleName?.toLowerCase().contains(_searchQuery) ?? false);
     }).toList();
   }
 }

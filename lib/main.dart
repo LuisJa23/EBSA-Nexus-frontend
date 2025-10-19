@@ -31,7 +31,7 @@ void main() async {
   // Inicializar inyección de dependencias
   await di.init();
 
-  // TODO: Inicializar base de datos local (en futuras iteraciones)
+  // TODO: Inicializar base de datos local
   // await setupLocalDatabase();
 
   // Configurar manejo global de errores
