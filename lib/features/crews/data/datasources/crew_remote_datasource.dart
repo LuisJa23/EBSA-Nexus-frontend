@@ -84,7 +84,6 @@ class CrewRemoteDataSourceImpl implements CrewRemoteDataSource {
   @override
   Future<CrewWithMembersModel> getCrewWithMembers(int crewId) async {
     try {
-      print('📡 Obteniendo cuadrilla con miembros - CrewId: $crewId');
       final response = await apiClient.get('/api/crews/$crewId');
 
       if (response.statusCode == 200) {
@@ -92,21 +91,6 @@ class CrewRemoteDataSourceImpl implements CrewRemoteDataSource {
             response.data as Map<String, dynamic>;
         final Map<String, dynamic> data =
             responseData['data'] as Map<String, dynamic>;
-
-        print(
-          '✅ Datos recibidos - Miembros: ${(data['members'] as List).length}',
-        );
-
-        // Log de un miembro de ejemplo para verificar estructura
-        if ((data['members'] as List).isNotEmpty) {
-          final firstMember = (data['members'] as List)[0];
-          print('📋 Estructura del primer miembro:');
-          print('   - id: ${firstMember['id']}');
-          print('   - userId: ${firstMember['userId']}');
-          print('   - username: ${firstMember['username']}');
-          print('   - fullName: ${firstMember['fullName']}');
-          print('   - isLeader: ${firstMember['isLeader']}');
-        }
 
         return CrewWithMembersModel.fromJson(data);
       } else {
@@ -116,7 +100,6 @@ class CrewRemoteDataSourceImpl implements CrewRemoteDataSource {
         );
       }
     } catch (e) {
-      print('❌ Error al obtener cuadrilla: $e');
       if (e is ServerException) rethrow;
       throw ServerException(message: 'Error de conexión: ${e.toString()}');
     }
@@ -128,9 +111,29 @@ class CrewRemoteDataSourceImpl implements CrewRemoteDataSource {
       final response = await apiClient.get('/api/users/available-for-crew');
 
       if (response.statusCode == 200) {
-        // El API retorna un array directo, no un objeto con propiedad 'data'
-        final List<dynamic> data = response.data as List<dynamic>;
-        return data.map((json) => AvailableUserModel.fromJson(json)).toList();
+        // Validar que response.data no sea null
+        if (response.data == null) {
+          return []; // Retornar lista vacía si la respuesta es null
+        }
+
+        // Verificar si es array directo o estructura paginada
+        if (response.data is List) {
+          // El API retorna un array directo
+          final List<dynamic> data = response.data as List<dynamic>;
+          return data.map((json) => AvailableUserModel.fromJson(json)).toList();
+        } else if (response.data is Map<String, dynamic>) {
+          // El API retorna un objeto paginado con estructura: { content: [], pageable: {...} }
+          final Map<String, dynamic> responseData =
+              response.data as Map<String, dynamic>;
+          final List<dynamic> data =
+              (responseData['content'] as List<dynamic>?) ?? [];
+          return data.map((json) => AvailableUserModel.fromJson(json)).toList();
+        } else {
+          throw ServerException(
+            message: 'Formato de respuesta inesperado del servidor',
+            statusCode: response.statusCode,
+          );
+        }
       } else {
         throw ServerException(
           message: 'Error al obtener usuarios disponibles',

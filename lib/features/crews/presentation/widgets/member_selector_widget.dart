@@ -22,10 +22,7 @@ class SelectedMember {
   SelectedMember({required this.user, required this.isLeader});
 
   SelectedMember copyWith({bool? isLeader}) {
-    return SelectedMember(
-      user: user,
-      isLeader: isLeader ?? this.isLeader,
-    );
+    return SelectedMember(user: user, isLeader: isLeader ?? this.isLeader);
   }
 }
 
@@ -96,7 +93,9 @@ class MemberSelectorWidget extends StatelessWidget {
           child: Text(
             '${selectedMembers.length}/10',
             style: AppTextStyles.bodySmall.copyWith(
-              color: selectedMembers.isEmpty ? AppColors.error : AppColors.success,
+              color: selectedMembers.isEmpty
+                  ? AppColors.error
+                  : AppColors.success,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -117,7 +116,11 @@ class MemberSelectorWidget extends StatelessWidget {
         child: Center(
           child: Column(
             children: [
-              Icon(Icons.people_outline, size: 48, color: AppColors.textSecondary),
+              Icon(
+                Icons.people_outline,
+                size: 48,
+                color: AppColors.textSecondary,
+              ),
               const SizedBox(height: 12),
               Text(
                 'No hay miembros agregados',
@@ -184,7 +187,7 @@ class MemberSelectorWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          
+
           // Info
           Expanded(
             child: Column(
@@ -224,7 +227,7 @@ class MemberSelectorWidget extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  member.user.workRoleName,
+                  member.user.workRoleName ?? 'Sin rol asignado',
                   style: AppTextStyles.bodySmall.copyWith(
                     color: AppColors.textSecondary,
                   ),
@@ -232,7 +235,7 @@ class MemberSelectorWidget extends StatelessWidget {
               ],
             ),
           ),
-          
+
           // Actions
           Row(
             mainAxisSize: MainAxisSize.min,
@@ -241,23 +244,23 @@ class MemberSelectorWidget extends StatelessWidget {
               IconButton(
                 icon: Icon(
                   member.isLeader ? Icons.star : Icons.star_border,
-                  color: member.isLeader ? AppColors.warning : AppColors.textSecondary,
+                  color: member.isLeader
+                      ? AppColors.warning
+                      : AppColors.textSecondary,
                   size: 20,
                 ),
                 onPressed: () => onToggleLeader(index),
-                tooltip: member.isLeader ? 'Quitar como líder' : 'Designar como líder',
+                tooltip: member.isLeader
+                    ? 'Quitar como líder'
+                    : 'Designar como líder',
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
               ),
               const SizedBox(width: 8),
-              
+
               // Remove button
               IconButton(
-                icon: const Icon(
-                  Icons.close,
-                  color: AppColors.error,
-                  size: 20,
-                ),
+                icon: const Icon(Icons.close, color: AppColors.error, size: 20),
                 onPressed: () => onRemoveMember(index),
                 tooltip: 'Eliminar',
                 padding: EdgeInsets.zero,
@@ -280,9 +283,7 @@ class MemberSelectorWidget extends StatelessWidget {
         onPressed: canAddMore && hasAvailableUsers ? onAddMember : null,
         icon: const Icon(Icons.add),
         label: Text(
-          canAddMore
-              ? 'Agregar Miembro'
-              : 'Límite alcanzado (10 miembros)',
+          canAddMore ? 'Agregar Miembro' : 'Límite alcanzado (10 miembros)',
         ),
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primary,

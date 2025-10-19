@@ -24,7 +24,7 @@ class CrewMemberDetail extends Equatable {
   final String firstName;
   final String lastName;
   final String roleName;
-  final String workRoleName;
+  final String? workRoleName;
   final String workType;
   final String documentNumber;
   final String phone;
@@ -44,7 +44,7 @@ class CrewMemberDetail extends Equatable {
     required this.firstName,
     required this.lastName,
     required this.roleName,
-    required this.workRoleName,
+    this.workRoleName,
     required this.workType,
     required this.documentNumber,
     required this.phone,

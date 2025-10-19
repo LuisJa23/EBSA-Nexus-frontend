@@ -382,7 +382,7 @@ class _CreateCrewPageState extends ConsumerState<CreateCrewPage> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    user.workRoleName,
+                    user.workRoleName ?? 'Sin rol asignado',
                     style: AppTextStyles.bodySmall.copyWith(
                       color: AppColors.textSecondary,
                     ),

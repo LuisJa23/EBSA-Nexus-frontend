@@ -18,7 +18,7 @@ class AvailableUser extends Equatable {
   final String firstName;
   final String lastName;
   final String roleName;
-  final String workRoleName;
+  final String? workRoleName; // Puede ser null
   final String workType;
   final String documentNumber;
   final String phone;
@@ -32,7 +32,7 @@ class AvailableUser extends Equatable {
     required this.firstName,
     required this.lastName,
     required this.roleName,
-    required this.workRoleName,
+    this.workRoleName, // Opcional
     required this.workType,
     required this.documentNumber,
     required this.phone,
@@ -43,17 +43,17 @@ class AvailableUser extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        uuid,
-        username,
-        email,
-        firstName,
-        lastName,
-        roleName,
-        workRoleName,
-        workType,
-        documentNumber,
-        phone,
-        active,
-      ];
+    id,
+    uuid,
+    username,
+    email,
+    firstName,
+    lastName,
+    roleName,
+    workRoleName,
+    workType,
+    documentNumber,
+    phone,
+    active,
+  ];
 }

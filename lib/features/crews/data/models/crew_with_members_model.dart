@@ -31,27 +31,27 @@ class CrewWithMembersModel extends CrewWithMembers {
       final membersList = json['members'] as List<dynamic>;
       members.addAll(
         membersList.map((memberJson) {
-          // Adaptar estructura: el miembro viene con datos de usuario directamente
+          // Nueva estructura: miembro viene con información limitada
           return CrewMemberDetailModel(
             id: memberJson['id'] as int,
-            crewId: json['id'] as int, // Del crew, no del member
+            crewId: memberJson['crewId'] as int,
             userId: memberJson['userId'] as int,
             isLeader: memberJson['isLeader'] as bool,
             joinedAt: DateTime.parse(memberJson['joinedAt'] as String),
             leftAt: memberJson['leftAt'] != null
                 ? DateTime.parse(memberJson['leftAt'] as String)
                 : null,
-            notes: memberJson['notes'] as String?,
-            userUuid: '', // No viene en esta respuesta
-            username: memberJson['username'] as String,
-            email: memberJson['email'] as String,
-            firstName: memberJson['firstName'] as String,
-            lastName: memberJson['lastName'] as String,
-            roleName: '', // No viene en esta respuesta
-            workRoleName: memberJson['workRoleName'] as String,
-            workType: '', // No viene en esta respuesta
-            documentNumber: '', // No viene en esta respuesta
-            phone: '', // No viene en esta respuesta
+            notes: null, // No viene en esta respuesta
+            userUuid: 'user-${memberJson['userId']}', // Generar UUID temporal
+            username: memberJson['username'] as String? ?? 'Usuario ${memberJson['userId']}',
+            email: 'usuario${memberJson['userId']}@ebsa.com.co', // Email por defecto
+            firstName: _extractFirstName(memberJson['fullName'] as String?),
+            lastName: _extractLastName(memberJson['fullName'] as String?),
+            roleName: 'Sin rol asignado', // No viene en esta respuesta
+            workRoleName: null, // No viene en esta respuesta - será null
+            workType: 'Sin tipo asignado', // No viene en esta respuesta
+            documentNumber: 'N/A', // No viene en esta respuesta
+            phone: 'N/A', // No viene en esta respuesta
             active: true, // Asumimos activo si está en la cuadrilla
           );
         }).toList(),
@@ -64,5 +64,19 @@ class CrewWithMembersModel extends CrewWithMembers {
   /// Convertir a entidad
   CrewWithMembers toEntity() {
     return CrewWithMembers(crewDetail: crewDetail, members: members);
+  }
+
+  /// Extraer el primer nombre del nombre completo
+  static String _extractFirstName(String? fullName) {
+    if (fullName == null || fullName.isEmpty) return 'Usuario';
+    final parts = fullName.trim().split(' ');
+    return parts.isNotEmpty ? parts.first : 'Usuario';
+  }
+
+  /// Extraer el apellido del nombre completo
+  static String _extractLastName(String? fullName) {
+    if (fullName == null || fullName.isEmpty) return 'Sin Apellido';
+    final parts = fullName.trim().split(' ');
+    return parts.length > 1 ? parts.sublist(1).join(' ') : 'Sin Apellido';
   }
 }
