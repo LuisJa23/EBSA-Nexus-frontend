@@ -145,6 +145,9 @@ class _EvidenceCaptureWidgetState extends State<EvidenceCaptureWidget>
   }
 
   Widget _buildCaptureButtons() {
+    final imageCount = _getImageCount();
+    final bool imageAtLimit = imageCount >= 10;
+
     return Row(
       children: [
         Expanded(
@@ -152,6 +155,7 @@ class _EvidenceCaptureWidgetState extends State<EvidenceCaptureWidget>
             icon: Icons.camera_alt,
             label: 'Tomar Foto',
             onTap: _capturePhoto,
+            isDisabled: imageAtLimit,
           ),
         ),
         const SizedBox(width: 12),
@@ -160,6 +164,7 @@ class _EvidenceCaptureWidgetState extends State<EvidenceCaptureWidget>
             icon: Icons.photo_library,
             label: 'Galería',
             onTap: _selectFromGallery,
+            isDisabled: imageAtLimit,
           ),
         ),
         if (widget.enableLocation) ...[
@@ -180,9 +185,10 @@ class _EvidenceCaptureWidgetState extends State<EvidenceCaptureWidget>
     required String label,
     required VoidCallback onTap,
     bool isCompact = false,
+    bool isDisabled = false,
   }) {
     return InkWell(
-      onTap: onTap,
+      onTap: isDisabled ? null : onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: EdgeInsets.symmetric(
@@ -190,20 +196,30 @@ class _EvidenceCaptureWidgetState extends State<EvidenceCaptureWidget>
           horizontal: isCompact ? 8 : 16,
         ),
         decoration: BoxDecoration(
-          border: Border.all(color: AppColors.primary),
+          border: Border.all(
+            color: isDisabled
+                ? Colors.grey.withValues(alpha: 0.3)
+                : AppColors.primary,
+          ),
           borderRadius: BorderRadius.circular(12),
-          color: Colors.white,
+          color: isDisabled
+              ? Colors.grey.withValues(alpha: 0.1)
+              : Colors.white,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: AppColors.primary, size: isCompact ? 20 : 24),
+            Icon(
+              icon,
+              color: isDisabled ? Colors.grey : AppColors.primary,
+              size: isCompact ? 20 : 24,
+            ),
             if (!isCompact) ...[
               const SizedBox(height: 4),
               Text(
                 label,
                 style: TextStyle(
-                  color: AppColors.primary,
+                  color: isDisabled ? Colors.grey : AppColors.primary,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
@@ -216,17 +232,111 @@ class _EvidenceCaptureWidgetState extends State<EvidenceCaptureWidget>
     );
   }
 
+  /// Obtener el conteo de imágenes (fotos + galería)
+  int _getImageCount() {
+    return _evidenceItems
+        .where((item) =>
+            item.type == EvidenceType.photo || item.type == EvidenceType.gallery)
+        .length;
+  }
+
+  /// Obtener el conteo de ubicaciones GPS
+  int _getGPSCount() {
+    return _evidenceItems.where((item) => item.type == EvidenceType.gps).length;
+  }
+
   Widget _buildEvidencesGrid() {
+    final imageCount = _getImageCount();
+    final gpsCount = _getGPSCount();
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Evidencias Capturadas (${_evidenceItems.length})',
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Colors.black87,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Evidencias Capturadas (${_evidenceItems.length})',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+            // Contador de imágenes
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: imageCount >= 10
+                    ? Colors.red.withValues(alpha: 0.1)
+                    : AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: imageCount >= 10
+                      ? Colors.red
+                      : AppColors.primary.withValues(alpha: 0.3),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.image,
+                    size: 14,
+                    color: imageCount >= 10 ? Colors.red : AppColors.primary,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '$imageCount/10',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: imageCount >= 10 ? Colors.red : AppColors.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Contador de GPS
+            if (widget.enableLocation)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: gpsCount >= 1
+                      ? Colors.green.withValues(alpha: 0.1)
+                      : Colors.grey.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: gpsCount >= 1
+                        ? Colors.green
+                        : Colors.grey.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.location_on,
+                      size: 14,
+                      color: gpsCount >= 1 ? Colors.green : Colors.grey,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '$gpsCount/1',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: gpsCount >= 1 ? Colors.green : Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
         ),
         const SizedBox(height: 12),
         GridView.builder(
@@ -489,6 +599,16 @@ class _EvidenceCaptureWidgetState extends State<EvidenceCaptureWidget>
 
   Future<void> _capturePhoto() async {
     try {
+      // Contar cuántas imágenes hay actualmente (fotos + galería)
+      final imageCount = _evidenceItems.where((item) =>
+        item.type == EvidenceType.photo || item.type == EvidenceType.gallery
+      ).length;
+
+      if (imageCount >= 10) {
+        _showErrorMessage('⚠️ Máximo 10 imágenes permitidas. Elimina algunas para agregar más.');
+        return;
+      }
+
       // Verificar primero el estado actual del permiso
       PermissionStatus cameraStatus = await Permission.camera.status;
 
@@ -541,6 +661,16 @@ class _EvidenceCaptureWidgetState extends State<EvidenceCaptureWidget>
 
   Future<void> _selectFromGallery() async {
     try {
+      // Contar cuántas imágenes hay actualmente (fotos + galería)
+      final imageCount = _evidenceItems.where((item) =>
+        item.type == EvidenceType.photo || item.type == EvidenceType.gallery
+      ).length;
+
+      if (imageCount >= 10) {
+        _showErrorMessage('⚠️ Máximo 10 imágenes permitidas. Elimina algunas para agregar más.');
+        return;
+      }
+
       // NUEVA ESTRATEGIA: Intentar abrir galería directamente
       // Si falla por permisos, entonces manejamos
       try {
@@ -551,12 +681,25 @@ class _EvidenceCaptureWidgetState extends State<EvidenceCaptureWidget>
         );
 
         if (images.isNotEmpty) {
-          for (var image in images) {
+          // Calcular cuántas imágenes se pueden agregar
+          final availableSlots = 10 - imageCount;
+          final imagesToAdd = images.take(availableSlots).toList();
+          
+          if (images.length > availableSlots) {
+            _showErrorMessage(
+              '⚠️ Solo se agregaron ${imagesToAdd.length} de ${images.length} imágenes. Límite: 10 imágenes totales.',
+            );
+          }
+
+          for (var image in imagesToAdd) {
             _addEvidence(image.path, EvidenceType.gallery);
           }
-          _showSuccessMessage(
-            '🖼️ ${images.length} imagen(es) seleccionada(s) de la galería',
-          );
+          
+          if (images.length <= availableSlots) {
+            _showSuccessMessage(
+              '🖼️ ${imagesToAdd.length} imagen(es) seleccionada(s) de la galería',
+            );
+          }
         }
         return;
       } catch (pickerError) {
@@ -632,6 +775,48 @@ class _EvidenceCaptureWidgetState extends State<EvidenceCaptureWidget>
 
   Future<void> _captureLocation() async {
     try {
+      // Verificar si ya existe una ubicación GPS
+      final existingGpsIndex = _evidenceItems.indexWhere(
+        (item) => item.type == EvidenceType.gps,
+      );
+
+      // Si ya existe una ubicación, preguntar si desea reemplazarla
+      if (existingGpsIndex != -1) {
+        final shouldReplace = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.warning, color: Colors.orange),
+                SizedBox(width: 8),
+                Text('Ubicación Existente'),
+              ],
+            ),
+            content: const Text(
+              'Ya has capturado una ubicación GPS. ¿Deseas reemplazarla con una nueva?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancelar'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Reemplazar'),
+              ),
+            ],
+          ),
+        );
+
+        if (shouldReplace != true) {
+          return; // Usuario canceló
+        }
+      }
+
       // Abrir selector de ubicación con mapa interactivo
       final LocationResult? selectedLocation = await Navigator.of(context).push(
         MaterialPageRoute(
@@ -656,6 +841,11 @@ class _EvidenceCaptureWidgetState extends State<EvidenceCaptureWidget>
       );
 
       setState(() {
+        // Si ya existía una ubicación, eliminarla
+        if (existingGpsIndex != -1) {
+          _evidenceItems.removeAt(existingGpsIndex);
+        }
+        // Agregar la nueva ubicación
         _evidenceItems.add(evidence);
       });
 
@@ -663,7 +853,9 @@ class _EvidenceCaptureWidgetState extends State<EvidenceCaptureWidget>
       _updateLegacyEvidences();
 
       _showSuccessMessage(
-        '✅ Ubicación GPS capturada: ${selectedLocation.latitude.toStringAsFixed(6)}, ${selectedLocation.longitude.toStringAsFixed(6)}',
+        existingGpsIndex != -1
+            ? '🔄 Ubicación GPS actualizada: ${selectedLocation.latitude.toStringAsFixed(6)}, ${selectedLocation.longitude.toStringAsFixed(6)}'
+            : '✅ Ubicación GPS capturada: ${selectedLocation.latitude.toStringAsFixed(6)}, ${selectedLocation.longitude.toStringAsFixed(6)}',
       );
     } catch (e) {
       print('Error capturando ubicación: $e');
