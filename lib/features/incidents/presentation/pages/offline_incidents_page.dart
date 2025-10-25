@@ -258,7 +258,9 @@ class _OfflineIncidentsPageState extends ConsumerState<OfflineIncidentsPage> {
                 children: [
                   const CircularProgressIndicator(),
                   const SizedBox(height: 16),
-                  Text('Sincronizando ${pendingIncidents.length} novedad(es)...'),
+                  Text(
+                    'Sincronizando ${pendingIncidents.length} novedad(es)...',
+                  ),
                 ],
               ),
             ),
@@ -351,7 +353,7 @@ class _OfflineIncidentsPageState extends ConsumerState<OfflineIncidentsPage> {
       } else if (mounted) {
         Navigator.of(context).pop();
       }
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -368,7 +370,7 @@ class _OfflineIncidentsPageState extends ConsumerState<OfflineIncidentsPage> {
       } else if (mounted) {
         Navigator.of(context).pop();
       }
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
