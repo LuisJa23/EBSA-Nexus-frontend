@@ -202,9 +202,7 @@ class _EvidenceCaptureWidgetState extends State<EvidenceCaptureWidget>
                 : AppColors.primary,
           ),
           borderRadius: BorderRadius.circular(12),
-          color: isDisabled
-              ? Colors.grey.withValues(alpha: 0.1)
-              : Colors.white,
+          color: isDisabled ? Colors.grey.withValues(alpha: 0.1) : Colors.white,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -235,8 +233,11 @@ class _EvidenceCaptureWidgetState extends State<EvidenceCaptureWidget>
   /// Obtener el conteo de imágenes (fotos + galería)
   int _getImageCount() {
     return _evidenceItems
-        .where((item) =>
-            item.type == EvidenceType.photo || item.type == EvidenceType.gallery)
+        .where(
+          (item) =>
+              item.type == EvidenceType.photo ||
+              item.type == EvidenceType.gallery,
+        )
         .length;
   }
 
@@ -248,7 +249,7 @@ class _EvidenceCaptureWidgetState extends State<EvidenceCaptureWidget>
   Widget _buildEvidencesGrid() {
     final imageCount = _getImageCount();
     final gpsCount = _getGPSCount();
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -600,12 +601,18 @@ class _EvidenceCaptureWidgetState extends State<EvidenceCaptureWidget>
   Future<void> _capturePhoto() async {
     try {
       // Contar cuántas imágenes hay actualmente (fotos + galería)
-      final imageCount = _evidenceItems.where((item) =>
-        item.type == EvidenceType.photo || item.type == EvidenceType.gallery
-      ).length;
+      final imageCount = _evidenceItems
+          .where(
+            (item) =>
+                item.type == EvidenceType.photo ||
+                item.type == EvidenceType.gallery,
+          )
+          .length;
 
       if (imageCount >= 10) {
-        _showErrorMessage('⚠️ Máximo 10 imágenes permitidas. Elimina algunas para agregar más.');
+        _showErrorMessage(
+          '⚠️ Máximo 10 imágenes permitidas. Elimina algunas para agregar más.',
+        );
         return;
       }
 
@@ -662,12 +669,18 @@ class _EvidenceCaptureWidgetState extends State<EvidenceCaptureWidget>
   Future<void> _selectFromGallery() async {
     try {
       // Contar cuántas imágenes hay actualmente (fotos + galería)
-      final imageCount = _evidenceItems.where((item) =>
-        item.type == EvidenceType.photo || item.type == EvidenceType.gallery
-      ).length;
+      final imageCount = _evidenceItems
+          .where(
+            (item) =>
+                item.type == EvidenceType.photo ||
+                item.type == EvidenceType.gallery,
+          )
+          .length;
 
       if (imageCount >= 10) {
-        _showErrorMessage('⚠️ Máximo 10 imágenes permitidas. Elimina algunas para agregar más.');
+        _showErrorMessage(
+          '⚠️ Máximo 10 imágenes permitidas. Elimina algunas para agregar más.',
+        );
         return;
       }
 
@@ -684,7 +697,7 @@ class _EvidenceCaptureWidgetState extends State<EvidenceCaptureWidget>
           // Calcular cuántas imágenes se pueden agregar
           final availableSlots = 10 - imageCount;
           final imagesToAdd = images.take(availableSlots).toList();
-          
+
           if (images.length > availableSlots) {
             _showErrorMessage(
               '⚠️ Solo se agregaron ${imagesToAdd.length} de ${images.length} imágenes. Límite: 10 imágenes totales.',
@@ -694,7 +707,7 @@ class _EvidenceCaptureWidgetState extends State<EvidenceCaptureWidget>
           for (var image in imagesToAdd) {
             _addEvidence(image.path, EvidenceType.gallery);
           }
-          
+
           if (images.length <= availableSlots) {
             _showSuccessMessage(
               '🖼️ ${imagesToAdd.length} imagen(es) seleccionada(s) de la galería',
