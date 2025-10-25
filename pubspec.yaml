@@ -69,6 +69,11 @@ dependencies:
   # Form Validation
   formz: ^0.7.0
 
+  # Media & Permissions
+  image_picker: ^1.0.7
+  permission_handler: ^11.3.0
+  path_provider: ^2.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -46,24 +46,19 @@ class _CreateIncidentPageState extends State<CreateIncidentPage> {
   // Lista de evidencias
   List<String> _evidences = [];
 
-  // Datos de prueba para los dropdowns
-  final List<String> _areas = [
-    'Área Comercial',
-    'Área Técnica',
-    'Área de Distribución',
-    'Área de Atención al Cliente',
-    'Área de Mantenimiento',
-  ];
+  // Definición de áreas y sus motivos
+  final Map<String, List<String>> _areaMotivos = {
+    'FACTURACIÓN': ['ERROR_LECTURA', 'ACTUALIZACION_DATOS', 'OTROS'],
+    'CARTERA': ['ERROR_LECTURA', 'ACTUALIZACION_DATOS', 'OTROS'],
+    'PÉRDIDAS': ['ERROR_LECTURA', 'ACTUALIZACION_DATOS', 'OTROS'],
+  };
 
-  final List<String> _motivos = [
-    'Lectura de medidor',
-    'Corte por no pago',
-    'Reconexión de servicio',
-    'Daño en medidor',
-    'Revisión técnica',
-    'Cambio de medidor',
-    'Reporte de anomalía',
-  ];
+  // Lista de áreas disponibles
+  List<String> get _areas => _areaMotivos.keys.toList();
+
+  // Lista de motivos según el área seleccionada
+  List<String> get _motivos =>
+      _selectedArea != null ? _areaMotivos[_selectedArea]! : [];
 
   final List<String> _municipios = [
     'Bogotá',
@@ -194,7 +189,13 @@ class _CreateIncidentPageState extends State<CreateIncidentPage> {
           items: _areas
               .map((area) => DropdownMenuItem(value: area, child: Text(area)))
               .toList(),
-          onChanged: (value) => setState(() => _selectedArea = value),
+          onChanged: (value) {
+            setState(() {
+              _selectedArea = value;
+              // Resetear el motivo cuando cambia el área
+              _selectedMotivo = null;
+            });
+          },
           validator: (value) => value == null ? 'Seleccione un área' : null,
         ),
         CustomDropdown<String>(

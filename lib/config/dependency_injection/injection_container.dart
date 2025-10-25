@@ -41,6 +41,19 @@ import '../../features/users/domain/repositories/user_repository.dart';
 import '../../features/users/domain/usecases/create_user_usecase.dart';
 import '../../features/users/domain/usecases/get_workers_usecase.dart';
 
+// Crews Feature - Data Layer
+import '../../features/crews/data/datasources/crew_remote_datasource.dart';
+import '../../features/crews/data/repositories/crew_repository_impl.dart';
+
+// Crews Feature - Domain Layer
+import '../../features/crews/domain/repositories/crew_repository.dart';
+import '../../features/crews/domain/usecases/get_all_crews_usecase.dart';
+import '../../features/crews/domain/usecases/get_crew_with_members_usecase.dart';
+import '../../features/crews/domain/usecases/get_available_users_usecase.dart';
+import '../../features/crews/domain/usecases/add_member_to_crew_usecase.dart';
+import '../../features/crews/domain/usecases/remove_member_from_crew_usecase.dart';
+import '../../features/crews/domain/usecases/promote_member_to_leader_usecase.dart';
+
 /// Service Locator global
 final GetIt sl = GetIt.instance;
 
@@ -180,6 +193,52 @@ Future<void> init() async {
   // Get Workers Use Case
   sl.registerLazySingleton<GetWorkersUseCase>(
     () => GetWorkersUseCase(repository: sl()),
+  );
+
+  // ============================================================================
+  // CREWS FEATURE - DATA LAYER
+  // ============================================================================
+
+  // Remote Data Source - API calls de cuadrillas
+  sl.registerLazySingleton<CrewRemoteDataSource>(
+    () => CrewRemoteDataSourceImpl(apiClient: sl()),
+  );
+
+  // Repository Implementation - Coordina remote
+  sl.registerLazySingleton<CrewRepository>(
+    () => CrewRepositoryImpl(remoteDataSource: sl(), networkInfo: sl()),
+  );
+
+  // ============================================================================
+  // CREWS FEATURE - DOMAIN LAYER (USE CASES)
+  // ============================================================================
+
+  // Get All Crews Use Case
+  sl.registerLazySingleton<GetAllCrewsUseCase>(() => GetAllCrewsUseCase(sl()));
+
+  // Get Crew With Members Use Case
+  sl.registerLazySingleton<GetCrewWithMembersUseCase>(
+    () => GetCrewWithMembersUseCase(sl()),
+  );
+
+  // Get Available Users Use Case
+  sl.registerLazySingleton<GetAvailableUsersUseCase>(
+    () => GetAvailableUsersUseCase(sl()),
+  );
+
+  // Add Member To Crew Use Case
+  sl.registerLazySingleton<AddMemberToCrewUseCase>(
+    () => AddMemberToCrewUseCase(sl()),
+  );
+
+  // Remove Member From Crew Use Case
+  sl.registerLazySingleton<RemoveMemberFromCrewUseCase>(
+    () => RemoveMemberFromCrewUseCase(sl()),
+  );
+
+  // Promote Member To Leader Use Case
+  sl.registerLazySingleton<PromoteMemberToLeaderUseCase>(
+    () => PromoteMemberToLeaderUseCase(sl()),
   );
 }
 
