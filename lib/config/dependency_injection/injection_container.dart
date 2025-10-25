@@ -54,6 +54,9 @@ import '../../features/crews/domain/usecases/add_member_to_crew_usecase.dart';
 import '../../features/crews/domain/usecases/remove_member_from_crew_usecase.dart';
 import '../../features/crews/domain/usecases/promote_member_to_leader_usecase.dart';
 
+// Incidents Feature - Data Layer
+import '../../features/incidents/data/novelty_service.dart';
+
 /// Service Locator global
 final GetIt sl = GetIt.instance;
 
@@ -239,6 +242,15 @@ Future<void> init() async {
   // Promote Member To Leader Use Case
   sl.registerLazySingleton<PromoteMemberToLeaderUseCase>(
     () => PromoteMemberToLeaderUseCase(sl()),
+  );
+
+  // ============================================================================
+  // INCIDENTS/NOVELTIES FEATURE - DATA LAYER
+  // ============================================================================
+
+  // Novelty Service - API calls de novedades
+  sl.registerLazySingleton<NoveltyService>(
+    () => NoveltyService(sl()),
   );
 }
 

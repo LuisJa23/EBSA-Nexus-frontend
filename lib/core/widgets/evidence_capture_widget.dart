@@ -53,6 +53,9 @@ class EvidenceCaptureWidget extends StatefulWidget {
   /// Callback cuando cambia el número de evidencias GPS (opcional)
   final Function(int)? onGPSCountChanged;
 
+  /// Callback cuando cambian los items completos de evidencias (con metadatos)
+  final Function(List<EvidenceItem>)? onEvidenceItemsChanged;
+
   /// Título del widget
   final String title;
 
@@ -64,6 +67,7 @@ class EvidenceCaptureWidget extends StatefulWidget {
     required this.evidences,
     required this.onEvidencesChanged,
     this.onGPSCountChanged,
+    this.onEvidenceItemsChanged,
     this.title = 'Evidencias',
     this.enableLocation = true,
   });
@@ -913,6 +917,11 @@ class _EvidenceCaptureWidgetState extends State<EvidenceCaptureWidget>
           .where((e) => e.type == EvidenceType.gps)
           .length;
       widget.onGPSCountChanged!(gpsCount);
+    }
+
+    // Notificar items completos con metadatos
+    if (widget.onEvidenceItemsChanged != null) {
+      widget.onEvidenceItemsChanged!(_evidenceItems);
     }
   }
 

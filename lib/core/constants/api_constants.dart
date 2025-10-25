@@ -92,6 +92,16 @@ class ApiConstants {
   static const String uploadEvidenceEndpoint = '/reports/evidence';
 
   // ============================================================================
+  // ENDPOINTS DE NOVEDADES
+  // ============================================================================
+
+  /// Endpoint para crear novedad (con form-data para imágenes)
+  static const String createNoveltyEndpoint = '/api/v1/novelties';
+
+  /// Endpoint para obtener lista de novedades
+  static const String noveltiesEndpoint = '/api/v1/novelties';
+
+  // ============================================================================
   // HEADERS HTTP
   // ============================================================================
 
