@@ -49,6 +49,7 @@ class RouteNames {
   static const String manageIncident = '/manage-incident';
   static const String createIncident = '/manage-incident/create';
   static const String incidentList = '/incident-list';
+  static const String offlineIncidents = '/manage-incident/offline';
 
   // ============================================================================
   // RUTAS DE CUADRILLAS

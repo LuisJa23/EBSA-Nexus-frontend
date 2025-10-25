@@ -83,6 +83,15 @@ class ManageIncidentPage extends StatelessWidget {
           subtitle: 'Ver Historial de Novedades',
           onTap: () => context.push(RouteNames.incidentList),
         ),
+        const SizedBox(height: 16),
+
+        // Opción 3: Novedades Offline
+        HomeActionCard(
+          icon: Icons.cloud_off,
+          title: 'Novedades Offline',
+          subtitle: 'Gestionar Novedades sin Conexión',
+          onTap: () => context.push(RouteNames.offlineIncidents),
+        ),
       ],
     );
   }

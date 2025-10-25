@@ -56,6 +56,10 @@ import '../../features/crews/domain/usecases/promote_member_to_leader_usecase.da
 
 // Incidents Feature - Data Layer
 import '../../features/incidents/data/novelty_service.dart';
+import '../../features/incidents/data/offline_sync_service.dart';
+
+// Database
+import '../database/app_database.dart';
 
 /// Service Locator global
 final GetIt sl = GetIt.instance;
@@ -118,6 +122,9 @@ Future<void> init() async {
   sl.registerLazySingleton<ApiClient>(
     () => ApiClient(dio: sl(), secureStorage: sl()),
   );
+
+  // App Database - Base de datos local con Drift
+  sl.registerLazySingleton<AppDatabase>(() => AppDatabase());
 
   // ============================================================================
   // AUTHENTICATION FEATURE - DATA LAYER
@@ -249,8 +256,15 @@ Future<void> init() async {
   // ============================================================================
 
   // Novelty Service - API calls de novedades
-  sl.registerLazySingleton<NoveltyService>(
-    () => NoveltyService(sl()),
+  sl.registerLazySingleton<NoveltyService>(() => NoveltyService(sl()));
+
+  // Offline Sync Service - Sincronización de novedades offline
+  sl.registerLazySingleton<OfflineSyncService>(
+    () => OfflineSyncService(
+      sl<AppDatabase>(), // Base de datos
+      sl<NoveltyService>(), // Servicio de novedades
+      sl<Connectivity>(), // Conectividad
+    ),
   );
 }
 

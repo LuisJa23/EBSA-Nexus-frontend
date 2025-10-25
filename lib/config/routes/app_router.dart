@@ -16,6 +16,7 @@ import '../../features/authentication/presentation/providers/auth_provider.dart'
 import '../../features/incidents/presentation/pages/manage_incident_page.dart';
 import '../../features/incidents/presentation/pages/create_incident_page.dart';
 import '../../features/incidents/presentation/pages/incident_list_page.dart';
+import '../../features/incidents/presentation/pages/offline_incidents_page.dart';
 import '../../features/reports/presentation/pages/create_report_page.dart';
 import '../../features/users/presentation/pages/manage_users_page.dart';
 import '../../features/users/presentation/pages/create_user_page.dart';
@@ -221,6 +222,16 @@ final routerProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
               child: const IncidentListPage(),
+            ),
+          ),
+
+          /// Novedades Offline
+          GoRoute(
+            path: RouteNames.offlineIncidents,
+            name: 'offline-incidents',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const OfflineIncidentsPage(),
             ),
           ),
 
