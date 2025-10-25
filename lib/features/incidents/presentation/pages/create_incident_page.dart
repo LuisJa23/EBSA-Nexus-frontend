@@ -46,6 +46,9 @@ class _CreateIncidentPageState extends State<CreateIncidentPage> {
   // Lista de evidencias
   List<String> _evidences = [];
 
+  // Contador de evidencias GPS (obligatorio)
+  int _gpsCount = 0;
+
   // Definición de áreas y sus motivos
   final Map<String, List<String>> _areaMotivos = {
     'FACTURACIÓN': ['ERROR_LECTURA', 'ACTUALIZACION_DATOS', 'OTROS'],
@@ -328,6 +331,11 @@ class _CreateIncidentPageState extends State<CreateIncidentPage> {
               _evidences = evidences;
             });
           },
+          onGPSCountChanged: (count) {
+            setState(() {
+              _gpsCount = count;
+            });
+          },
           title: 'Capturar Evidencias',
           enableLocation: true,
         ),
@@ -390,6 +398,18 @@ class _CreateIncidentPageState extends State<CreateIncidentPage> {
       return;
     }
 
+    // Validar que exista al menos una evidencia GPS (obligatorio)
+    if (_gpsCount == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('📍 Debe capturar al menos una ubicación GPS'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
     // Mostrar diálogo de confirmación
     showDialog(
       context: context,
@@ -414,6 +434,7 @@ class _CreateIncidentPageState extends State<CreateIncidentPage> {
             ),
             _buildSummaryItem('Municipio', _selectedMunicipio ?? ''),
             _buildSummaryItem('Evidencias', '${_evidences.length} archivo(s)'),
+            _buildSummaryItem('Ubicaciones GPS', '$_gpsCount'),
           ],
         ),
         actions: [
