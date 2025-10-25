@@ -45,5 +45,17 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- Permisos para cámara y galería -->
+	<key>NSCameraUsageDescription</key>
+	<string>Esta aplicación necesita acceso a la cámara para capturar evidencias fotográficas de los incidentes reportados.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Esta aplicación necesita acceso a tu galería de fotos para adjuntar evidencias a los reportes de incidentes.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Esta aplicación necesita permiso para guardar fotos capturadas en tu galería.</string>
+	<!-- Permisos para ubicación GPS -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Esta aplicación necesita acceso a tu ubicación para registrar las coordenadas GPS de los incidentes reportados.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Esta aplicación necesita acceso a tu ubicación para registrar las coordenadas GPS de los incidentes reportados.</string>
 </dict>
 </plist>

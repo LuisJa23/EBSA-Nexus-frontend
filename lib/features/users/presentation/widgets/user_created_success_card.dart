@@ -11,6 +11,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -274,8 +275,13 @@ class UserCreatedSuccessCard extends StatelessWidget {
         width: double.infinity,
         child: ElevatedButton.icon(
           onPressed: () {
+            // Cerrar el diálogo y luego volver a la página anterior
             Navigator.of(context).pop(); // Cerrar diálogo
-            Navigator.of(context).pop(); // Volver a página anterior
+
+            // Verificar si podemos hacer pop antes de intentarlo
+            if (context.canPop()) {
+              context.pop(); // Volver a página anterior
+            }
           },
           icon: const Icon(Icons.check),
           label: const Text('Entendido'),
