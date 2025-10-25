@@ -21,7 +21,7 @@ class NoveltyService {
   NoveltyService(this._apiClient);
 
   /// Crea una nueva novedad con imágenes
-  /// 
+  ///
   /// Parámetros:
   /// - [areaId]: ID del área
   /// - [reason]: Motivo de la novedad
@@ -73,14 +73,11 @@ class NoveltyService {
       for (var i = 0; i < images.length; i++) {
         final file = images[i];
         final fileName = file.path.split('/').last;
-        
+
         formData.files.add(
           MapEntry(
             'images', // El backend espera "images" como nombre del campo
-            await MultipartFile.fromFile(
-              file.path,
-              filename: fileName,
-            ),
+            await MultipartFile.fromFile(file.path, filename: fileName),
           ),
         );
       }
@@ -91,9 +88,7 @@ class NoveltyService {
         data: formData,
         options: Options(
           contentType: 'multipart/form-data',
-          headers: {
-            'Accept': 'application/json',
-          },
+          headers: {'Accept': 'application/json'},
         ),
       );
 
@@ -104,11 +99,7 @@ class NoveltyService {
   }
 
   /// Obtiene la lista de novedades
-  Future<Response> getNovelties({
-    int? page,
-    int? limit,
-    String? status,
-  }) async {
+  Future<Response> getNovelties({int? page, int? limit, String? status}) async {
     try {
       final queryParameters = <String, dynamic>{};
 
@@ -132,6 +123,56 @@ class NoveltyService {
     try {
       final response = await _apiClient.get(
         '${ApiConstants.noveltiesEndpoint}/$id',
+      );
+
+      return response;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Busca novedades con filtros
+  Future<Response> searchNovelties({
+    int page = 0,
+    int size = 20,
+    String? status,
+  }) async {
+    try {
+      final queryParameters = <String, dynamic>{'page': page, 'size': size};
+
+      if (status != null) {
+        queryParameters['status'] = status;
+      }
+
+      final response = await _apiClient.get(
+        '${ApiConstants.noveltiesEndpoint}/search',
+        queryParameters: queryParameters,
+      );
+
+      return response;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Asigna una cuadrilla a una novedad
+  Future<Response> assignCrewToNovelty({
+    required String noveltyId,
+    required int assignedCrewId,
+    required String priority,
+    String? instructions,
+  }) async {
+    try {
+      final data = {
+        'assignedCrewId': assignedCrewId,
+        'priority': priority,
+        if (instructions != null && instructions.isNotEmpty)
+          'instructions': instructions,
+      };
+
+      final response = await _apiClient.post(
+        '${ApiConstants.noveltiesEndpoint}/$noveltyId/assign',
+        data: data,
       );
 
       return response;
