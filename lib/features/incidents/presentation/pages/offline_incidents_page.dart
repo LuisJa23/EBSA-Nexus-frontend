@@ -174,7 +174,9 @@ class _OfflineIncidentsPageState extends ConsumerState<OfflineIncidentsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('No hay conexión. Verifica tu red e inténtalo de nuevo.'),
+            content: Text(
+              'No hay conexión. Verifica tu red e inténtalo de nuevo.',
+            ),
             backgroundColor: AppColors.error,
           ),
         );
@@ -240,25 +242,29 @@ class _OfflineIncidentsPageState extends ConsumerState<OfflineIncidentsPage> {
 
     if (confirm != true) return;
 
-    // Mostrar indicador de carga
+    // Mostrar indicador de carga y guardar su contexto
+    BuildContext? loadingDialogContext;
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => Center(
-        child: Card(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const CircularProgressIndicator(),
-                const SizedBox(height: 16),
-                Text('Sincronizando ${pendingIncidents.length} novedad(es)...'),
-              ],
+      builder: (dialogContext) {
+        loadingDialogContext = dialogContext;
+        return Center(
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                  Text('Sincronizando ${pendingIncidents.length} novedad(es)...'),
+                ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
 
     try {
@@ -268,13 +274,18 @@ class _OfflineIncidentsPageState extends ConsumerState<OfflineIncidentsPage> {
       // Sincronizar todas las novedades
       final result = await syncService.syncAllPendingIncidents();
 
-      // Cerrar diálogo de carga
-      if (mounted) Navigator.of(context).pop();
+      // Cerrar SOLO el diálogo de carga usando su contexto
+      if (loadingDialogContext != null) {
+        Navigator.of(loadingDialogContext!).pop();
+      } else if (mounted) {
+        Navigator.of(context).pop();
+      }
 
       // Mostrar resultado
       final successCount = result['success'] as int;
       final failedCount = result['failed'] as int;
-      final errors = result['errors'] as List<String>;
+      final errorsList = result['errors'] as List<dynamic>;
+      final errors = errorsList.map((e) => e.toString()).toList();
 
       if (mounted) {
         String message;
@@ -334,7 +345,13 @@ class _OfflineIncidentsPageState extends ConsumerState<OfflineIncidentsPage> {
       // Recargar lista
       await _loadIncidents();
     } on TimeoutException catch (_) {
-      if (mounted) Navigator.of(context).pop();
+      // Cerrar SOLO el diálogo de carga usando su contexto
+      if (loadingDialogContext != null) {
+        Navigator.of(loadingDialogContext!).pop();
+      } else if (mounted) {
+        Navigator.of(context).pop();
+      }
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -345,11 +362,19 @@ class _OfflineIncidentsPageState extends ConsumerState<OfflineIncidentsPage> {
       }
       await _loadIncidents();
     } on SocketException catch (_) {
-      if (mounted) Navigator.of(context).pop();
+      // Cerrar SOLO el diálogo de carga usando su contexto
+      if (loadingDialogContext != null) {
+        Navigator.of(loadingDialogContext!).pop();
+      } else if (mounted) {
+        Navigator.of(context).pop();
+      }
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('No hay conexión. Verifica tu red e inténtalo de nuevo.'),
+            content: Text(
+              'No hay conexión. Verifica tu red e inténtalo de nuevo.',
+            ),
             backgroundColor: AppColors.error,
           ),
         );
