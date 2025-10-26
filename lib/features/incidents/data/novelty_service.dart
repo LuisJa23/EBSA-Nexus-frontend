@@ -103,18 +103,47 @@ class NoveltyService {
     }
   }
 
-  /// Obtiene la lista de novedades
+  /// Obtiene la lista de novedades con filtros y paginación
+  /// 
+  /// Parámetros:
+  /// - [page]: Número de página (inicia en 0)
+  /// - [size]: Cantidad de elementos por página
+  /// - [sort]: Campo para ordenar
+  /// - [direction]: Dirección de ordenamiento (ASC o DESC)
+  /// - [status]: Filtrar por estado
+  /// - [priority]: Filtrar por prioridad
+  /// - [areaId]: Filtrar por ID de área
+  /// - [crewId]: Filtrar por ID de cuadrilla
+  /// - [creatorId]: Filtrar por ID del creador
+  /// - [startDate]: Fecha inicio (formato ISO)
+  /// - [endDate]: Fecha fin (formato ISO)
   Future<Response> getNovelties({
     int? page,
-    int? limit,
+    int? size,
+    String? sort,
+    String? direction,
     String? status,
+    String? priority,
+    int? areaId,
+    int? crewId,
+    int? creatorId,
+    String? startDate,
+    String? endDate,
   }) async {
     try {
       final queryParameters = <String, dynamic>{};
 
       if (page != null) queryParameters['page'] = page;
-      if (limit != null) queryParameters['limit'] = limit;
+      if (size != null) queryParameters['size'] = size;
+      if (sort != null) queryParameters['sort'] = sort;
+      if (direction != null) queryParameters['direction'] = direction;
       if (status != null) queryParameters['status'] = status;
+      if (priority != null) queryParameters['priority'] = priority;
+      if (areaId != null) queryParameters['areaId'] = areaId;
+      if (crewId != null) queryParameters['crewId'] = crewId;
+      if (creatorId != null) queryParameters['creatorId'] = creatorId;
+      if (startDate != null) queryParameters['startDate'] = startDate;
+      if (endDate != null) queryParameters['endDate'] = endDate;
 
       final response = await _apiClient.get(
         ApiConstants.noveltiesEndpoint,
@@ -131,7 +160,7 @@ class NoveltyService {
   Future<Response> getNoveltyById(String id) async {
     try {
       final response = await _apiClient.get(
-        '${ApiConstants.noveltiesEndpoint}/$id',
+        ApiConstants.noveltyByIdEndpoint(id),
       );
 
       return response;

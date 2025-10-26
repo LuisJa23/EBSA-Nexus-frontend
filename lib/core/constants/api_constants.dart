@@ -20,7 +20,7 @@ class ApiConstants {
 
   /// URL base para desarrollo en red local (para dispositivo físico)
   /// IP del hotspot WiFi compartido desde PC
-  static const String baseUrlNetwork = 'http://192.168.20.44:8080';
+  static const String baseUrlNetwork = 'http://192.168.1.38:8080';
 
   /// URL base para producción (configurar cuando esté disponible)
   static const String baseUrlProduction = 'https://api.nexusebsa.com';
@@ -98,8 +98,63 @@ class ApiConstants {
   /// Endpoint para crear novedad (con form-data para imágenes)
   static const String createNoveltyEndpoint = '/api/v1/novelties';
 
-  /// Endpoint para obtener lista de novedades
-  static const String noveltiesEndpoint = '/api/v1/novelties';
+  /// Endpoint para obtener lista de novedades con búsqueda y filtros
+  static const String noveltiesEndpoint = '/api/v1/novelties/search';
+  
+  /// Endpoint para obtener una novedad específica por ID
+  static String noveltyByIdEndpoint(String id) => '/api/v1/novelties/$id';
+
+  // ============================================================================
+  // ENDPOINTS DE NOTIFICACIONES
+  // ============================================================================
+
+  /// Endpoint base para notificaciones
+  static const String notificationsEndpoint = '/api/v1/notifications';
+
+  /// Obtener resumen de notificaciones de un usuario
+  /// GET /api/v1/notifications/user/{userId}/summary
+  static String notificationsSummaryEndpoint(int userId) =>
+      '/api/v1/notifications/user/$userId/summary';
+
+  /// Obtener todas las notificaciones de un usuario
+  /// GET /api/v1/notifications/user/{userId}
+  static String userNotificationsEndpoint(int userId) =>
+      '/api/v1/notifications/user/$userId';
+
+  /// Obtener notificaciones no leídas
+  /// GET /api/v1/notifications/user/{userId}/unread
+  static String unreadNotificationsEndpoint(int userId) =>
+      '/api/v1/notifications/user/$userId/unread';
+
+  /// Contar notificaciones no leídas
+  /// GET /api/v1/notifications/user/{userId}/unread/count
+  static String unreadCountEndpoint(int userId) =>
+      '/api/v1/notifications/user/$userId/unread/count';
+
+  /// Obtener notificaciones por tipo
+  /// GET /api/v1/notifications/user/{userId}/type/{type}
+  static String notificationsByTypeEndpoint(int userId, String type) =>
+      '/api/v1/notifications/user/$userId/type/$type';
+
+  /// Marcar notificación como leída
+  /// PATCH /api/v1/notifications/{id}/read
+  static String markAsReadEndpoint(int notificationId) =>
+      '/api/v1/notifications/$notificationId/read';
+
+  /// Marcar todas como leídas
+  /// PATCH /api/v1/notifications/user/{userId}/read-all
+  static String markAllAsReadEndpoint(int userId) =>
+      '/api/v1/notifications/user/$userId/read-all';
+
+  /// Eliminar notificación
+  /// DELETE /api/v1/notifications/{id}
+  static String deleteNotificationEndpoint(int notificationId) =>
+      '/api/v1/notifications/$notificationId';
+
+  /// Eliminar todas las notificaciones de un usuario
+  /// DELETE /api/v1/notifications/user/{userId}
+  static String deleteAllNotificationsEndpoint(int userId) =>
+      '/api/v1/notifications/user/$userId';
 
   // ============================================================================
   // HEADERS HTTP

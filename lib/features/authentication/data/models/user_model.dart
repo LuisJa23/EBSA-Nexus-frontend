@@ -101,15 +101,40 @@ class UserModel extends User {
   factory UserModel.fromLoginResponse(Map<String, dynamic> json) {
     try {
       print('🔍 DEBUG fromLoginResponse - JSON completo: $json');
-      print('🔍 DEBUG fromLoginResponse - role field: ${json['role']}');
+      print(
+        '🔍 DEBUG fromLoginResponse - Campos disponibles: ${json.keys.toList()}',
+      );
+
+      // IMPORTANTE: Buscar el ID numérico del usuario/worker
+      // El backend envía notificaciones con "userId" que debe ser numérico
+      String userId;
+      if (json.containsKey('userId') && json['userId'] != null) {
+        userId = json['userId'].toString();
+        print('✅ userId encontrado: $userId');
+      } else if (json.containsKey('id') && json['id'] != null) {
+        userId = json['id'].toString();
+        print('✅ id encontrado: $userId');
+      } else if (json.containsKey('workerId') && json['workerId'] != null) {
+        userId = json['workerId'].toString();
+        print('✅ workerId encontrado: $userId');
+      } else {
+        // Fallback: usar username si no hay ID numérico
+        userId = json['username'] ?? 'unknown';
+        print('⚠️ No se encontró userId/id/workerId numérico');
+        print(
+          '⚠️ ACCIÓN REQUERIDA: El backend debe enviar el campo "userId" en /auth/login',
+        );
+        print('⚠️ Usando username como fallback: $userId');
+      }
+
       final now = DateTime.now();
 
       final userModel = UserModel(
-        id: json['username'] ?? 'unknown',
+        id: userId,
         username: json['username'] ?? 'unknown',
         email: _parseStringField(json, 'email').toLowerCase().trim(),
-        firstName: json['username'] ?? 'Usuario',
-        lastName: '',
+        firstName: json['firstName'] ?? json['username'] ?? 'Usuario',
+        lastName: json['lastName'] ?? '',
         role: _parseUserRole(json['role']),
         workArea: json['workRole'] ?? '',
         phoneNumber: null,
@@ -120,10 +145,11 @@ class UserModel extends User {
       );
 
       print(
-        '✅ DEBUG fromLoginResponse - UserModel creado con role: ${userModel.role}',
+        '✅ UserModel creado - ID: ${userModel.id}, Username: ${userModel.username}, Role: ${userModel.role}',
       );
       return userModel;
     } catch (e) {
+      print('❌ Error en fromLoginResponse: $e');
       throw FormatException('Error deserializando respuesta de login: $e');
     }
   }
