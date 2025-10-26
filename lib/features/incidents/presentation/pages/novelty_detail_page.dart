@@ -36,11 +36,19 @@ class _NoveltyDetailPageState extends State<NoveltyDetailPage> {
   bool _isLoading = true;
   NoveltyModel? _novelty;
   String? _errorMessage;
+  int _currentImageIndex = 0; // Para el indicador de posición
+  final PageController _pageController = PageController(); // Controlador del carrusel
 
   @override
   void initState() {
     super.initState();
     _loadNoveltyDetail();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose(); // Liberar recursos
+    super.dispose();
   }
 
   Future<void> _loadNoveltyDetail() async {
@@ -109,12 +117,8 @@ class _NoveltyDetailPageState extends State<NoveltyDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Detalle de Novedad',
-          style: AppTextStyles.heading2.copyWith(color: AppColors.textPrimary),
-        ),
-        backgroundColor: AppColors.surface,
-        elevation: 0,
+        title: const Text('Detalle de Novedad'),
+        centerTitle: true,
       ),
       body: _buildBody(),
       bottomNavigationBar: _novelty != null && _novelty!.crewId == null
@@ -180,35 +184,140 @@ class _NoveltyDetailPageState extends State<NoveltyDetailPage> {
   }
 
   Widget _buildImagesSection() {
-    return SizedBox(
-      height: 250,
-      child: PageView.builder(
-        itemCount: _novelty!.images.length,
-        itemBuilder: (context, index) {
-          final image = _novelty!.images[index];
-          return GestureDetector(
-            onTap: () => _showImageFullscreen(image.imageUrl),
-            child: Image.network(
-              image.imageUrl,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  color: AppColors.surfaceElevated,
-                  child: const Center(
-                    child: Icon(Icons.broken_image, size: 64),
+    final imageCount = _novelty!.images.length;
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      height: 280,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Stack(
+          children: [
+            // Carrusel de imágenes
+            PageView.builder(
+              controller: _pageController,
+              itemCount: imageCount,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentImageIndex = index;
+                });
+              },
+              itemBuilder: (context, index) {
+                final image = _novelty!.images[index];
+                return GestureDetector(
+                  onTap: () => _showImageFullscreen(image.imageUrl),
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Image.network(
+                      image.imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: AppColors.surfaceElevated,
+                          child: const Center(
+                            child: Icon(Icons.broken_image, size: 64),
+                          ),
+                        );
+                      },
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          color: AppColors.surfaceElevated,
+                          child: const Center(child: CircularProgressIndicator()),
+                        );
+                      },
+                    ),
                   ),
                 );
               },
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return Container(
-                  color: AppColors.surfaceElevated,
-                  child: const Center(child: CircularProgressIndicator()),
-                );
-              },
             ),
-          );
-        },
+            
+            // Flechas de navegación (solo si hay más de 1 imagen)
+            if (imageCount > 1) ...[
+              // Flecha izquierda
+              if (_currentImageIndex > 0)
+                Positioned(
+                  left: 8,
+                  top: 0,
+                  bottom: 0,
+                  child: Center(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.5),
+                        shape: BoxShape.circle,
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.chevron_left, color: Colors.white, size: 28),
+                        onPressed: () {
+                          _pageController.previousPage(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              
+              // Flecha derecha
+              if (_currentImageIndex < imageCount - 1)
+                Positioned(
+                  right: 8,
+                  top: 0,
+                  bottom: 0,
+                  child: Center(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.5),
+                        shape: BoxShape.circle,
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.chevron_right, color: Colors.white, size: 28),
+                        onPressed: () {
+                          _pageController.nextPage(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+            
+            // Indicador de posición (número de imagen)
+            if (imageCount > 1)
+              Positioned(
+                bottom: 12,
+                right: 12,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    '${_currentImageIndex + 1} / $imageCount',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -238,190 +347,283 @@ class _NoveltyDetailPageState extends State<NoveltyDetailPage> {
   }
 
   Widget _buildInfoSection() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildInfoRow(
-            Icons.account_circle,
-            'Cuenta',
-            _novelty!.accountNumber,
-            AppColors.primary,
-          ),
-          const SizedBox(height: 12),
-          _buildInfoRow(
-            Icons.speed,
-            'Medidor',
-            _novelty!.meterNumber,
-            AppColors.secondary,
-          ),
-          const SizedBox(height: 12),
-          _buildInfoRow(
-            Icons.report_problem,
-            'Motivo',
-            _getReasonLabel(_novelty!.reason),
-            _getReasonColor(_novelty!.reason),
-          ),
-        ],
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Información General',
+              style: AppTextStyles.heading3.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildInfoRow(
+              Icons.account_circle,
+              'Cuenta',
+              _novelty!.accountNumber,
+              AppColors.primary,
+            ),
+            const Divider(height: 24),
+            _buildInfoRow(
+              Icons.speed,
+              'Medidor',
+              _novelty!.meterNumber,
+              AppColors.secondary,
+            ),
+            const Divider(height: 24),
+            _buildInfoRow(
+              Icons.report_problem,
+              'Motivo',
+              _getReasonLabel(_novelty!.reason),
+              _getReasonColor(_novelty!.reason),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildReadingsSection() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Lecturas',
-            style: AppTextStyles.bodyLarge.copyWith(
-              fontWeight: FontWeight.bold,
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Lecturas',
+              style: AppTextStyles.heading3.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Activa', style: AppTextStyles.caption),
-                    const SizedBox(height: 4),
-                    Text(
-                      _novelty!.activeReading.toStringAsFixed(2),
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Reactiva', style: AppTextStyles.caption),
-                    const SizedBox(height: 4),
-                    Text(
-                      _novelty!.reactiveReading.toStringAsFixed(2),
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.bolt, size: 16, color: AppColors.primary),
+                            const SizedBox(width: 4),
+                            Text('Activa', style: AppTextStyles.caption),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _novelty!.activeReading.toStringAsFixed(2),
+                          style: AppTextStyles.heading3.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.secondary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.flash_on, size: 16, color: AppColors.secondary),
+                            const SizedBox(width: 4),
+                            Text('Reactiva', style: AppTextStyles.caption),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _novelty!.reactiveReading.toStringAsFixed(2),
+                          style: AppTextStyles.heading3.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.secondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildLocationSection() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Ubicación',
-            style: AppTextStyles.bodyLarge.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
-          InkWell(
-            onTap: _openMap,
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceElevated,
-                borderRadius: BorderRadius.circular(8),
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: _openMap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Ubicación',
+                style: AppTextStyles.heading3.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              child: Row(
+              const SizedBox(height: 12),
+              Row(
                 children: [
-                  Icon(Icons.location_on, color: AppColors.error),
-                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.error.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(Icons.location_on, color: AppColors.error, size: 24),
+                  ),
+                  const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
-                      _novelty!.municipality,
-                      style: AppTextStyles.bodyMedium,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Municipio', style: AppTextStyles.caption),
+                        const SizedBox(height: 4),
+                        Text(
+                          _novelty!.municipality,
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   Icon(Icons.open_in_new, size: 20, color: AppColors.primary),
                 ],
               ),
-            ),
+              const SizedBox(height: 8),
+              Text(
+                'Toca para ver en el mapa',
+                style: AppTextStyles.caption.copyWith(
+                  color: AppColors.primary,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildDescriptionSection() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Descripción',
-            style: AppTextStyles.bodyLarge.copyWith(
-              fontWeight: FontWeight.bold,
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.description, size: 20, color: AppColors.primary),
+                const SizedBox(width: 8),
+                Text(
+                  'Descripción',
+                  style: AppTextStyles.heading3.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(_novelty!.description, style: AppTextStyles.bodyMedium),
-          if (_novelty!.observations != null &&
-              _novelty!.observations!.isNotEmpty) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Text(
-              'Observaciones',
-              style: AppTextStyles.bodyLarge.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              _novelty!.description,
+              style: AppTextStyles.bodyMedium.copyWith(height: 1.5),
             ),
-            const SizedBox(height: 8),
-            Text(_novelty!.observations!, style: AppTextStyles.bodyMedium),
+            if (_novelty!.observations != null &&
+                _novelty!.observations!.isNotEmpty) ...[
+              const Divider(height: 24),
+              Row(
+                children: [
+                  Icon(Icons.note, size: 20, color: AppColors.secondary),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Observaciones',
+                    style: AppTextStyles.heading3.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                _novelty!.observations!,
+                style: AppTextStyles.bodyMedium.copyWith(height: 1.5),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildStatusSection() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Estado',
-            style: AppTextStyles.bodyLarge.copyWith(
-              fontWeight: FontWeight.bold,
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Estado',
+              style: AppTextStyles.heading3.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          _buildStatusChip(_novelty!.status),
-          const SizedBox(height: 12),
-          Text(
-            'Creada: ${_formatDate(_novelty!.createdAt)}',
-            style: AppTextStyles.caption,
-          ),
-        ],
+            const SizedBox(height: 12),
+            _buildStatusChip(_novelty!.status),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Icon(Icons.schedule, size: 16, color: AppColors.textSecondary),
+                const SizedBox(width: 8),
+                Text(
+                  'Creada: ${_formatDate(_novelty!.createdAt)}',
+                  style: AppTextStyles.caption,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

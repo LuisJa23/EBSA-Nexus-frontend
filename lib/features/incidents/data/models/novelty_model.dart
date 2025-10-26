@@ -63,7 +63,7 @@ class NoveltyModel {
           .map((e) => NoveltyImageModel.fromJson(e as Map<String, dynamic>))
           .toList();
     }
-    
+
     return NoveltyModel(
       id: json['id'] as int,
       areaId: json['areaId'] as int,
