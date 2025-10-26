@@ -178,7 +178,7 @@ class _NoveltyDetailPageState extends State<NoveltyDetailPage> {
           // Estado y fechas
           _buildStatusSection(),
 
-          const SizedBox(height: 100), // Espacio para el botón
+          const SizedBox(height: 20), // Reducir espacio para el botón
         ],
       ),
     );
@@ -696,21 +696,23 @@ class _NoveltyDetailPageState extends State<NoveltyDetailPage> {
 
   Widget _buildAssignButton() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+
+      child: ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
-        ],
-      ),
-      child: CustomButton(
-        text: 'Asignar Cuadrilla',
+        ),
         onPressed: _showAssignCrewDialog,
-        icon: Icons.group_add,
+        icon: const Icon(Icons.group_add, size: 22),
+        label: const Text(
+          'Asignar Cuadrilla',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+        ),
       ),
     );
   }
