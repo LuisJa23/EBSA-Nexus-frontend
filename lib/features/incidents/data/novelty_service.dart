@@ -206,4 +206,31 @@ class NoveltyService {
       rethrow;
     }
   }
+
+  /// Actualiza el estado de una novedad a COMPLETADA
+  /// Para COMPLETADA usa /resolve
+  Future<Response> updateNoveltyStatus({
+    required String noveltyId,
+    required String status,
+  }) async {
+    try {
+      String endpoint;
+
+      if (status == 'COMPLETADA') {
+        endpoint = '${ApiConstants.noveltiesEndpoint}/$noveltyId/resolve';
+      } else {
+        throw Exception('Estado no válido para actualización: $status');
+      }
+
+      final response = await _apiClient.put(endpoint);
+
+      return response;
+    } catch (e) {
+      AppLogger.error(
+        'NoveltyService: Error al actualizar estado de novedad',
+        error: e,
+      );
+      rethrow;
+    }
+  }
 }

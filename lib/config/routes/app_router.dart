@@ -17,6 +17,7 @@ import '../../features/incidents/presentation/pages/manage_incident_page.dart';
 import '../../features/incidents/presentation/pages/create_incident_page.dart';
 import '../../features/incidents/presentation/pages/assign_squad_page.dart';
 import '../../features/incidents/presentation/pages/novelty_detail_page.dart';
+import '../../features/incidents/presentation/pages/novelty_report_page.dart';
 import '../../features/incidents/presentation/pages/incident_list_page.dart';
 import '../../features/incidents/presentation/pages/offline_incidents_page.dart';
 import '../../features/reports/presentation/pages/create_report_page.dart';
@@ -260,6 +261,19 @@ final routerProvider = Provider<GoRouter>((ref) {
               return NoTransitionPage(
                 key: state.pageKey,
                 child: NoveltyDetailPage(noveltyId: noveltyId),
+              );
+            },
+          ),
+
+          /// Reporte de Novedad
+          GoRoute(
+            path: '/novelty-report/:noveltyId',
+            name: 'novelty-report',
+            pageBuilder: (context, state) {
+              final noveltyId = state.pathParameters['noveltyId']!;
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: NoveltyReportPage(noveltyId: noveltyId),
               );
             },
           ),

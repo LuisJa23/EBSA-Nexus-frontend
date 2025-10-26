@@ -185,9 +185,14 @@ class _AssignmentsPageState extends ConsumerState<AssignmentsPage> {
           final novelty = assignmentsState.novelties[index];
           return NoveltyCard(
             novelty: novelty,
+            userRole: authState.user?.role,
             onTap: () {
               // Navegar al detalle de la novedad
               context.push('/novelty-detail/${novelty.id}');
+            },
+            onStatusChanged: () {
+              // Recargar las asignaciones después de cambiar el estado
+              _loadAssignments();
             },
           );
         },
