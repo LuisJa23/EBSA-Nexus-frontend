@@ -48,6 +48,7 @@ class RouteNames {
   static const String incidentSelector = '/incidents/selector';
   static const String manageIncident = '/manage-incident';
   static const String createIncident = '/manage-incident/create';
+  static const String assignSquad = '/manage-incident/assign-squad';
   static const String incidentList = '/incident-list';
   static const String offlineIncidents = '/manage-incident/offline';
 

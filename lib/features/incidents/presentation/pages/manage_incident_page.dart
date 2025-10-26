@@ -76,7 +76,16 @@ class ManageIncidentPage extends StatelessWidget {
         ),
         const SizedBox(height: 16),
 
-        // Opción 2: Lista de Incidentes
+        // Opción 2: Asignar Cuadrilla
+        HomeActionCard(
+          icon: Icons.group_work,
+          title: 'Asignar Cuadrilla',
+          subtitle: 'Asignar Novedad a Cuadrilla',
+          onTap: () => context.push(RouteNames.assignSquad),
+        ),
+        const SizedBox(height: 16),
+
+        // Opción 3: Lista de Incidentes
         HomeActionCard(
           icon: Icons.list_alt,
           title: 'Lista de Incidentes',

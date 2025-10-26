@@ -45,6 +45,11 @@ class _MapLocationPickerWidgetState extends State<MapLocationPickerWidget> {
         widget.initialLocation!.longitude,
       );
       _accuracy = widget.initialLocation!.accuracy;
+
+      // Mover el mapa a la ubicación inicial después de construir
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _mapController.move(_selectedLocation, 15.0);
+      });
     } else {
       // Bogotá, Colombia por defecto (temporal mientras carga GPS)
       _selectedLocation = LatLng(4.7110, -74.0721);

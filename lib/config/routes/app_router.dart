@@ -10,11 +10,13 @@ import '../../features/authentication/presentation/pages/home_page.dart';
 import '../../features/authentication/presentation/pages/login_page.dart';
 import '../../features/authentication/presentation/pages/splash_page.dart';
 import '../../features/authentication/presentation/pages/notifications_page.dart';
-import '../../features/authentication/presentation/pages/assignments_page.dart';
+import '../../features/incidents/presentation/pages/assignments_page.dart';
 import '../../features/authentication/presentation/pages/profile_page.dart';
 import '../../features/authentication/presentation/providers/auth_provider.dart';
 import '../../features/incidents/presentation/pages/manage_incident_page.dart';
 import '../../features/incidents/presentation/pages/create_incident_page.dart';
+import '../../features/incidents/presentation/pages/assign_squad_page.dart';
+import '../../features/incidents/presentation/pages/novelty_detail_page.dart';
 import '../../features/incidents/presentation/pages/incident_list_page.dart';
 import '../../features/incidents/presentation/pages/offline_incidents_page.dart';
 import '../../features/reports/presentation/pages/create_report_page.dart';
@@ -215,6 +217,30 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
 
+          /// Asignar Cuadrilla
+          GoRoute(
+            path: RouteNames.assignSquad,
+            name: 'assign-squad',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const AssignSquadPage(),
+            ),
+            routes: [
+              /// Detalle de Novedad para Asignar
+              GoRoute(
+                path: 'novelty/:noveltyId',
+                name: 'novelty-detail',
+                pageBuilder: (context, state) {
+                  final noveltyId = state.pathParameters['noveltyId']!;
+                  return NoTransitionPage(
+                    key: state.pageKey,
+                    child: NoveltyDetailPage(noveltyId: noveltyId),
+                  );
+                },
+              ),
+            ],
+          ),
+
           /// Consultar Novedades
           GoRoute(
             path: RouteNames.incidentList,
@@ -223,6 +249,19 @@ final routerProvider = Provider<GoRouter>((ref) {
               key: state.pageKey,
               child: const IncidentListPage(),
             ),
+          ),
+
+          /// Detalle de Novedad (Ruta independiente)
+          GoRoute(
+            path: '/novelty-detail/:noveltyId',
+            name: 'novelty-detail-standalone',
+            pageBuilder: (context, state) {
+              final noveltyId = state.pathParameters['noveltyId']!;
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: NoveltyDetailPage(noveltyId: noveltyId),
+              );
+            },
           ),
 
           /// Novedades Offline
@@ -413,6 +452,7 @@ String _getTitleForRoute(String path) {
   // Rutas de incidentes y reportes
   if (path == RouteNames.manageIncident) return 'Gestionar Novedad';
   if (path == RouteNames.createIncident) return 'Crear Incidente';
+  if (path == RouteNames.assignSquad) return 'Asignar Cuadrilla';
   if (path == RouteNames.incidentList) return 'Consultas';
   if (path == RouteNames.createReport) return 'Hacer Reporte';
 
