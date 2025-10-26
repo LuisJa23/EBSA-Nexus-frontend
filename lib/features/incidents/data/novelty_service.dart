@@ -13,6 +13,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/utils/app_logger.dart';
 
 /// Servicio para gestión de novedades
 class NoveltyService {
@@ -177,6 +178,31 @@ class NoveltyService {
 
       return response;
     } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Obtiene las novedades asignadas a un usuario
+  Future<Response> getUserNovelties(String userId) async {
+    try {
+      final endpoint = ApiConstants.userNoveltiesEndpoint(userId);
+      AppLogger.debug('NoveltyService: Llamando endpoint: $endpoint');
+
+      final response = await _apiClient.get(endpoint);
+
+      AppLogger.debug(
+        'NoveltyService: Respuesta obtenida - Status: ${response.statusCode}',
+      );
+      if (response.data != null) {
+        AppLogger.debug('NoveltyService: Datos de respuesta: ${response.data}');
+      }
+
+      return response;
+    } catch (e) {
+      AppLogger.error(
+        'NoveltyService: Error al obtener novedades del usuario',
+        error: e,
+      );
       rethrow;
     }
   }

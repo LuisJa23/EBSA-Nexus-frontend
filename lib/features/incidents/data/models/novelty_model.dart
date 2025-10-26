@@ -30,6 +30,7 @@ class NoveltyModel {
   final DateTime? cancelledAt;
   final List<NoveltyImageModel> images;
   final NoveltyAssignmentModel? assignment;
+  final int? imageCount;
 
   NoveltyModel({
     required this.id,
@@ -53,7 +54,40 @@ class NoveltyModel {
     this.cancelledAt,
     required this.images,
     this.assignment,
+    this.imageCount,
   });
+
+  /// Estado localizado en español
+  String get statusLocalized {
+    switch (status) {
+      case 'PENDIENTE':
+        return 'Pendiente';
+      case 'EN_CURSO':
+        return 'En Curso';
+      case 'COMPLETADA':
+        return 'Completada';
+      case 'CERRADA':
+        return 'Cerrada';
+      case 'CANCELADA':
+        return 'Cancelada';
+      default:
+        return status;
+    }
+  }
+
+  /// Motivo localizado
+  String get reasonLocalized {
+    switch (reason) {
+      case 'ERROR_LECTURA':
+        return 'Error de Lectura';
+      case 'ACTUALIZACION_DATOS':
+        return 'Actualización de Datos';
+      case 'OTROS':
+        return 'Otros';
+      default:
+        return reason;
+    }
+  }
 
   factory NoveltyModel.fromJson(Map<String, dynamic> json) {
     // Manejar tanto el formato con 'images' (array) como 'imageCount' (número)
@@ -96,6 +130,7 @@ class NoveltyModel {
               json['assignment'] as Map<String, dynamic>,
             )
           : null,
+      imageCount: json['imageCount'] as int?,
     );
   }
 
@@ -122,6 +157,7 @@ class NoveltyModel {
       'cancelledAt': cancelledAt?.toIso8601String(),
       'images': images.map((e) => e.toJson()).toList(),
       'assignment': assignment?.toJson(),
+      'imageCount': imageCount,
     };
   }
 }

@@ -101,6 +101,10 @@ class ApiConstants {
   /// Endpoint para obtener lista de novedades
   static const String noveltiesEndpoint = '/api/v1/novelties';
 
+  /// Endpoint para obtener novedades del usuario
+  static String userNoveltiesEndpoint(String userId) =>
+      '/api/v1/novelties/user/$userId';
+
   // ============================================================================
   // HEADERS HTTP
   // ============================================================================

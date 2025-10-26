@@ -10,7 +10,7 @@ import '../../features/authentication/presentation/pages/home_page.dart';
 import '../../features/authentication/presentation/pages/login_page.dart';
 import '../../features/authentication/presentation/pages/splash_page.dart';
 import '../../features/authentication/presentation/pages/notifications_page.dart';
-import '../../features/authentication/presentation/pages/assignments_page.dart';
+import '../../features/incidents/presentation/pages/assignments_page.dart';
 import '../../features/authentication/presentation/pages/profile_page.dart';
 import '../../features/authentication/presentation/providers/auth_provider.dart';
 import '../../features/incidents/presentation/pages/manage_incident_page.dart';
@@ -249,6 +249,19 @@ final routerProvider = Provider<GoRouter>((ref) {
               key: state.pageKey,
               child: const IncidentListPage(),
             ),
+          ),
+
+          /// Detalle de Novedad (Ruta independiente)
+          GoRoute(
+            path: '/novelty-detail/:noveltyId',
+            name: 'novelty-detail-standalone',
+            pageBuilder: (context, state) {
+              final noveltyId = state.pathParameters['noveltyId']!;
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: NoveltyDetailPage(noveltyId: noveltyId),
+              );
+            },
           ),
 
           /// Novedades Offline
