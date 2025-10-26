@@ -37,7 +37,8 @@ class _NoveltyDetailPageState extends State<NoveltyDetailPage> {
   NoveltyModel? _novelty;
   String? _errorMessage;
   int _currentImageIndex = 0; // Para el indicador de posición
-  final PageController _pageController = PageController(); // Controlador del carrusel
+  final PageController _pageController =
+      PageController(); // Controlador del carrusel
 
   @override
   void initState() {
@@ -185,12 +186,12 @@ class _NoveltyDetailPageState extends State<NoveltyDetailPage> {
 
   Widget _buildImagesSection() {
     final imageCount = _novelty!.images.length;
-    
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       height: 280,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -200,7 +201,7 @@ class _NoveltyDetailPageState extends State<NoveltyDetailPage> {
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         child: Stack(
           children: [
             // Carrusel de imágenes
@@ -216,8 +217,10 @@ class _NoveltyDetailPageState extends State<NoveltyDetailPage> {
                 final image = _novelty!.images[index];
                 return GestureDetector(
                   onTap: () => _showImageFullscreen(image.imageUrl),
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(
+                      16,
+                    ), // Aplicar borde directamente a la imagen
                     child: Image.network(
                       image.imageUrl,
                       fit: BoxFit.cover,
@@ -233,7 +236,9 @@ class _NoveltyDetailPageState extends State<NoveltyDetailPage> {
                         if (loadingProgress == null) return child;
                         return Container(
                           color: AppColors.surfaceElevated,
-                          child: const Center(child: CircularProgressIndicator()),
+                          child: const Center(
+                            child: CircularProgressIndicator(),
+                          ),
                         );
                       },
                     ),
@@ -241,7 +246,7 @@ class _NoveltyDetailPageState extends State<NoveltyDetailPage> {
                 );
               },
             ),
-            
+
             // Flechas de navegación (solo si hay más de 1 imagen)
             if (imageCount > 1) ...[
               // Flecha izquierda
@@ -257,7 +262,11 @@ class _NoveltyDetailPageState extends State<NoveltyDetailPage> {
                         shape: BoxShape.circle,
                       ),
                       child: IconButton(
-                        icon: const Icon(Icons.chevron_left, color: Colors.white, size: 28),
+                        icon: const Icon(
+                          Icons.chevron_left,
+                          color: Colors.white,
+                          size: 28,
+                        ),
                         onPressed: () {
                           _pageController.previousPage(
                             duration: const Duration(milliseconds: 300),
@@ -268,7 +277,7 @@ class _NoveltyDetailPageState extends State<NoveltyDetailPage> {
                     ),
                   ),
                 ),
-              
+
               // Flecha derecha
               if (_currentImageIndex < imageCount - 1)
                 Positioned(
@@ -282,7 +291,11 @@ class _NoveltyDetailPageState extends State<NoveltyDetailPage> {
                         shape: BoxShape.circle,
                       ),
                       child: IconButton(
-                        icon: const Icon(Icons.chevron_right, color: Colors.white, size: 28),
+                        icon: const Icon(
+                          Icons.chevron_right,
+                          color: Colors.white,
+                          size: 28,
+                        ),
                         onPressed: () {
                           _pageController.nextPage(
                             duration: const Duration(milliseconds: 300),
@@ -294,14 +307,17 @@ class _NoveltyDetailPageState extends State<NoveltyDetailPage> {
                   ),
                 ),
             ],
-            
+
             // Indicador de posición (número de imagen)
             if (imageCount > 1)
               Positioned(
                 bottom: 12,
                 right: 12,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.7),
                     borderRadius: BorderRadius.circular(16),
@@ -420,7 +436,11 @@ class _NoveltyDetailPageState extends State<NoveltyDetailPage> {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.bolt, size: 16, color: AppColors.primary),
+                            Icon(
+                              Icons.bolt,
+                              size: 16,
+                              color: AppColors.primary,
+                            ),
                             const SizedBox(width: 4),
                             Text('Activa', style: AppTextStyles.caption),
                           ],
@@ -450,7 +470,11 @@ class _NoveltyDetailPageState extends State<NoveltyDetailPage> {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.flash_on, size: 16, color: AppColors.secondary),
+                            Icon(
+                              Icons.flash_on,
+                              size: 16,
+                              color: AppColors.secondary,
+                            ),
                             const SizedBox(width: 4),
                             Text('Reactiva', style: AppTextStyles.caption),
                           ],
@@ -503,7 +527,11 @@ class _NoveltyDetailPageState extends State<NoveltyDetailPage> {
                       color: AppColors.error.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(Icons.location_on, color: AppColors.error, size: 24),
+                    child: Icon(
+                      Icons.location_on,
+                      color: AppColors.error,
+                      size: 24,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
