@@ -11,13 +11,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../config/dependency_injection/injection_container.dart' as di;
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/loading_indicator.dart';
-import '../../../../core/widgets/custom_button.dart';
+import '../../../../core/widgets/map_location_picker_widget.dart';
 import '../../../crews/data/models/crew_model.dart';
 import '../../../crews/data/datasources/crew_remote_datasource.dart';
 import '../../data/models/novelty_model.dart';
@@ -88,15 +87,31 @@ class _NoveltyDetailPageState extends State<NoveltyDetailPage> {
     final coordinates = _novelty!.address.split(',');
     if (coordinates.length != 2) return;
 
-    final lat = coordinates[0];
-    final lon = coordinates[1];
-    final url = Uri.parse(
-      'https://www.google.com/maps/search/?api=1&query=$lat,$lon',
-    );
+    final lat = double.tryParse(coordinates[0]);
+    final lon = double.tryParse(coordinates[1]);
 
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
+    if (lat == null || lon == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Coordenadas inválidas'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
     }
+
+    // Abrir mapa interactivo con la ubicación de la novedad
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => MapLocationPickerWidget(
+          initialLocation: LocationResult(
+            latitude: lat,
+            longitude: lon,
+            accuracy: 0,
+          ),
+        ),
+      ),
+    );
   }
 
   void _showAssignCrewDialog() {
@@ -789,6 +804,8 @@ class _AssignCrewBottomSheetState extends State<_AssignCrewBottomSheet> {
   CrewModel? _selectedCrew;
   String _priority = 'MEDIA';
   final _instructionsController = TextEditingController();
+  int _currentPage = 0;
+  final int _itemsPerPage = 4;
 
   @override
   void initState() {
@@ -800,6 +817,14 @@ class _AssignCrewBottomSheetState extends State<_AssignCrewBottomSheet> {
   void dispose() {
     _instructionsController.dispose();
     super.dispose();
+  }
+
+  int get _totalPages => (_crews.length / _itemsPerPage).ceil();
+
+  List<CrewModel> get _currentCrews {
+    final start = _currentPage * _itemsPerPage;
+    final end = (start + _itemsPerPage).clamp(0, _crews.length);
+    return _crews.sublist(start, end);
   }
 
   Future<void> _loadCrews() async {
@@ -888,13 +913,68 @@ class _AssignCrewBottomSheetState extends State<_AssignCrewBottomSheet> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Asignar Cuadrilla', style: AppTextStyles.heading2),
+                  // Header con botón cerrar
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Asignar Cuadrilla', style: AppTextStyles.heading2),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.of(context).pop(),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 24),
 
-                  // Selección de cuadrilla
+                  // Selección de cuadrilla con paginación
                   Text('Cuadrilla', style: AppTextStyles.bodyMedium),
                   const SizedBox(height: 8),
-                  ...(_crews.map((crew) => _buildCrewOption(crew))),
+
+                  // Mostrar cuadrillas de la página actual
+                  if (_crews.isEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceElevated,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Center(
+                        child: Text('No hay cuadrillas disponibles'),
+                      ),
+                    )
+                  else ...[
+                    ...(_currentCrews.map((crew) => _buildCrewOption(crew))),
+
+                    // Controles de paginación
+                    if (_totalPages > 1) ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.chevron_left),
+                            onPressed: _currentPage > 0
+                                ? () => setState(() => _currentPage--)
+                                : null,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Página ${_currentPage + 1} de $_totalPages',
+                            style: AppTextStyles.bodySmall,
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: const Icon(Icons.chevron_right),
+                            onPressed: _currentPage < _totalPages - 1
+                                ? () => setState(() => _currentPage++)
+                                : null,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
 
                   const SizedBox(height: 16),
 
@@ -929,8 +1009,52 @@ class _AssignCrewBottomSheetState extends State<_AssignCrewBottomSheet> {
 
                   const SizedBox(height: 24),
 
-                  // Botón asignar
-                  CustomButton(text: 'Asignar', onPressed: _assignCrew),
+                  // Botones
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            side: BorderSide(color: AppColors.primary),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            'Cancelar',
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _assignCrew,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Asignar',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
