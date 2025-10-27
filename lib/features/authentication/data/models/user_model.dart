@@ -102,6 +102,9 @@ class UserModel extends User {
   factory UserModel.fromLoginResponse(Map<String, dynamic> json, String token) {
     try {
       print('🔍 DEBUG fromLoginResponse - JSON completo: $json');
+      print(
+        '🔍 DEBUG fromLoginResponse - Campos disponibles: ${json.keys.toList()}',
+      );
       print('🔍 DEBUG fromLoginResponse - token: ${token.substring(0, 20)}...');
 
       // Decodificar el JWT para obtener el userId
@@ -113,7 +116,9 @@ class UserModel extends User {
 
       final now = DateTime.now();
 
-      // Intentar obtener el userId del JWT primero
+      // IMPORTANTE: Buscar el ID numérico del usuario/worker
+      // El backend envía notificaciones con "userId" que debe ser numérico
+      // Prioridad: JWT primero, luego JSON response
       String userId = 'unknown';
 
       // Revisar diferentes campos posibles en el JWT
@@ -143,8 +148,8 @@ class UserModel extends User {
         id: userId,
         username: json['username'] ?? 'unknown',
         email: _parseStringField(json, 'email').toLowerCase().trim(),
-        firstName: json['username'] ?? 'Usuario',
-        lastName: '',
+        firstName: json['firstName'] ?? json['username'] ?? 'Usuario',
+        lastName: json['lastName'] ?? '',
         role: _parseUserRole(json['role']),
         workArea: json['workRole'] ?? '',
         phoneNumber: null,
@@ -155,11 +160,11 @@ class UserModel extends User {
       );
 
       print(
-        '✅ DEBUG fromLoginResponse - UserModel creado con id: ${userModel.id}, role: ${userModel.role}',
+        '✅ UserModel creado - ID: ${userModel.id}, Username: ${userModel.username}, Role: ${userModel.role}',
       );
       return userModel;
     } catch (e, stackTrace) {
-      print('❌ ERROR deserializando respuesta de login: $e');
+      print('❌ Error en fromLoginResponse: $e');
       print('❌ StackTrace: $stackTrace');
       throw FormatException('Error deserializando respuesta de login: $e');
     }

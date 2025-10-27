@@ -99,14 +99,47 @@ class NoveltyService {
     }
   }
 
-  /// Obtiene la lista de novedades
-  Future<Response> getNovelties({int? page, int? limit, String? status}) async {
+  /// Obtiene la lista de novedades con filtros y paginación
+  ///
+  /// Parámetros:
+  /// - [page]: Número de página (inicia en 0)
+  /// - [size]: Cantidad de elementos por página
+  /// - [sort]: Campo para ordenar
+  /// - [direction]: Dirección de ordenamiento (ASC o DESC)
+  /// - [status]: Filtrar por estado
+  /// - [priority]: Filtrar por prioridad
+  /// - [areaId]: Filtrar por ID de área
+  /// - [crewId]: Filtrar por ID de cuadrilla
+  /// - [creatorId]: Filtrar por ID del creador
+  /// - [startDate]: Fecha inicio (formato ISO)
+  /// - [endDate]: Fecha fin (formato ISO)
+  Future<Response> getNovelties({
+    int? page,
+    int? size,
+    String? sort,
+    String? direction,
+    String? status,
+    String? priority,
+    int? areaId,
+    int? crewId,
+    int? creatorId,
+    String? startDate,
+    String? endDate,
+  }) async {
     try {
       final queryParameters = <String, dynamic>{};
 
       if (page != null) queryParameters['page'] = page;
-      if (limit != null) queryParameters['limit'] = limit;
+      if (size != null) queryParameters['size'] = size;
+      if (sort != null) queryParameters['sort'] = sort;
+      if (direction != null) queryParameters['direction'] = direction;
       if (status != null) queryParameters['status'] = status;
+      if (priority != null) queryParameters['priority'] = priority;
+      if (areaId != null) queryParameters['areaId'] = areaId;
+      if (crewId != null) queryParameters['crewId'] = crewId;
+      if (creatorId != null) queryParameters['creatorId'] = creatorId;
+      if (startDate != null) queryParameters['startDate'] = startDate;
+      if (endDate != null) queryParameters['endDate'] = endDate;
 
       final response = await _apiClient.get(
         ApiConstants.noveltiesEndpoint,
@@ -123,7 +156,7 @@ class NoveltyService {
   Future<Response> getNoveltyById(String id) async {
     try {
       final response = await _apiClient.get(
-        '${ApiConstants.noveltiesEndpoint}/$id',
+        ApiConstants.noveltyByIdEndpoint(id),
       );
 
       return response;
@@ -146,7 +179,7 @@ class NoveltyService {
       }
 
       final response = await _apiClient.get(
-        '${ApiConstants.noveltiesEndpoint}/search',
+        '${ApiConstants.noveltiesEndpoint}',
         queryParameters: queryParameters,
       );
 
@@ -171,13 +204,23 @@ class NoveltyService {
           'instructions': instructions,
       };
 
+      AppLogger.debug(
+        'NoveltyService: Asignando cuadrilla $assignedCrewId a novedad $noveltyId',
+      );
+      AppLogger.debug('NoveltyService: Datos a enviar: $data');
+
       final response = await _apiClient.post(
-        '${ApiConstants.noveltiesEndpoint}/$noveltyId/assign',
+        ApiConstants.assignCrewToNoveltyEndpoint(noveltyId),
         data: data,
+      );
+
+      AppLogger.debug(
+        'NoveltyService: Cuadrilla asignada - Status: ${response.statusCode}',
       );
 
       return response;
     } catch (e) {
+      AppLogger.error('NoveltyService: Error al asignar cuadrilla', error: e);
       rethrow;
     }
   }
@@ -201,33 +244,6 @@ class NoveltyService {
     } catch (e) {
       AppLogger.error(
         'NoveltyService: Error al obtener novedades del usuario',
-        error: e,
-      );
-      rethrow;
-    }
-  }
-
-  /// Actualiza el estado de una novedad a COMPLETADA
-  /// Para COMPLETADA usa /resolve
-  Future<Response> updateNoveltyStatus({
-    required String noveltyId,
-    required String status,
-  }) async {
-    try {
-      String endpoint;
-
-      if (status == 'COMPLETADA') {
-        endpoint = '${ApiConstants.noveltiesEndpoint}/$noveltyId/resolve';
-      } else {
-        throw Exception('Estado no válido para actualización: $status');
-      }
-
-      final response = await _apiClient.put(endpoint);
-
-      return response;
-    } catch (e) {
-      AppLogger.error(
-        'NoveltyService: Error al actualizar estado de novedad',
         error: e,
       );
       rethrow;
