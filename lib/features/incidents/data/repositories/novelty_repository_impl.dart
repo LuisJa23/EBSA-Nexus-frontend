@@ -47,7 +47,9 @@ class NoveltyRepositoryImpl implements NoveltyRepository {
       );
 
       final noveltyPage = NoveltyPage(
-        novelties: pageResponse.content.map((model) => model.toEntity()).toList(),
+        novelties: pageResponse.content
+            .map((model) => model.toEntity())
+            .toList(),
         totalElements: pageResponse.totalElements,
         totalPages: pageResponse.totalPages,
         currentPage: pageResponse.number,
@@ -113,7 +115,9 @@ class NoveltyRepositoryImpl implements NoveltyRepository {
         return const NetworkFailure(message: 'Petición cancelada');
 
       case DioExceptionType.connectionError:
-        return const NetworkFailure(message: 'Error de conexión. Verifica tu internet.');
+        return const NetworkFailure(
+          message: 'Error de conexión. Verifica tu internet.',
+        );
 
       default:
         return NetworkFailure(message: 'Error de red: ${error.message}');

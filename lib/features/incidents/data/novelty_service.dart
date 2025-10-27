@@ -13,6 +13,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/utils/app_logger.dart';
 
 /// Servicio para gestión de novedades
 class NoveltyService {
@@ -21,7 +22,7 @@ class NoveltyService {
   NoveltyService(this._apiClient);
 
   /// Crea una nueva novedad con imágenes
-  /// 
+  ///
   /// Parámetros:
   /// - [areaId]: ID del área
   /// - [reason]: Motivo de la novedad
@@ -73,14 +74,11 @@ class NoveltyService {
       for (var i = 0; i < images.length; i++) {
         final file = images[i];
         final fileName = file.path.split('/').last;
-        
+
         formData.files.add(
           MapEntry(
             'images', // El backend espera "images" como nombre del campo
-            await MultipartFile.fromFile(
-              file.path,
-              filename: fileName,
-            ),
+            await MultipartFile.fromFile(file.path, filename: fileName),
           ),
         );
       }
@@ -91,9 +89,7 @@ class NoveltyService {
         data: formData,
         options: Options(
           contentType: 'multipart/form-data',
-          headers: {
-            'Accept': 'application/json',
-          },
+          headers: {'Accept': 'application/json'},
         ),
       );
 
@@ -104,7 +100,7 @@ class NoveltyService {
   }
 
   /// Obtiene la lista de novedades con filtros y paginación
-  /// 
+  ///
   /// Parámetros:
   /// - [page]: Número de página (inicia en 0)
   /// - [size]: Cantidad de elementos por página
@@ -165,6 +161,148 @@ class NoveltyService {
 
       return response;
     } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Busca novedades con filtros
+  Future<Response> searchNovelties({
+    int page = 0,
+    int size = 20,
+    String? status,
+  }) async {
+    try {
+      final queryParameters = <String, dynamic>{'page': page, 'size': size};
+
+      if (status != null) {
+        queryParameters['status'] = status;
+      }
+
+      final response = await _apiClient.get(
+        '${ApiConstants.noveltiesEndpoint}',
+        queryParameters: queryParameters,
+      );
+
+      return response;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Asigna una cuadrilla a una novedad
+  Future<Response> assignCrewToNovelty({
+    required String noveltyId,
+    required int assignedCrewId,
+    required String priority,
+    String? instructions,
+  }) async {
+    try {
+      final data = {
+        'assignedCrewId': assignedCrewId,
+        'priority': priority,
+        if (instructions != null && instructions.isNotEmpty)
+          'instructions': instructions,
+      };
+
+      AppLogger.debug(
+        'NoveltyService: Asignando cuadrilla $assignedCrewId a novedad $noveltyId',
+      );
+      AppLogger.debug('NoveltyService: Datos a enviar: $data');
+
+      final response = await _apiClient.post(
+        ApiConstants.assignCrewToNoveltyEndpoint(noveltyId),
+        data: data,
+      );
+
+      AppLogger.debug(
+        'NoveltyService: Cuadrilla asignada - Status: ${response.statusCode}',
+      );
+
+      return response;
+    } catch (e) {
+      AppLogger.error('NoveltyService: Error al asignar cuadrilla', error: e);
+      rethrow;
+    }
+  }
+
+  /// Obtiene las novedades asignadas a un usuario
+  Future<Response> getUserNovelties(String userId) async {
+    try {
+      final endpoint = ApiConstants.userNoveltiesEndpoint(userId);
+      AppLogger.debug('NoveltyService: Llamando endpoint: $endpoint');
+
+      final response = await _apiClient.get(endpoint);
+
+      AppLogger.debug(
+        'NoveltyService: Respuesta obtenida - Status: ${response.statusCode}',
+      );
+      if (response.data != null) {
+        AppLogger.debug('NoveltyService: Datos de respuesta: ${response.data}');
+      }
+
+      return response;
+    } catch (e) {
+      AppLogger.error(
+        'NoveltyService: Error al obtener novedades del usuario',
+        error: e,
+      );
+      rethrow;
+    }
+  }
+
+  /// Obtiene novedades por cuadrilla
+  ///
+  /// Endpoint: GET /api/v1/novelties/crew/{crewId}
+  Future<Response> getNoveliesByCrew(int crewId) async {
+    try {
+      AppLogger.debug(
+        'NoveltyService: Obteniendo novedades de cuadrilla $crewId',
+      );
+
+      final response = await _apiClient.get(
+        ApiConstants.noveltiesByCrewEndpoint(crewId),
+      );
+
+      AppLogger.debug(
+        'NoveltyService: Novedades de cuadrilla obtenidas - Status: ${response.statusCode}',
+      );
+
+      return response;
+    } catch (e) {
+      AppLogger.error(
+        'NoveltyService: Error al obtener novedades de cuadrilla',
+        error: e,
+      );
+      rethrow;
+    }
+  }
+
+  /// Obtiene novedades por estado
+  ///
+  /// Endpoint: GET /api/v1/novelties/status/{status}
+  ///
+  /// Parámetros:
+  /// - [status]: Estado de la novedad (CREADA, EN_CURSO, COMPLETADA, CERRADA, CANCELADA)
+  Future<Response> getNoveliesByStatus(String status) async {
+    try {
+      AppLogger.debug(
+        'NoveltyService: Obteniendo novedades con estado $status',
+      );
+
+      final response = await _apiClient.get(
+        ApiConstants.noveltiesByStatusEndpoint(status),
+      );
+
+      AppLogger.debug(
+        'NoveltyService: Novedades por estado obtenidas - Status: ${response.statusCode}',
+      );
+
+      return response;
+    } catch (e) {
+      AppLogger.error(
+        'NoveltyService: Error al obtener novedades por estado',
+        error: e,
+      );
       rethrow;
     }
   }

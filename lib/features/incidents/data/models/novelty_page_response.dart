@@ -35,9 +35,10 @@ class NoveltyPageResponse {
   /// Crea una instancia desde JSON
   factory NoveltyPageResponse.fromJson(Map<String, dynamic> json) {
     // El backend devuelve "novelties" en lugar de "content"
-    final noveltiesList = json['novelties'] as List<dynamic>? ?? 
-                          json['content'] as List<dynamic>?;
-    
+    final noveltiesList =
+        json['novelties'] as List<dynamic>? ??
+        json['content'] as List<dynamic>?;
+
     return NoveltyPageResponse(
       content: (noveltiesList ?? [])
           .map((item) => NoveltyResponse.fromJson(item as Map<String, dynamic>))
@@ -47,8 +48,10 @@ class NoveltyPageResponse {
       size: json['pageSize'] as int? ?? json['size'] as int? ?? 20,
       number: json['currentPage'] as int? ?? json['number'] as int? ?? 0,
       first: json['first'] as bool? ?? (json['currentPage'] as int? ?? 0) == 0,
-      last: json['last'] as bool? ?? 
-            (json['currentPage'] as int? ?? 0) >= ((json['totalPages'] as int? ?? 1) - 1),
+      last:
+          json['last'] as bool? ??
+          (json['currentPage'] as int? ?? 0) >=
+              ((json['totalPages'] as int? ?? 1) - 1),
       empty: json['empty'] as bool? ?? (noveltiesList?.isEmpty ?? true),
     );
   }

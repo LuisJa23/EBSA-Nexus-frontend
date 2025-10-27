@@ -145,8 +145,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       }
 
       // Crear UserModel desde la respuesta directa del backend
-      final user = UserModel.fromLoginResponse(responseData);
-      print('✅ Usuario creado: ${user.email}');
+      final token = responseData['token'] as String;
+      final user = UserModel.fromLoginResponse(responseData, token);
+      print('✅ Usuario creado: ${user.email} con id: ${user.id}');
 
       // Almacenar token del login
       if (responseData.containsKey('token')) {
@@ -245,9 +246,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       final userData = responseData['data']['user'] as Map<String, dynamic>;
       final tokens = responseData['data']['tokens'] as Map<String, dynamic>?;
 
+      String? accessToken;
+
       // Almacenar nuevos tokens
       if (tokens != null && tokens.containsKey('access_token')) {
-        final accessToken = tokens['access_token'] as String?;
+        accessToken = tokens['access_token'] as String?;
         if (accessToken != null && accessToken.isNotEmpty) {
           await _localDataSource.saveAccessToken(accessToken);
         }
@@ -260,7 +263,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         }
       }
 
-      return UserModel.fromLoginResponse(userData);
+      return UserModel.fromLoginResponse(userData, accessToken ?? 'unknown');
     } on DioException catch (e) {
       throw _handleDioError(e);
     } catch (e) {

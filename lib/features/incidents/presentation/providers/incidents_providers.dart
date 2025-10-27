@@ -65,6 +65,6 @@ final getNoveltyByIdUseCaseProvider = Provider<GetNoveltyById>((ref) {
 /// Provider de estado para la lista de novedades
 final noveltyListProvider =
     StateNotifierProvider<NoveltyListNotifier, NoveltyListState>((ref) {
-  final getNovelties = ref.watch(getNoveltiesUseCaseProvider);
-  return NoveltyListNotifier(getNovelties);
-});
+      final getNovelties = ref.watch(getNoveltiesUseCaseProvider);
+      return NoveltyListNotifier(getNovelties);
+    });

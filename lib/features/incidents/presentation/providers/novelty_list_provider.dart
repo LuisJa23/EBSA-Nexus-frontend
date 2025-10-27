@@ -15,13 +15,7 @@ import '../../domain/repositories/novelty_repository.dart';
 import '../../domain/usecases/get_novelties.dart';
 
 /// Estados posibles de carga de novedades
-enum NoveltyListStatus {
-  initial,
-  loading,
-  loadingMore,
-  success,
-  error,
-}
+enum NoveltyListStatus { initial, loading, loadingMore, success, error }
 
 /// Estado de la lista de novedades
 class NoveltyListState {
@@ -32,7 +26,7 @@ class NoveltyListState {
   final int totalPages;
   final int totalElements;
   final bool hasMore;
-  
+
   // Filtros
   final NoveltyStatus? statusFilter;
   final NoveltyPriority? priorityFilter;
@@ -94,10 +88,18 @@ class NoveltyListState {
       totalPages: totalPages ?? this.totalPages,
       totalElements: totalElements ?? this.totalElements,
       hasMore: hasMore ?? this.hasMore,
-      statusFilter: clearStatusFilter ? null : (statusFilter ?? this.statusFilter),
-      priorityFilter: clearPriorityFilter ? null : (priorityFilter ?? this.priorityFilter),
-      areaIdFilter: clearAreaFilter ? null : (areaIdFilter ?? this.areaIdFilter),
-      crewIdFilter: clearCrewFilter ? null : (crewIdFilter ?? this.crewIdFilter),
+      statusFilter: clearStatusFilter
+          ? null
+          : (statusFilter ?? this.statusFilter),
+      priorityFilter: clearPriorityFilter
+          ? null
+          : (priorityFilter ?? this.priorityFilter),
+      areaIdFilter: clearAreaFilter
+          ? null
+          : (areaIdFilter ?? this.areaIdFilter),
+      crewIdFilter: clearCrewFilter
+          ? null
+          : (crewIdFilter ?? this.crewIdFilter),
       sortField: sortField ?? this.sortField,
       sortDirection: sortDirection ?? this.sortDirection,
     );
@@ -242,10 +244,7 @@ class NoveltyListNotifier extends StateNotifier<NoveltyListState> {
 
   /// Cambia el ordenamiento
   void setSorting(String field, String direction) {
-    state = state.copyWith(
-      sortField: field,
-      sortDirection: direction,
-    );
+    state = state.copyWith(sortField: field, sortDirection: direction);
     loadNovelties(refresh: true);
   }
 
@@ -267,4 +266,3 @@ class NoveltyListNotifier extends StateNotifier<NoveltyListState> {
     await loadNovelties(refresh: true);
   }
 }
-

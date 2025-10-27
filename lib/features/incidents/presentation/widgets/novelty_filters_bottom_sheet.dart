@@ -181,9 +181,7 @@ class _NoveltyFiltersBottomSheetState extends State<NoveltyFiltersBottomSheet> {
         color: isSelected ? color : AppColors.textPrimary,
         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
       ),
-      side: BorderSide(
-        color: isSelected ? color : Colors.grey[300]!,
-      ),
+      side: BorderSide(color: isSelected ? color : Colors.grey[300]!),
     );
   }
 
@@ -192,7 +190,8 @@ class _NoveltyFiltersBottomSheetState extends State<NoveltyFiltersBottomSheet> {
     final isSelected = _selectedPriority == priority;
     final color = priority != null
         ? Color(
-            int.parse(priority.colorHex.substring(1), radix: 16) + 0xFF000000)
+            int.parse(priority.colorHex.substring(1), radix: 16) + 0xFF000000,
+          )
         : AppColors.textSecondary;
 
     return FilterChip(
@@ -210,9 +209,7 @@ class _NoveltyFiltersBottomSheetState extends State<NoveltyFiltersBottomSheet> {
         color: isSelected ? color : AppColors.textPrimary,
         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
       ),
-      side: BorderSide(
-        color: isSelected ? color : Colors.grey[300]!,
-      ),
+      side: BorderSide(color: isSelected ? color : Colors.grey[300]!),
     );
   }
 }

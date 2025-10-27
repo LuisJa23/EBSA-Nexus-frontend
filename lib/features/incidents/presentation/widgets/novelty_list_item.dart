@@ -19,11 +19,7 @@ class NoveltyListItem extends StatelessWidget {
   final Novelty novelty;
   final VoidCallback? onTap;
 
-  const NoveltyListItem({
-    super.key,
-    required this.novelty,
-    this.onTap,
-  });
+  const NoveltyListItem({super.key, required this.novelty, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -32,10 +28,7 @@ class NoveltyListItem extends StatelessWidget {
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: _getPriorityColor().withOpacity(0.3),
-          width: 2,
-        ),
+        side: BorderSide(color: _getPriorityColor().withOpacity(0.3), width: 2),
       ),
       child: InkWell(
         onTap: onTap,
@@ -121,8 +114,8 @@ class NoveltyListItem extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    novelty.areaName.isNotEmpty 
-                        ? novelty.areaName 
+                    novelty.areaName.isNotEmpty
+                        ? novelty.areaName
                         : 'Área ${novelty.areaId}',
                     style: AppTextStyles.caption.copyWith(
                       color: AppColors.textSecondary,
@@ -131,11 +124,7 @@ class NoveltyListItem extends StatelessWidget {
                   const SizedBox(width: 12),
                   // Cuadrilla
                   if (novelty.hasCrewAssigned && novelty.crewName != null) ...[
-                    Icon(
-                      Icons.groups,
-                      size: 14,
-                      color: AppColors.success,
-                    ),
+                    Icon(Icons.groups, size: 14, color: AppColors.success),
                     const SizedBox(width: 4),
                     Text(
                       novelty.crewName ?? 'Cuadrilla ${novelty.crewId}',
@@ -147,11 +136,7 @@ class NoveltyListItem extends StatelessWidget {
                   const Spacer(),
                   // Imágenes
                   if (novelty.hasImages) ...[
-                    Icon(
-                      Icons.image,
-                      size: 14,
-                      color: AppColors.textSecondary,
-                    ),
+                    Icon(Icons.image, size: 14, color: AppColors.textSecondary),
                     const SizedBox(width: 4),
                     Text(
                       '${novelty.imageCount}',
@@ -180,16 +165,12 @@ class NoveltyListItem extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Icon(
-                    Icons.person,
-                    size: 12,
-                    color: AppColors.textSecondary,
-                  ),
+                  Icon(Icons.person, size: 12, color: AppColors.textSecondary),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
-                      novelty.creatorName.isNotEmpty 
-                          ? novelty.creatorName 
+                      novelty.creatorName.isNotEmpty
+                          ? novelty.creatorName
                           : 'Usuario ${novelty.creatorId}',
                       style: AppTextStyles.caption.copyWith(
                         color: AppColors.textSecondary,

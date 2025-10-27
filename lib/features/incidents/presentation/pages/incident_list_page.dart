@@ -86,9 +86,7 @@ class _IncidentListPageState extends ConsumerState<IncidentListPage> {
   Widget _buildBody(NoveltyListState state) {
     // Estado de carga inicial
     if (state.status == NoveltyListStatus.loading && state.novelties.isEmpty) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     // Estado de error
@@ -122,9 +120,7 @@ class _IncidentListPageState extends ConsumerState<IncidentListPage> {
                   if (state.isLoadingMore) {
                     return const Padding(
                       padding: EdgeInsets.all(16),
-                      child: Center(
-                        child: CircularProgressIndicator(),
-                      ),
+                      child: Center(child: CircularProgressIndicator()),
                     );
                   }
                   return const SizedBox(height: 16);
@@ -149,17 +145,11 @@ class _IncidentListPageState extends ConsumerState<IncidentListPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.grey[100],
-        border: Border(
-          bottom: BorderSide(color: Colors.grey[300]!),
-        ),
+        border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.info_outline,
-            size: 16,
-            color: AppColors.textSecondary,
-          ),
+          Icon(Icons.info_outline, size: 16, color: AppColors.textSecondary),
           const SizedBox(width: 8),
           Text(
             '${state.totalElements} ${state.totalElements == 1 ? 'novedad' : 'novedades'}',
@@ -211,11 +201,7 @@ class _IncidentListPageState extends ConsumerState<IncidentListPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: AppColors.error,
-            ),
+            Icon(Icons.error_outline, size: 64, color: AppColors.error),
             const SizedBox(height: 16),
             Text(
               'Error al cargar novedades',

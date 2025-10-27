@@ -20,7 +20,7 @@ class ApiConstants {
 
   /// URL base para desarrollo en red local (para dispositivo físico)
   /// IP del hotspot WiFi compartido desde PC
-  static const String baseUrlNetwork = 'http://192.168.1.38:8080';
+  static const String baseUrlNetwork = 'http://192.168.0.9:8080';
 
   /// URL base para producción (configurar cuando esté disponible)
   static const String baseUrlProduction = 'https://api.nexusebsa.com';
@@ -100,9 +100,21 @@ class ApiConstants {
 
   /// Endpoint para obtener lista de novedades con búsqueda y filtros
   static const String noveltiesEndpoint = '/api/v1/novelties/search';
-  
+
   /// Endpoint para obtener una novedad específica por ID
   static String noveltyByIdEndpoint(String id) => '/api/v1/novelties/$id';
+
+  /// Endpoint para obtener novedades por cuadrilla
+  static String noveltiesByCrewEndpoint(int crewId) =>
+      '/api/v1/novelties/crew/$crewId';
+
+  /// Endpoint para obtener novedades por estado
+  static String noveltiesByStatusEndpoint(String status) =>
+      '/api/v1/novelties/status/$status';
+
+  /// Endpoint para asignar cuadrilla a una novedad
+  static String assignCrewToNoveltyEndpoint(String noveltyId) =>
+      '/api/v1/novelties/$noveltyId/assign';
 
   // ============================================================================
   // ENDPOINTS DE NOTIFICACIONES
@@ -155,6 +167,10 @@ class ApiConstants {
   /// DELETE /api/v1/notifications/user/{userId}
   static String deleteAllNotificationsEndpoint(int userId) =>
       '/api/v1/notifications/user/$userId';
+
+  /// Endpoint para obtener novedades del usuario
+  static String userNoveltiesEndpoint(String userId) =>
+      '/api/v1/novelties/user/$userId';
 
   // ============================================================================
   // HEADERS HTTP

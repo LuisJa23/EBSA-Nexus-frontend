@@ -11,6 +11,7 @@
 // CAPA: DATA LAYER
 // HERENCIA: extends User (domain entity)
 
+import 'package:jwt_decoder/jwt_decoder.dart';
 import '../../domain/entities/user.dart';
 
 /// Modelo de datos para Usuario que extiende la entidad del dominio
@@ -98,36 +99,50 @@ class UserModel extends User {
   /// Crea UserModel desde respuesta de login exitoso
   ///
   /// Formato específico que incluye token y permisos adicionales
-  factory UserModel.fromLoginResponse(Map<String, dynamic> json) {
+  factory UserModel.fromLoginResponse(Map<String, dynamic> json, String token) {
     try {
       print('🔍 DEBUG fromLoginResponse - JSON completo: $json');
       print(
         '🔍 DEBUG fromLoginResponse - Campos disponibles: ${json.keys.toList()}',
       );
+      print('🔍 DEBUG fromLoginResponse - token: ${token.substring(0, 20)}...');
+
+      // Decodificar el JWT para obtener el userId
+      Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+      print(
+        '🔍 DEBUG JWT decodificado - TODAS LAS CLAVES: ${decodedToken.keys.toList()}',
+      );
+      print('🔍 DEBUG JWT decodificado - TODOS LOS VALORES: $decodedToken');
+
+      final now = DateTime.now();
 
       // IMPORTANTE: Buscar el ID numérico del usuario/worker
       // El backend envía notificaciones con "userId" que debe ser numérico
-      String userId;
-      if (json.containsKey('userId') && json['userId'] != null) {
-        userId = json['userId'].toString();
-        print('✅ userId encontrado: $userId');
-      } else if (json.containsKey('id') && json['id'] != null) {
-        userId = json['id'].toString();
-        print('✅ id encontrado: $userId');
-      } else if (json.containsKey('workerId') && json['workerId'] != null) {
-        userId = json['workerId'].toString();
-        print('✅ workerId encontrado: $userId');
-      } else {
-        // Fallback: usar username si no hay ID numérico
-        userId = json['username'] ?? 'unknown';
-        print('⚠️ No se encontró userId/id/workerId numérico');
-        print(
-          '⚠️ ACCIÓN REQUERIDA: El backend debe enviar el campo "userId" en /auth/login',
-        );
-        print('⚠️ Usando username como fallback: $userId');
-      }
+      // Prioridad: JWT primero, luego JSON response
+      String userId = 'unknown';
 
-      final now = DateTime.now();
+      // Revisar diferentes campos posibles en el JWT
+      if (decodedToken.containsKey('userId')) {
+        userId = decodedToken['userId'].toString();
+        print('✅ userId encontrado en JWT.userId: $userId');
+      } else if (decodedToken.containsKey('id')) {
+        userId = decodedToken['id'].toString();
+        print('✅ userId encontrado en JWT.id: $userId');
+      } else if (decodedToken.containsKey('sub')) {
+        userId = decodedToken['sub'].toString();
+        print('✅ userId encontrado en JWT.sub: $userId');
+      } else if (json.containsKey('userId')) {
+        userId = json['userId'].toString();
+        print('✅ userId encontrado en JSON.userId: $userId');
+      } else if (json.containsKey('id')) {
+        userId = json['id'].toString();
+        print('✅ userId encontrado en JSON.id: $userId');
+      } else {
+        print(
+          '⚠️ NO SE ENCONTRÓ userId en ningún lado, usando username como fallback',
+        );
+        userId = json['username'] ?? 'unknown';
+      }
 
       final userModel = UserModel(
         id: userId,
@@ -148,8 +163,9 @@ class UserModel extends User {
         '✅ UserModel creado - ID: ${userModel.id}, Username: ${userModel.username}, Role: ${userModel.role}',
       );
       return userModel;
-    } catch (e) {
+    } catch (e, stackTrace) {
       print('❌ Error en fromLoginResponse: $e');
+      print('❌ StackTrace: $stackTrace');
       throw FormatException('Error deserializando respuesta de login: $e');
     }
   }

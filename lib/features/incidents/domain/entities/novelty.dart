@@ -129,17 +129,21 @@ enum NoveltyStatus {
   bool get canClose => this == NoveltyStatus.completada;
 
   /// Verifica si es un estado terminal
-  bool get isTerminal => this == NoveltyStatus.cerrada || this == NoveltyStatus.cancelada;
+  bool get isTerminal =>
+      this == NoveltyStatus.cerrada || this == NoveltyStatus.cancelada;
 
   /// Valida si la transición al estado objetivo es válida
   bool canTransitionTo(NoveltyStatus targetStatus) {
     return switch (this) {
-      NoveltyStatus.creada => targetStatus == NoveltyStatus.enCurso || 
-                              targetStatus == NoveltyStatus.cancelada,
-      NoveltyStatus.enCurso => targetStatus == NoveltyStatus.completada || 
-                               targetStatus == NoveltyStatus.cancelada,
+      NoveltyStatus.creada =>
+        targetStatus == NoveltyStatus.enCurso ||
+            targetStatus == NoveltyStatus.cancelada,
+      NoveltyStatus.enCurso =>
+        targetStatus == NoveltyStatus.completada ||
+            targetStatus == NoveltyStatus.cancelada,
       NoveltyStatus.completada => targetStatus == NoveltyStatus.cerrada,
-      NoveltyStatus.cerrada || NoveltyStatus.cancelada => false, // Estados terminales
+      NoveltyStatus.cerrada ||
+      NoveltyStatus.cancelada => false, // Estados terminales
     };
   }
 
