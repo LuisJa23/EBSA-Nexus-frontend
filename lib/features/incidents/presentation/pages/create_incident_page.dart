@@ -131,6 +131,7 @@ class _CreateIncidentPageState extends ConsumerState<CreateIncidentPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Crear Incidente'),
+        centerTitle: true,
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
