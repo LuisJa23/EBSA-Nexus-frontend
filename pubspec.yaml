@@ -101,6 +101,9 @@ dev_dependencies:
 
   # Testing
   mockito: ^5.4.2
+  
+  # App Icon Generator
+  flutter_launcher_icons: ^0.13.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -142,3 +145,11 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# Configuración para generar el ícono de la aplicación
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/ebsa.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/ebsa.png"

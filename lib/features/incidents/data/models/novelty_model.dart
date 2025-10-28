@@ -75,6 +75,20 @@ class NoveltyModel {
     }
   }
 
+  /// Nombre del área
+  String get areaName {
+    switch (areaId) {
+      case 1:
+        return 'Facturación';
+      case 2:
+        return 'Cartera';
+      case 3:
+        return 'Pérdidas';
+      default:
+        return 'Área $areaId';
+    }
+  }
+
   /// Motivo localizado
   String get reasonLocalized {
     switch (reason) {

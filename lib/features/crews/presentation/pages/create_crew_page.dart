@@ -67,6 +67,13 @@ class _CreateCrewPageState extends ConsumerState<CreateCrewPage> {
       }
     });
 
+    return Scaffold(
+      appBar: AppBar(title: const Text('Crear Cuadrilla'), centerTitle: true),
+      body: _buildBody(state),
+    );
+  }
+
+  Widget _buildBody(CreateCrewState state) {
     if (state.status == CreateCrewStatus.loadingUsers) {
       return const Center(child: LoadingIndicator());
     }
@@ -133,14 +140,6 @@ class _CreateCrewPageState extends ConsumerState<CreateCrewPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Nueva Cuadrilla',
-          style: AppTextStyles.heading2.copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 8),
         Text(
           'Completa la información para crear una nueva cuadrilla',
           style: AppTextStyles.bodyMedium.copyWith(

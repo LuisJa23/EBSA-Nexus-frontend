@@ -104,47 +104,42 @@ class _CreateUserPageState extends ConsumerState<CreateUserPage> {
       }
     });
 
-    return state.isLoading
-        ? const Center(child: CircularProgressIndicator())
-        : SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildHeader(),
-                  const SizedBox(height: 24),
-                  // Solo mostrar banner si es un error general, NO si son errores de campos
-                  if (state.shouldShowErrorBanner) ...[
-                    _buildErrorBanner(state.errorMessage!),
-                    const SizedBox(height: 16),
+    return Scaffold(
+      appBar: AppBar(title: const Text('Crear Usuario'), centerTitle: true),
+      body: state.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildHeader(),
+                    const SizedBox(height: 24),
+                    // Solo mostrar banner si es un error general, NO si son errores de campos
+                    if (state.shouldShowErrorBanner) ...[
+                      _buildErrorBanner(state.errorMessage!),
+                      const SizedBox(height: 16),
+                    ],
+                    _buildPersonalInfoSection(state),
+                    const SizedBox(height: 24),
+                    _buildContactSection(state),
+                    const SizedBox(height: 24),
+                    _buildRoleSection(state),
+                    const SizedBox(height: 32),
+                    _buildCreateButton(state),
                   ],
-                  _buildPersonalInfoSection(state),
-                  const SizedBox(height: 24),
-                  _buildContactSection(state),
-                  const SizedBox(height: 24),
-                  _buildRoleSection(state),
-                  const SizedBox(height: 32),
-                  _buildCreateButton(state),
-                ],
+                ),
               ),
             ),
-          );
+    );
   }
 
   Widget _buildHeader() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Crear Nuevo Usuario',
-          style: AppTextStyles.heading1.copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 8),
         Text(
           'Complete el formulario para registrar un nuevo usuario',
           style: AppTextStyles.bodyLarge.copyWith(

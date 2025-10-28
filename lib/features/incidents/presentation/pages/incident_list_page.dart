@@ -66,6 +66,7 @@ class _IncidentListPageState extends ConsumerState<IncidentListPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Consultar Novedades'),
+        centerTitle: true,
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         actions: [

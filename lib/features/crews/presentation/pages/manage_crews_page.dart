@@ -26,15 +26,21 @@ class ManageCrewsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildHeader(),
-          const SizedBox(height: 32),
-          _buildOptionsCards(context),
-        ],
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Gestionar Cuadrillas'),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(),
+            const SizedBox(height: 32),
+            _buildOptionsCards(context),
+          ],
+        ),
       ),
     );
   }
@@ -44,14 +50,6 @@ class ManageCrewsPage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Gestionar Cuadrillas',
-          style: AppTextStyles.heading1.copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 8),
         Text(
           'Elige la opción que deseas realizar',
           style: AppTextStyles.bodyLarge.copyWith(
