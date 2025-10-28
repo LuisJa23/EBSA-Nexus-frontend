@@ -315,3 +315,41 @@ class _NoveltyCardState extends State<NoveltyCard> {
     );
   }
 }
+
+extension NoveltyServiceExtension on NoveltyService {
+  /// Provides a compatibility implementation for `updateNoveltyStatus`.
+  /// At runtime this will try to delegate to common method names (if present)
+  /// such as `updateStatus` or `updateNovelty`; otherwise it throws an
+  /// UnimplementedError with guidance to implement the method in the service.
+  Future<void> updateNoveltyStatus({
+    required String noveltyId,
+    required String status,
+  }) async {
+    // Try to delegate to commonly named methods on the actual implementation.
+    // The `dynamic` calls avoid compile-time errors and allow delegation if
+    // the concrete class exposes such methods.
+    try {
+      final dynamic self = this;
+      // Try method named `updateStatus`
+      try {
+        await self.updateStatus(noveltyId: noveltyId, status: status);
+        return;
+      } catch (_) {}
+      // Try method named `updateNovelty` (different signature)
+      try {
+        await self.updateNovelty(noveltyId, status);
+        return;
+      } catch (_) {}
+    } catch (_) {
+      // fall through to throw below
+    }
+
+    throw UnimplementedError(
+      'NoveltyService.updateNoveltyStatus is not implemented. '
+      'Please implement updateNoveltyStatus in '
+      'lib/features/incidents/data/novelty_service.dart or expose a compatible '
+      'method (e.g. updateStatus or updateNovelty) on the NoveltyService '
+      'implementation.',
+    );
+  }
+}

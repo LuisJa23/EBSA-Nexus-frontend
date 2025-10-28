@@ -406,14 +406,21 @@ PreferredSizeWidget? _buildAppBar(
   ];
 
   final isMainRoute = mainRoutes.contains(currentPath);
-  final canPop = GoRouter.of(context).canPop();
 
   // Definir leading (botón izquierdo)
+  // Forzar la aparición del botón de retroceso en rutas secundarias.
+  // Si no es posible hacer pop en el stack, navegar al Home como fallback.
   Widget? leading;
-  if (!isMainRoute && canPop) {
-    // Mostrar botón de retroceso en rutas secundarias
+  if (!isMainRoute) {
     leading = IconButton(
-      onPressed: () => context.pop(),
+      onPressed: () {
+        if (GoRouter.of(context).canPop()) {
+          context.pop();
+        } else {
+          // Si no hay historial para hacer pop, regresar al Home
+          context.go(RouteNames.home);
+        }
+      },
       icon: const Icon(Icons.arrow_back, color: Colors.white),
       tooltip: 'Volver',
     );
@@ -437,7 +444,8 @@ PreferredSizeWidget? _buildAppBar(
 
   return AppBar(
     leading: leading,
-    automaticallyImplyLeading: !isMainRoute, // Solo en rutas secundarias
+    // Controlamos manualmente el leading para asegurar consistencia
+    automaticallyImplyLeading: false,
     title: Text(
       title,
       style: AppTextStyles.heading3.copyWith(
