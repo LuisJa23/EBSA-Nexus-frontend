@@ -453,6 +453,7 @@ class _OfflineIncidentsPageState extends ConsumerState<OfflineIncidentsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Novedades Offline'),
+        centerTitle: true,
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,

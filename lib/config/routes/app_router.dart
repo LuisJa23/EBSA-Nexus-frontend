@@ -17,6 +17,7 @@ import '../../features/incidents/presentation/pages/manage_incident_page.dart';
 import '../../features/incidents/presentation/pages/create_incident_page.dart';
 import '../../features/incidents/presentation/pages/assign_squad_page.dart';
 import '../../features/incidents/presentation/pages/novelty_detail_page.dart';
+import '../../features/incidents/presentation/pages/novelty_report_page.dart';
 import '../../features/incidents/presentation/pages/incident_list_page.dart';
 import '../../features/incidents/presentation/pages/offline_incidents_page.dart';
 import '../../features/reports/presentation/pages/create_report_page.dart';
@@ -264,6 +265,19 @@ final routerProvider = Provider<GoRouter>((ref) {
             },
           ),
 
+          /// Reporte de Novedad
+          GoRoute(
+            path: '/novelty-report/:noveltyId',
+            name: 'novelty-report',
+            pageBuilder: (context, state) {
+              final noveltyId = state.pathParameters['noveltyId']!;
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: NoveltyReportPage(noveltyId: noveltyId),
+              );
+            },
+          ),
+
           /// Novedades Offline
           GoRoute(
             path: RouteNames.offlineIncidents,
@@ -392,14 +406,21 @@ PreferredSizeWidget? _buildAppBar(
   ];
 
   final isMainRoute = mainRoutes.contains(currentPath);
-  final canPop = GoRouter.of(context).canPop();
 
   // Definir leading (botón izquierdo)
+  // Forzar la aparición del botón de retroceso en rutas secundarias.
+  // Si no es posible hacer pop en el stack, navegar al Home como fallback.
   Widget? leading;
-  if (!isMainRoute && canPop) {
-    // Mostrar botón de retroceso en rutas secundarias
+  if (!isMainRoute) {
     leading = IconButton(
-      onPressed: () => context.pop(),
+      onPressed: () {
+        if (GoRouter.of(context).canPop()) {
+          context.pop();
+        } else {
+          // Si no hay historial para hacer pop, regresar al Home
+          context.go(RouteNames.home);
+        }
+      },
       icon: const Icon(Icons.arrow_back, color: Colors.white),
       tooltip: 'Volver',
     );
@@ -423,7 +444,8 @@ PreferredSizeWidget? _buildAppBar(
 
   return AppBar(
     leading: leading,
-    automaticallyImplyLeading: !isMainRoute, // Solo en rutas secundarias
+    // Controlamos manualmente el leading para asegurar consistencia
+    automaticallyImplyLeading: false,
     title: Text(
       title,
       style: AppTextStyles.heading3.copyWith(

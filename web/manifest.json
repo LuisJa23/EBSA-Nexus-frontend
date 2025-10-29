@@ -1,11 +1,11 @@
 {
-    "name": "ebsa_nexus_frontend",
-    "short_name": "ebsa_nexus_frontend",
+    "name": "EBSA Nexus",
+    "short_name": "EBSA Nexus",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Sistema de gestión de incidentes EBSA.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
