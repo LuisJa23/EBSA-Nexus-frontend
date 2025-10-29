@@ -23,7 +23,7 @@ import '../widgets/login_form.dart';
 /// Página principal de inicio de sesión
 ///
 /// Proporciona la interfaz de usuario para que los usuarios
-/// se autentiquen en la aplicación Nexus EBSA.
+/// se autentiquen en la aplicación EBSA Nexus.
 ///
 /// **Características**:
 /// - Diseño responsive y accesible
@@ -102,29 +102,27 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Widget _buildHeader() {
     return Column(
       children: [
-        // Logo de EBSA
+        // Logo de EBSA (imagen personalizada)
         Container(
           width: 120,
           height: 120,
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withOpacity(0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
+
+          child: Padding(
+            padding: const EdgeInsets.all(2),
+            child: Image.asset(
+              'assets/ebsa2.png',
+              width: 96,
+              height: 96,
+              fit: BoxFit.contain,
+            ),
           ),
-          child: const Icon(Icons.business, size: 60, color: Colors.white),
         ),
 
         const SizedBox(height: 24),
 
         // Título principal
         Text(
-          'Nexus EBSA',
+          'EBSA Nexus',
           style: AppTextStyles.heading1.copyWith(
             color: AppColors.primary,
             fontWeight: FontWeight.bold,
@@ -261,7 +259,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
         // Información de la aplicación
         Text(
-          'Nexus EBSA v1.0.0',
+          'EBSA Nexus v1.0.0',
           style: AppTextStyles.bodySmall.copyWith(
             color: AppColors.textSecondary,
           ),

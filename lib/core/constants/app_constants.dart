@@ -1,6 +1,6 @@
 // app_constants.dart
 //
-// Constantes generales de la aplicación Nexus EBSA
+// Constantes generales de la aplicación EBSA Nexus
 //
 // PROPÓSITO:
 // - Definir valores constantes que se usan en toda la aplicación
@@ -8,14 +8,14 @@
 // - Versiones de API, códigos de error comunes
 // - Configuraciones de cache y almacenamiento
 
-/// Constantes generales de la aplicación Nexus EBSA
+/// Constantes generales de la aplicación EBSA Nexus
 class AppConstants {
   // ============================================================================
   // INFORMACIÓN DE LA APP
   // ============================================================================
 
   /// Nombre de la aplicación
-  static const String appName = 'Nexus EBSA';
+  static const String appName = 'EBSA Nexus';
 
   /// Versión de la aplicación
   static const String appVersion = '1.0.0';

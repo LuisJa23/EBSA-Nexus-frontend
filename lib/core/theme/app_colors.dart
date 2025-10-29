@@ -1,6 +1,6 @@
 // app_colors.dart
 //
-// Paleta de colores de la aplicación Nexus EBSA
+// Paleta de colores de la aplicación EBSA Nexus
 //
 // PROPÓSITO:
 // - Definir colores corporativos de EBSA

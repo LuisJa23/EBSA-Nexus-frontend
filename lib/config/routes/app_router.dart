@@ -478,7 +478,7 @@ PreferredSizeWidget? _buildAppBar(
 /// en el AppBar de forma consistente
 String _getTitleForRoute(String path) {
   // Rutas principales con bottom navigation
-  if (path == RouteNames.home) return 'Nexus EBSA';
+  if (path == RouteNames.home) return 'EBSA Nexus';
   if (path == RouteNames.notifications) return 'Notificaciones';
   if (path == RouteNames.assignments) return 'Asignaciones';
   if (path == RouteNames.profile) return 'Mi Perfil';
@@ -501,7 +501,7 @@ String _getTitleForRoute(String path) {
   if (path == RouteNames.listCrews) return 'Lista de Cuadrillas';
 
   // Por defecto
-  return 'Nexus EBSA';
+  return 'EBSA Nexus';
 }
 
 /// Muestra el diálogo de confirmación para cerrar sesión

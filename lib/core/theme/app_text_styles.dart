@@ -1,6 +1,6 @@
 // app_text_styles.dart
 //
-// Estilos de texto de la aplicación Nexus EBSA
+// Estilos de texto de la aplicación EBSA Nexus
 //
 // PROPÓSITO:
 // - Definir tipografías consistentes

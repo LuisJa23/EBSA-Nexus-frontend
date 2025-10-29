@@ -9,7 +9,7 @@
 // - Configuraciones de autenticación
 //
 
-/// Constantes de configuración para API de Nexus EBSA
+/// Constantes de configuración para API de EBSA Nexus
 class ApiConstants {
   // ============================================================================
   // CONFIGURACIÓN DE ENTORNO

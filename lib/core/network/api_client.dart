@@ -1,6 +1,6 @@
 // api_client.dart
 //
-// Cliente HTTP configurado para la API de Nexus EBSA
+// Cliente HTTP configurado para la API de EBSA Nexus
 //
 // PROPÓSITO:
 // - Configurar Dio con interceptors personalizados
@@ -17,7 +17,7 @@ import '../constants/api_constants.dart';
 import '../constants/storage_constants.dart';
 import '../errors/exceptions.dart';
 
-/// Cliente HTTP configurado para la API de Nexus EBSA
+/// Cliente HTTP configurado para la API de EBSA Nexus
 class ApiClient {
   late final Dio _dio;
   final FlutterSecureStorage _secureStorage;

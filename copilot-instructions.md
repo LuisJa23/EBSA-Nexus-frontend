@@ -1,7 +1,7 @@
-# GitHub Copilot Instructions - Nexus EBSA Mobile Application
+# GitHub Copilot Instructions - EBSA Nexus Mobile Application
 
 ## Project Context
-You are working on **Nexus EBSA**, a mobile incident reporting system for EBSA S.A.E.S.P. workers. The application allows field workers, contractors, and area managers to create, manage, and track incident reports with multimedia evidence (photos, videos, audio) and GPS data.
+You are working on **EBSA Nexus**, a mobile incident reporting system for EBSA S.A.E.S.P. workers. The application allows field workers, contractors, and area managers to create, manage, and track incident reports with multimedia evidence (photos, videos, audio) and GPS data.
 
 ## Technology Stack
 - **Flutter Version**: 3.35.5
