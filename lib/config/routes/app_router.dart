@@ -18,6 +18,7 @@ import '../../features/incidents/presentation/pages/create_incident_page.dart';
 import '../../features/incidents/presentation/pages/assign_squad_page.dart';
 import '../../features/incidents/presentation/pages/novelty_detail_page.dart';
 import '../../features/incidents/presentation/pages/novelty_report_page.dart';
+import '../../features/incidents/presentation/pages/select_novelty_for_report_page.dart';
 import '../../features/incidents/presentation/pages/incident_list_page.dart';
 import '../../features/incidents/presentation/pages/offline_incidents_page.dart';
 import '../../features/reports/presentation/pages/create_report_page.dart';
@@ -278,6 +279,16 @@ final routerProvider = Provider<GoRouter>((ref) {
             },
           ),
 
+          /// Seleccionar Novedad para Reporte
+          GoRoute(
+            path: '/select-novelty-for-report',
+            name: 'select-novelty-for-report',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const SelectNoveltyForReportPage(),
+            ),
+          ),
+
           /// Novedades Offline
           GoRoute(
             path: RouteNames.offlineIncidents,
@@ -476,6 +487,8 @@ String _getTitleForRoute(String path) {
   if (path == RouteNames.createIncident) return 'Crear Incidente';
   if (path == RouteNames.assignSquad) return 'Asignar Cuadrilla';
   if (path == RouteNames.incidentList) return 'Consultas';
+  if (path == RouteNames.selectNoveltyForReport) return 'Seleccionar Novedad';
+  if (path.startsWith('/novelty-report/')) return 'Crear Reporte';
   if (path == RouteNames.createReport) return 'Hacer Reporte';
 
   // Rutas de administración de usuarios

@@ -79,12 +79,12 @@ class HomePage extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
 
-        // 2. Hacer Reporte (Todos los roles)
+        // 2. Crear Reporte de Novedad (Todos los roles)
         HomeActionCard(
-          icon: Icons.description,
-          title: 'Hacer Reporte',
-          subtitle: 'Hacer reporte de Novedad',
-          onTap: () => context.push(RouteNames.createReport),
+          icon: Icons.assignment_turned_in,
+          title: 'Crear Reporte',
+          subtitle: 'Reportar resolución de novedad',
+          onTap: () => context.push(RouteNames.selectNoveltyForReport),
         ),
 
         // 3. Consultas (Solo Admin y Jefe de Área)

@@ -57,6 +57,7 @@ import '../../features/crews/domain/usecases/promote_member_to_leader_usecase.da
 // Incidents Feature - Data Layer
 import '../../features/incidents/data/novelty_service.dart';
 import '../../features/incidents/data/offline_sync_service.dart';
+import '../../features/incidents/data/services/novelty_report_service.dart';
 
 // Database
 import '../database/app_database.dart';
@@ -265,6 +266,11 @@ Future<void> init() async {
       sl<NoveltyService>(), // Servicio de novedades
       sl<Connectivity>(), // Conectividad
     ),
+  );
+
+  // Novelty Report Service - API calls de reportes de resolución de novedades
+  sl.registerLazySingleton<NoveltyReportService>(
+    () => NoveltyReportService(apiClient: sl()),
   );
 }
 
