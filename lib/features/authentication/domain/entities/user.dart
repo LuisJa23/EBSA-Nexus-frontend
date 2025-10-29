@@ -16,7 +16,7 @@
 
 import 'package:equatable/equatable.dart';
 
-/// Entidad de dominio que representa un usuario del sistema Nexus EBSA
+/// Entidad de dominio que representa un usuario del sistema EBSA Nexus
 class User extends Equatable {
   /// Identificador único del usuario (ID numérico del backend)
   final String id;

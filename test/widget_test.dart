@@ -1,4 +1,4 @@
-// Test básico para la aplicación Nexus EBSA
+// Test básico para la aplicación EBSA Nexus
 //
 // Pruebas de widgets para verificar el funcionamiento correcto
 // de la aplicación y sus componentes principales.
@@ -10,7 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ebsa_nexus_frontend/app.dart';
 
 void main() {
-  testWidgets('Nexus EBSA app loads correctly', (WidgetTester tester) async {
+  testWidgets('EBSA Nexus app loads correctly', (WidgetTester tester) async {
     // Construir la aplicación dentro de ProviderScope
     await tester.pumpWidget(const ProviderScope(child: NexusEBSAApp()));
 
@@ -18,7 +18,7 @@ void main() {
     expect(find.byType(MaterialApp), findsOneWidget);
 
     // Verificar que aparece el título de la app
-    expect(find.text('Nexus EBSA'), findsOneWidget);
+    expect(find.text('EBSA Nexus'), findsOneWidget);
 
     // Verificar que aparece el formulario de login
     expect(find.text('Iniciar Sesión'), findsOneWidget);

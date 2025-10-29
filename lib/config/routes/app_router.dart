@@ -457,12 +457,24 @@ PreferredSizeWidget? _buildAppBar(
     leading: leading,
     // Controlamos manualmente el leading para asegurar consistencia
     automaticallyImplyLeading: false,
-    title: Text(
-      title,
-      style: AppTextStyles.heading3.copyWith(
-        color: Colors.white,
-        fontWeight: FontWeight.bold,
-      ),
+    title: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Image.asset(
+          'assets/ebsa2.png',
+          width: 25,
+          height: 25,
+          fit: BoxFit.contain,
+        ),
+        const SizedBox(width: 12),
+        Text(
+          title,
+          style: AppTextStyles.heading3.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
     ),
     backgroundColor: AppColors.primary,
     elevation: 0,
@@ -477,7 +489,7 @@ PreferredSizeWidget? _buildAppBar(
 /// en el AppBar de forma consistente
 String _getTitleForRoute(String path) {
   // Rutas principales con bottom navigation
-  if (path == RouteNames.home) return 'Nexus EBSA';
+  if (path == RouteNames.home) return 'EBSA Nexus';
   if (path == RouteNames.notifications) return 'Notificaciones';
   if (path == RouteNames.assignments) return 'Asignaciones';
   if (path == RouteNames.profile) return 'Mi Perfil';
@@ -502,7 +514,7 @@ String _getTitleForRoute(String path) {
   if (path == RouteNames.listCrews) return 'Lista de Cuadrillas';
 
   // Por defecto
-  return 'Nexus EBSA';
+  return 'EBSA Nexus';
 }
 
 /// Muestra el diálogo de confirmación para cerrar sesión

@@ -1,6 +1,6 @@
 // app_theme.dart
 //
-// Tema principal de la aplicación Nexus EBSA
+// Tema principal de la aplicación EBSA Nexus
 //
 // PROPÓSITO:
 // - Definir el ThemeData principal de la aplicación
@@ -14,7 +14,7 @@ import '../constants/app_constants.dart';
 import 'app_colors.dart';
 import 'app_text_styles.dart';
 
-/// Configuración de temas de la aplicación Nexus EBSA
+/// Configuración de temas de la aplicación EBSA Nexus
 class AppTheme {
   /// Tema claro (modo por defecto)
   static ThemeData get lightTheme {

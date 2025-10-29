@@ -1,6 +1,6 @@
 // main.dart
 //
-// Punto de entrada principal de la aplicación Nexus EBSA
+// Punto de entrada principal de la aplicación EBSA Nexus
 //
 // PROPÓSITO:
 // - Inicializar la aplicación Flutter
