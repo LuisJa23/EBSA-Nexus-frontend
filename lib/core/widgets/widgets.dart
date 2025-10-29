@@ -14,6 +14,9 @@ export 'custom_button.dart';
 export 'custom_dropdown.dart';
 export 'form_section.dart';
 
+// Widgets de navegación
+export 'custom_app_bar.dart';
+
 // Widgets especializados
 export 'work_role_dropdown.dart';
 export 'evidence_capture_widget.dart';

@@ -446,12 +446,24 @@ PreferredSizeWidget? _buildAppBar(
     leading: leading,
     // Controlamos manualmente el leading para asegurar consistencia
     automaticallyImplyLeading: false,
-    title: Text(
-      title,
-      style: AppTextStyles.heading3.copyWith(
-        color: Colors.white,
-        fontWeight: FontWeight.bold,
-      ),
+    title: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Image.asset(
+          'assets/ebsa2.png',
+          width: 25,
+          height: 25,
+          fit: BoxFit.contain,
+        ),
+        const SizedBox(width: 12),
+        Text(
+          title,
+          style: AppTextStyles.heading3.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
     ),
     backgroundColor: AppColors.primary,
     elevation: 0,
