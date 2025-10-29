@@ -1,6 +1,6 @@
 // app.dart
 //
-// Widget principal de la aplicación Nexus EBSA
+// Widget principal de la aplicación EBSA Nexus
 //
 // PROPÓSITO:
 // - Configurar MaterialApp o CupertinoApp
@@ -17,7 +17,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'config/routes/app_router.dart';
 import 'core/theme/app_theme.dart';
 
-/// Widget principal de la aplicación Nexus EBSA
+/// Widget principal de la aplicación EBSA Nexus
 ///
 /// Configura el MaterialApp con tema corporativo,
 /// navegación reactiva y configuraciones globales.
@@ -40,7 +40,7 @@ class NexusEBSAApp extends ConsumerWidget {
       // ========================================================================
       // CONFIGURACIÓN BÁSICA
       // ========================================================================
-      title: 'Nexus EBSA',
+      title: 'EBSA Nexus',
       debugShowCheckedModeBanner: false,
 
       // ========================================================================

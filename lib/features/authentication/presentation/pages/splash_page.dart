@@ -117,7 +117,7 @@ class _SplashPageState extends ConsumerState<SplashPage>
 
               // Título principal
               Text(
-                'Nexus EBSA',
+                'EBSA Nexus',
                 style: AppTextStyles.heading1.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
