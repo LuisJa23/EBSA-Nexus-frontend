@@ -8,6 +8,8 @@ import '../../../../config/routes/route_names.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/home_action_card.dart';
+import '../../../reports/presentation/pages/manage_reports_page.dart';
+import '../../../reports/presentation/providers/pending_count_provider.dart';
 import '../../domain/entities/user.dart';
 import '../providers/auth_provider.dart';
 
@@ -26,7 +28,7 @@ class HomePage extends ConsumerWidget {
         children: [
           _buildWelcomeHeader(),
           const SizedBox(height: 32),
-          _buildActionCards(context, user),
+          _buildActionCards(context, ref, user),
         ],
       ),
     );
@@ -54,7 +56,7 @@ class HomePage extends ConsumerWidget {
     );
   }
 
-  Widget _buildActionCards(BuildContext context, User? user) {
+  Widget _buildActionCards(BuildContext context, WidgetRef ref, User? user) {
     // Debug: Imprimir información del usuario
     print('🔍 DEBUG Home - User: ${user?.email}');
     print('🔍 DEBUG Home - Role: ${user?.role}');
@@ -79,13 +81,8 @@ class HomePage extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
 
-        // 2. Crear Reporte de Novedad (Todos los roles)
-        HomeActionCard(
-          icon: Icons.assignment_turned_in,
-          title: 'Crear Reporte',
-          subtitle: 'Reportar resolución de novedad',
-          onTap: () => context.push(RouteNames.selectNoveltyForReport),
-        ),
+        // 2. Gestionar Reportes (Todos los roles) - NUEVO
+        _buildManageReportsCard(context, ref),
 
         // 3. Consultas (Solo Admin y Jefe de Área)
         if (hasFullAccess) ...[
@@ -118,6 +115,56 @@ class HomePage extends ConsumerWidget {
           onTap: () => context.push(RouteNames.manageCrews),
         ),
       ],
+    );
+  }
+
+  /// Widget para el card de Gestionar Reportes con badge de pendientes
+  Widget _buildManageReportsCard(BuildContext context, WidgetRef ref) {
+    final pendingCountAsync = ref.watch(autoRefreshPendingCountProvider);
+
+    return pendingCountAsync.when(
+      data: (pendingCount) {
+        final title = pendingCount > 0
+            ? 'Gestionar Reportes ($pendingCount)'
+            : 'Gestionar Reportes';
+
+        return HomeActionCard(
+          icon: Icons.folder_special,
+          title: title,
+          subtitle: 'Crear y sincronizar reportes offline',
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ManageReportsPage()),
+            );
+          },
+        );
+      },
+      loading: () {
+        // Mientras carga, mostrar sin contador
+        return HomeActionCard(
+          icon: Icons.folder_special,
+          title: 'Gestionar Reportes',
+          subtitle: 'Crear y sincronizar reportes offline',
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ManageReportsPage()),
+            );
+          },
+        );
+      },
+      error: (_, __) {
+        // En caso de error, mostrar sin contador
+        return HomeActionCard(
+          icon: Icons.folder_special,
+          title: 'Gestionar Reportes',
+          subtitle: 'Crear y sincronizar reportes offline',
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ManageReportsPage()),
+            );
+          },
+        );
+      },
     );
   }
 }

@@ -20,7 +20,7 @@ class ApiConstants {
 
   /// URL base para desarrollo en red local (para dispositivo físico)
   /// IP del hotspot WiFi compartido desde PC
-  static const String baseUrlNetwork = 'http://192.168.137.48:8080';
+  static const String baseUrlNetwork = 'http://192.168.1.38:8080';
 
   /// URL base para producción (configurar cuando esté disponible)
   static const String baseUrlProduction = 'https://api.nexusebsa.com';
@@ -193,16 +193,16 @@ class ApiConstants {
   // ============================================================================
 
   /// Timeout para conexión (en milisegundos)
-  /// Aumentado para permitir conexiones lentas
-  static const int connectTimeout = 30000; // 30 segundos
+  /// Reducido para detectar rápidamente sin conexión
+  static const int connectTimeout = 5000; // 5 segundos
 
   /// Timeout para recepción (en milisegundos)
   /// Aumentado para permitir descargas de imágenes y respuestas grandes
   static const int receiveTimeout = 60000; // 60 segundos
 
   /// Timeout para envío (en milisegundos)
-  /// Aumentado para permitir subida de imágenes (multipart/form-data)
-  static const int sendTimeout = 60000; // 60 segundos
+  /// Para permitir subida de imágenes (multipart/form-data)
+  static const int sendTimeout = 30000; // 30 segundos
 
   // ============================================================================
   // CÓDIGOS DE RESPUESTA HTTP

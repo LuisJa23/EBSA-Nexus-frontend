@@ -226,6 +226,7 @@ class _ViewNoveltyReportPageState extends ConsumerState<ViewNoveltyReportPage> {
                   'Información de la Novedad',
                   style: AppTextStyles.heading3.copyWith(
                     fontWeight: FontWeight.bold,
+                    fontSize: 18,
                     color: AppColors.primary,
                   ),
                 ),

@@ -18,6 +18,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../../../config/dependency_injection/injection_container.dart';
 import '../../../../core/utils/app_logger.dart';
+import '../../../reports/domain/usecases/cache_dependencies_usecase.dart';
 import '../../data/datasources/auth_local_datasource.dart';
 import '../../data/models/user_model.dart';
 import '../../domain/entities/credentials.dart';
@@ -259,6 +260,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
             rememberedEmail: rememberMe ? email : null,
             rememberMe: rememberMe,
           );
+
+          // ✅ NUEVO: Cachear dependencias para uso offline
+          _cacheDependenciesAfterLogin();
         },
       );
     } catch (e, stackTrace) {
@@ -544,6 +548,30 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
     } catch (e) {
       print('Error inesperado refrescando usuario: $e');
+    }
+  }
+
+  /// Cachea dependencias para uso offline después del login
+  Future<void> _cacheDependenciesAfterLogin() async {
+    try {
+      AppLogger.debug('🔄 Iniciando cache de dependencias...');
+
+      final cacheDepsUseCase = sl<CacheDependenciesUseCase>();
+      final result = await cacheDepsUseCase();
+
+      result.fold(
+        (failure) {
+          AppLogger.warning(
+            '⚠️ Error cacheando dependencias: ${failure.message}',
+          );
+        },
+        (_) {
+          AppLogger.success('✅ Dependencias cacheadas exitosamente');
+        },
+      );
+    } catch (e) {
+      AppLogger.warning('⚠️ Error cacheando dependencias', error: e);
+      // No interrumpimos el login por este error
     }
   }
 }

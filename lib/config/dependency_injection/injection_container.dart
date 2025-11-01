@@ -13,6 +13,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:uuid/uuid.dart';
 
 // Core
 import '../../core/network/network_info.dart';
@@ -59,8 +60,21 @@ import '../../features/incidents/data/novelty_service.dart';
 import '../../features/incidents/data/offline_sync_service.dart';
 import '../../features/incidents/data/services/novelty_report_service.dart';
 
+// Reports Feature - Data Layer
+import '../../features/reports/data/datasources/report_local_datasource.dart';
+import '../../features/reports/data/datasources/report_remote_datasource.dart';
+import '../../features/reports/data/repositories/report_repository_impl.dart';
+
+// Reports Feature - Domain Layer
+import '../../features/reports/domain/repositories/report_repository.dart';
+import '../../features/reports/domain/usecases/create_report_offline_usecase.dart';
+import '../../features/reports/domain/usecases/sync_reports_usecase.dart';
+import '../../features/reports/domain/usecases/get_pending_reports_usecase.dart';
+import '../../features/reports/domain/usecases/get_pending_reports_count_usecase.dart';
+import '../../features/reports/domain/usecases/cache_dependencies_usecase.dart';
+
 // Database
-import '../database/app_database.dart';
+import '../../core/database/app_database.dart';
 
 /// Service Locator global
 final GetIt sl = GetIt.instance;
@@ -264,13 +278,70 @@ Future<void> init() async {
     () => OfflineSyncService(
       sl<AppDatabase>(), // Base de datos
       sl<NoveltyService>(), // Servicio de novedades
+      sl<NoveltyReportService>(), // Servicio de reportes
       sl<Connectivity>(), // Conectividad
+      sl<
+        CrewRemoteDataSource
+      >(), // Servicio de cuadrillas (para cachear miembros)
     ),
   );
 
   // Novelty Report Service - API calls de reportes de resolución de novedades
   sl.registerLazySingleton<NoveltyReportService>(
     () => NoveltyReportService(apiClient: sl()),
+  );
+
+  // ============================================================================
+  // REPORTS FEATURE - DATA LAYER
+  // ============================================================================
+
+  // Local Data Source - Caché local de reportes
+  sl.registerLazySingleton<ReportLocalDataSource>(
+    () => ReportLocalDataSourceImpl(sl()),
+  );
+
+  // Remote Data Source - API calls de reportes
+  sl.registerLazySingleton<ReportRemoteDataSource>(
+    () => ReportRemoteDataSourceImpl(sl()),
+  );
+
+  // Repository Implementation - Coordina remote y local
+  sl.registerLazySingleton<ReportRepository>(
+    () => ReportRepositoryImpl(
+      remoteDataSource: sl(),
+      localDataSource: sl(),
+      networkInfo: sl(),
+    ),
+  );
+
+  // ============================================================================
+  // REPORTS FEATURE - DOMAIN LAYER (USE CASES)
+  // ============================================================================
+
+  // UUID Generator - Para IDs locales de reportes
+  sl.registerLazySingleton<Uuid>(() => const Uuid());
+
+  // Create Report Offline Use Case
+  sl.registerLazySingleton<CreateReportOfflineUseCase>(
+    () => CreateReportOfflineUseCase(sl(), sl()),
+  );
+
+  // Sync Reports Use Case
+  sl.registerLazySingleton<SyncReportsUseCase>(() => SyncReportsUseCase(sl()));
+
+  // Get Pending Reports Use Case
+  sl.registerLazySingleton<GetPendingReportsUseCase>(
+    () => GetPendingReportsUseCase(sl()),
+  );
+
+  // Get Pending Reports Count Use Case
+  sl.registerLazySingleton<GetPendingReportsCountUseCase>(
+    () => GetPendingReportsCountUseCase(sl()),
+  );
+
+  // Cache Dependencies Use Case
+  sl.registerLazySingleton<CacheDependenciesUseCase>(
+    () => CacheDependenciesUseCase(sl()),
   );
 }
 

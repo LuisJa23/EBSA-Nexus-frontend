@@ -203,15 +203,39 @@ class _NoveltyCardState extends State<NoveltyCard> {
                 const SizedBox(height: 12),
                 const Divider(),
                 const SizedBox(height: 8),
+
+                // Botón principal: Completar (online)
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: _completeNovelty,
                     icon: const Icon(Icons.check_circle, size: 18),
-                    label: const Text('Completar'),
+                    label: const Text('Completar Reporte'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.success,
                       foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                // Botón secundario: Crear reporte offline
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      // Navegar a la página de crear reporte offline
+                      context.push(
+                        '/reports/offline/create/${widget.novelty.id}',
+                      );
+                    },
+                    icon: const Icon(Icons.cloud_off, size: 18),
+                    label: const Text('Crear Offline'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      side: BorderSide(color: AppColors.primary),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                   ),

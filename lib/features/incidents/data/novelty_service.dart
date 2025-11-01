@@ -148,6 +148,22 @@ class NoveltyService {
         AppLogger.error('Status Code: ${e.response?.statusCode}');
         AppLogger.error('Response data: ${e.response?.data}');
         AppLogger.error('Request: ${e.requestOptions.path}');
+        AppLogger.error(
+          'Request data type: ${e.requestOptions.data.runtimeType}',
+        );
+
+        // Si es error 500 o 403, dar más contexto
+        if (e.response?.statusCode == 500) {
+          AppLogger.error('⚠️ Error 500: Problema en el servidor');
+          AppLogger.error('Posibles causas:');
+          AppLogger.error('  - Permisos insuficientes del usuario');
+          AppLogger.error('  - Validación fallida en el backend');
+          AppLogger.error('  - Error en base de datos');
+          AppLogger.error('Response completa: ${e.response?.data}');
+        } else if (e.response?.statusCode == 403) {
+          AppLogger.error('⚠️ Error 403: Acceso denegado');
+          AppLogger.error('El usuario no tiene permisos para crear novedades');
+        }
       }
 
       rethrow;

@@ -173,7 +173,7 @@ class AppLogger {
 
   /// Log de error de cache
   static void cacheError(String operation, dynamic error) {
-    error('$_cachePrefix ❌ Error en $operation', error: error);
+    AppLogger.error('$_cachePrefix ❌ Error en $operation', error: error);
   }
 
   // ============================================================================
@@ -228,6 +228,11 @@ class AppLogger {
   // ============================================================================
   // MÉTODOS DE DIAGNÓSTICO
   // ============================================================================
+
+  /// Log de éxito general
+  static void success(String message) {
+    info('✅ $message');
+  }
 
   /// Log de estado completo de almacenamiento
   static void storageDebugInfo(Map<String, dynamic> info) {

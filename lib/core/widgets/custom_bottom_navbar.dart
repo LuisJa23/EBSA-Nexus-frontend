@@ -1,3 +1,4 @@
+import 'package:ebsa_nexus_frontend/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -72,7 +73,7 @@ class CustomBottomNavBar extends ConsumerWidget {
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         color: isActive
-                            ? const Color(0xFFF2C94C)
+                            ? AppColors.primary
                             : Colors.transparent,
                         shape: BoxShape.circle,
                       ),

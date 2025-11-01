@@ -68,6 +68,7 @@ dependencies:
   logger: ^2.0.2+1
   dart_jsonwebtoken: ^2.14.1
   go_router: ^14.6.2
+  path: ^1.8.3
 
   # Form Validation
   formz: ^0.7.0
@@ -101,7 +102,7 @@ dev_dependencies:
 
   # Testing
   mockito: ^5.4.2
-  
+
   # App Icon Generator
   flutter_launcher_icons: ^0.13.1
 

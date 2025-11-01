@@ -22,6 +22,8 @@ import '../../features/incidents/presentation/pages/select_novelty_for_report_pa
 import '../../features/incidents/presentation/pages/incident_list_page.dart';
 import '../../features/incidents/presentation/pages/offline_incidents_page.dart';
 import '../../features/reports/presentation/pages/create_report_page.dart';
+import '../../features/reports/presentation/pages/create_offline_report_page.dart';
+import '../../features/reports/presentation/pages/select_novelty_for_offline_report_page.dart';
 import '../../features/users/presentation/pages/manage_users_page.dart';
 import '../../features/users/presentation/pages/create_user_page.dart';
 import '../../features/users/presentation/pages/list_users_page.dart';
@@ -279,6 +281,19 @@ final routerProvider = Provider<GoRouter>((ref) {
             },
           ),
 
+          /// Crear Reporte Offline
+          GoRoute(
+            path: '/reports/offline/create/:noveltyId',
+            name: 'create-offline-report',
+            pageBuilder: (context, state) {
+              final noveltyId = state.pathParameters['noveltyId']!;
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: CreateOfflineReportPage(noveltyId: noveltyId),
+              );
+            },
+          ),
+
           /// Seleccionar Novedad para Reporte
           GoRoute(
             path: '/select-novelty-for-report',
@@ -286,6 +301,16 @@ final routerProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
               child: const SelectNoveltyForReportPage(),
+            ),
+          ),
+
+          /// Seleccionar Novedad para Reporte Offline
+          GoRoute(
+            path: '/select-novelty-for-offline-report',
+            name: 'select-novelty-for-offline-report',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const SelectNoveltyForOfflineReportPage(),
             ),
           ),
 

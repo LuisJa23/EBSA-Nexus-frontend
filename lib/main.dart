@@ -22,6 +22,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
+import 'config/database/database_initializer.dart';
 import 'config/dependency_injection/injection_container.dart' as di;
 
 void main() async {
@@ -31,8 +32,8 @@ void main() async {
   // Inicializar inyección de dependencias
   await di.init();
 
-  // TODO: Inicializar base de datos local
-  // await setupLocalDatabase();
+  // Inicializar base de datos local
+  await initializeLocalDatabase();
 
   // Configurar manejo global de errores
   FlutterError.onError = (FlutterErrorDetails details) {
