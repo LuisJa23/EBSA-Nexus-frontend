@@ -55,6 +55,13 @@ class RouteNames {
   static String noveltyReport(String noveltyId) => '/novelty-report/$noveltyId';
 
   // ============================================================================
+  // RUTAS DE ANALYTICS / CONSULTAS
+  // ============================================================================
+
+  static const String analytics = '/analytics';
+  static const String analyticsDashboard = '/analytics/dashboard';
+
+  // ============================================================================
   // RUTAS DE CUADRILLAS
   // ============================================================================
 

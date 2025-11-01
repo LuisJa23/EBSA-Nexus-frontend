@@ -84,14 +84,14 @@ class HomePage extends ConsumerWidget {
         // 2. Gestionar Reportes (Todos los roles) - NUEVO
         _buildManageReportsCard(context, ref),
 
-        // 3. Consultas (Solo Admin y Jefe de Área)
+        // 3. Consultas / Analytics (Solo Admin y Jefe de Área)
         if (hasFullAccess) ...[
           const SizedBox(height: 16),
           HomeActionCard(
-            icon: Icons.bar_chart,
-            title: 'Consultas',
-            subtitle: 'Consultar Novedades asignadas',
-            onTap: () => context.push(RouteNames.incidentList),
+            icon: Icons.analytics,
+            title: 'Análisis y Estadísticas',
+            subtitle: 'Dashboard con métricas y gráficas',
+            onTap: () => context.push(RouteNames.analyticsDashboard),
           ),
         ],
 
@@ -106,12 +106,14 @@ class HomePage extends ConsumerWidget {
           ),
         ],
 
-        // 5. Gestionar Cuadrillas
+        // 5. Cuadrillas (Todos los roles)
         const SizedBox(height: 16),
         HomeActionCard(
           icon: Icons.groups,
-          title: 'Gestionar Cuadrillas',
-          subtitle: 'Administración de cuadrillas',
+          title: hasFullAccess ? 'Gestionar Cuadrillas' : 'Ver Cuadrillas',
+          subtitle: hasFullAccess
+              ? 'Administración de cuadrillas'
+              : 'Consultar cuadrillas del sistema',
           onTap: () => context.push(RouteNames.manageCrews),
         ),
       ],
