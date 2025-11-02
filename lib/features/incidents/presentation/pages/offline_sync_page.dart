@@ -144,7 +144,10 @@ class _OfflineSyncPageState extends ConsumerState<OfflineSyncPage> {
       }
 
       if (hasErrors) {
-        _showErrorDialog('Sincronización completada con errores', resultMessage);
+        _showErrorDialog(
+          'Sincronización completada con errores',
+          resultMessage,
+        );
       } else {
         _showSuccessDialog('Sincronización exitosa', resultMessage);
       }

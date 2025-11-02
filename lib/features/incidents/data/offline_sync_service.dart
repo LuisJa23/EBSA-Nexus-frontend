@@ -69,7 +69,6 @@ class OfflineSyncService {
 
   /// Sincroniza todas las novedades offline pendientes
   Future<Map<String, dynamic>> syncAllOfflineNovelties() async {
-
     int successCount = 0;
     int failedCount = 0;
     List<String> errors = [];
