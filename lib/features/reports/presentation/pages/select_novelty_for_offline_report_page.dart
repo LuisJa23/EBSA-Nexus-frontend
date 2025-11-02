@@ -117,6 +117,11 @@ class _SelectNoveltyForOfflineReportPageState
 
       // NUEVA ESTRATEGIA: Usar las novedades ya cargadas en el provider
       // en lugar de hacer una nueva llamada al servidor
+
+      // Capturar providers ANTES de operaciones asíncronas
+      final assignmentsNotifier = ref.read(assignmentsProvider.notifier);
+      final authState = ref.read(authNotifierProvider);
+
       final assignmentsState = ref.read(assignmentsProvider);
 
       print('� Novedades en provider: ${assignmentsState.novelties.length}');
@@ -125,7 +130,6 @@ class _SelectNoveltyForOfflineReportPageState
       if (assignmentsState.novelties.isEmpty) {
         print('⚠️ No hay novedades en provider, cargando primero...');
 
-        final authState = ref.read(authNotifierProvider);
         final userId = authState.user?.id;
 
         if (userId == null) {
@@ -133,7 +137,7 @@ class _SelectNoveltyForOfflineReportPageState
         }
 
         // Cargar novedades del usuario
-        await ref.read(assignmentsProvider.notifier).loadUserNovelties(userId);
+        await assignmentsNotifier.loadUserNovelties(userId);
 
         // Obtener el estado actualizado
         final updatedState = ref.read(assignmentsProvider);
@@ -348,11 +352,13 @@ class _SelectNoveltyForOfflineReportPageState
   }
 
   Future<void> _handleRefresh() async {
+    // Capturar providers ANTES de cualquier operación asíncrona
     final authState = ref.read(authNotifierProvider);
+    final notifier = ref.read(assignmentsProvider.notifier);
     final userId = authState.user?.id;
 
     if (userId != null) {
-      await ref.read(assignmentsProvider.notifier).refreshNovelties(userId);
+      await notifier.refreshNovelties(userId);
     }
     await _loadCachedNovelties();
   }
