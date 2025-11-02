@@ -13,6 +13,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:drift/drift.dart' as drift;
 
@@ -25,6 +26,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../../core/widgets/evidence_capture_widget.dart';
 import '../../../../core/database/app_database.dart';
+import '../../../../core/errors/exceptions.dart';
 
 /// Página para crear reportes de incidentes
 ///
@@ -51,7 +53,7 @@ class _CreateIncidentPageState extends ConsumerState<CreateIncidentPage> {
   // Variables de selección
   String? _selectedArea;
   String? _selectedMotivo;
-  String? _selectedMunicipio;
+  int? _selectedMunicipioId; // Cambiado a ID numérico
 
   // Lista de evidencias (legacy - mantener por compatibilidad)
   List<String> _evidences = [];
@@ -83,18 +85,26 @@ class _CreateIncidentPageState extends ConsumerState<CreateIncidentPage> {
   List<String> get _motivos =>
       _selectedArea != null ? _areaMotivos[_selectedArea]! : [];
 
-  final List<String> _municipios = [
-    'Bogotá',
-    'Medellín',
-    'Cali',
-    'Barranquilla',
-    'Cartagena',
-    'Cúcuta',
-    'Bucaramanga',
-    'Pereira',
-    'Santa Marta',
-    'Ibagué',
+  // Lista de municipios con sus IDs (según la tabla de BD)
+  final List<Map<String, dynamic>> _municipios = [
+    {'id': 5, 'name': 'ARCABUCO'},
+    {'id': 6, 'name': 'CHITARAQUE'},
+    {'id': 7, 'name': 'GAMBITA'},
+    {'id': 8, 'name': 'MONIQUIRA'},
+    {'id': 9, 'name': 'SAN JOSE DE PARE'},
+    {'id': 10, 'name': 'SANTANA'},
+    {'id': 11, 'name': 'TOGUI'},
   ];
+
+  // Getter para obtener el nombre del municipio seleccionado
+  String get _selectedMunicipioName {
+    if (_selectedMunicipioId == null) return '';
+    final municipio = _municipios.firstWhere(
+      (m) => m['id'] == _selectedMunicipioId,
+      orElse: () => {'name': ''},
+    );
+    return municipio['name'] as String;
+  }
 
   @override
   void dispose() {
@@ -117,7 +127,7 @@ class _CreateIncidentPageState extends ConsumerState<CreateIncidentPage> {
       _observationsController.clear();
       _selectedArea = null;
       _selectedMotivo = null;
-      _selectedMunicipio = null;
+      _selectedMunicipioId = null; // Cambiado a ID
       _evidenceItems.clear();
     });
     _formKey.currentState?.reset();
@@ -348,17 +358,19 @@ class _CreateIncidentPageState extends ConsumerState<CreateIncidentPage> {
     return FormSection(
       title: 'Ubicación',
       children: [
-        CustomDropdown<String>(
-          value: _selectedMunicipio,
+        CustomDropdown<int>(
+          value: _selectedMunicipioId,
           label: 'Municipio',
           icon: Icons.location_city,
           items: _municipios
               .map(
-                (municipio) =>
-                    DropdownMenuItem(value: municipio, child: Text(municipio)),
+                (municipio) => DropdownMenuItem(
+                  value: municipio['id'] as int,
+                  child: Text(municipio['name'] as String),
+                ),
               )
               .toList(),
-          onChanged: (value) => setState(() => _selectedMunicipio = value),
+          onChanged: (value) => setState(() => _selectedMunicipioId = value),
           validator: (value) =>
               value == null ? 'Seleccione un municipio' : null,
         ),
@@ -483,11 +495,72 @@ class _CreateIncidentPageState extends ConsumerState<CreateIncidentPage> {
       return;
     }
 
+    // Validaciones adicionales
+    if (_selectedArea == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Debe seleccionar un área'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_selectedMotivo == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Debe seleccionar un motivo'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_selectedMunicipioId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Debe seleccionar un municipio'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_descriptionController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Debe ingresar una descripción'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     // Validar que exista al menos una evidencia GPS (obligatorio)
     if (_gpsCount == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('📍 Debe capturar al menos una ubicación GPS'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
+    // Validar que exista al menos una imagen
+    final imageCount = _evidenceItems
+        .where(
+          (item) =>
+              item.type == EvidenceType.photo ||
+              item.type == EvidenceType.gallery,
+        )
+        .length;
+
+    if (imageCount == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('📷 Debe capturar al menos una imagen'),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 3),
         ),
@@ -530,7 +603,32 @@ class _CreateIncidentPageState extends ConsumerState<CreateIncidentPage> {
       // Obtener ID numérico del área seleccionada
       final areaId = _areaIds[_selectedArea] ?? 1;
 
-      // Crear novedad
+      // Log detallado de los datos a enviar
+      print('═══════════════════════════════════════════════════════');
+      print('📤 PREPARANDO DATOS PARA ENVIAR AL BACKEND');
+      print('═══════════════════════════════════════════════════════');
+      print('🔢 areaId: $areaId (${areaId.runtimeType})');
+      print('📝 reason: $_selectedMotivo');
+      print('🏠 accountNumber: ${_accountNumberController.text.trim()}');
+      print('⚡ meterNumber: ${_meterNumberController.text.trim()}');
+      print('📊 activeReading: ${_activeReadingController.text.trim()}');
+      print('📊 reactiveReading: ${_reactiveReadingController.text.trim()}');
+      print(
+        '📍 locationId: $_selectedMunicipioId (${_selectedMunicipioId.runtimeType})',
+      );
+      print('🗺️  locationName: $_selectedMunicipioName');
+      print('🌐 address (GPS): $address');
+      print('📄 description: ${_descriptionController.text.trim()}');
+      print(
+        '📝 observations: ${_observationsController.text.trim().isNotEmpty ? _observationsController.text.trim() : "null"}',
+      );
+      print('📷 images: ${imageFiles.length} archivo(s)');
+      for (var i = 0; i < imageFiles.length; i++) {
+        print('   Imagen ${i + 1}: ${imageFiles[i].path}');
+      }
+      print('═══════════════════════════════════════════════════════');
+
+      // Crear novedad con locationId
       await noveltyService.createNovelty(
         areaId: areaId.toString(), // Convertir a string para el servicio
         reason: _selectedMotivo ?? '',
@@ -538,7 +636,10 @@ class _CreateIncidentPageState extends ConsumerState<CreateIncidentPage> {
         meterNumber: _meterNumberController.text.trim(),
         activeReading: _activeReadingController.text.trim(),
         reactiveReading: _reactiveReadingController.text.trim(),
-        municipality: _selectedMunicipio ?? '',
+        locationId:
+            _selectedMunicipioId?.toString() ?? '', // Enviar ID del municipio
+        municipality:
+            _selectedMunicipioName, // Enviar NOMBRE del municipio (requerido)
         address: address,
         description: _descriptionController.text.trim(),
         observations: _observationsController.text.trim().isNotEmpty
@@ -554,217 +655,43 @@ class _CreateIncidentPageState extends ConsumerState<CreateIncidentPage> {
       if (mounted) {
         _showSuccessDialog(imageFiles.length, address);
       }
-    } catch (e) {
+    } on NetworkException catch (e) {
       print('════════════════════════════════════════════════════');
-      print('🔴 PASO 1: ERROR CAPTURADO');
-      print('Error completo: ${e.toString()}');
-      print('Stack trace: ${e.toString()}');
-      print('════════════════════════════════════════════════════');
-
-      // Verificar si es error de timeout o conexión PRIMERO
-      final errorMessage = e.toString().toLowerCase();
-      final isConnectionError =
-          errorMessage.contains('connection') ||
-          errorMessage.contains('timeout') ||
-          errorMessage.contains('socketexception') ||
-          errorMessage.contains('network') ||
-          errorMessage.contains('timed out');
-
-      print('════════════════════════════════════════════════════');
-      print('� PASO 2: VERIFICAR TIPO DE ERROR');
-      print('Es error de conexión? $isConnectionError');
-      print('Mensaje de error (lowercase): $errorMessage');
+      print('🔴 NetworkException CAPTURADO - ERROR DE CONEXIÓN');
+      print('Mensaje: ${e.message}');
       print('════════════════════════════════════════════════════');
 
-      // SIEMPRE cerrar el diálogo de carga primero
-      print('════════════════════════════════════════════════════');
-      print('🔴 PASO 3: INTENTANDO CERRAR DIÁLOGO DE CARGA');
-      print('Widget mounted? $mounted');
-      print('loadingDialogContext disponible? ${loadingDialogContext != null}');
-
+      // Cerrar diálogo de carga
       if (loadingDialogContext != null) {
         try {
           Navigator.of(loadingDialogContext!).pop();
-          print('✅ Navigator.pop() ejecutado en loadingDialogContext');
+          print('✅ Diálogo de carga cerrado');
         } catch (popError) {
-          print('❌ ERROR al hacer pop con loadingDialogContext: $popError');
+          print('❌ ERROR al cerrar diálogo: $popError');
         }
       } else if (mounted) {
         try {
           Navigator.of(context).pop();
-          print('✅ Navigator.pop() ejecutado en context (fallback)');
+          print('✅ Diálogo de carga cerrado (fallback)');
         } catch (popError) {
-          print('❌ ERROR al hacer pop con context: $popError');
+          print('❌ ERROR al cerrar diálogo: $popError');
         }
-      } else {
-        print('❌ Ningún contexto disponible para cerrar diálogo');
       }
-      print(
-        '════════════════════════════════════════════════════',
-      ); // Esperar un frame para que el pop se complete
-      print('🔴 PASO 4: Esperando 100ms...');
+
+      // Esperar un frame para que el pop se complete
       await Future.delayed(Duration(milliseconds: 100));
-      print('✅ Espera completada');
 
-      if (isConnectionError) {
-        print('════════════════════════════════════════════════════');
-        print('🔴 PASO 5: ES ERROR DE CONEXIÓN - GUARDANDO OFFLINE');
-        print('════════════════════════════════════════════════════');
+      print('════════════════════════════════════════════════════');
+      print('🔴 GUARDANDO OFFLINE - NetworkException');
+      print('════════════════════════════════════════════════════');
 
-        try {
-          print('💾 Llamando a _saveOffline()...');
-          await _saveOffline();
-          print('✅✅✅ _saveOffline() COMPLETADO EXITOSAMENTE');
-        } catch (saveError) {
-          print('❌❌❌ ERROR en _saveOffline(): $saveError');
-          return; // Salir si falla el guardado
-        }
-
-        print('════════════════════════════════════════════════════');
-        print('🔴 PASO 6: PREPARANDO DIÁLOGO DE ÉXITO');
-        print('════════════════════════════════════════════════════');
-
-        print('════════════════════════════════════════════════════');
-        print('🔴 PASO 6: PREPARANDO DIÁLOGO DE ÉXITO');
-        print('════════════════════════════════════════════════════');
-
-        // Contar imágenes guardadas
-        final imageCount = _evidenceItems
-            .where(
-              (item) =>
-                  item.type == EvidenceType.photo ||
-                  item.type == EvidenceType.gallery,
-            )
-            .length;
-
-        print('Número de imágenes: $imageCount');
-        print('Widget mounted? $mounted');
-
-        // Mostrar diálogo de éxito offline (mismo formato que online pero naranja)
+      try {
+        print('💾 Llamando a _saveOffline()...');
+        await _saveOffline();
+        print('✅✅✅ _saveOffline() COMPLETADO EXITOSAMENTE');
+      } catch (saveError) {
+        print('❌❌❌ ERROR en _saveOffline(): $saveError');
         if (mounted) {
-          print('🔴 PASO 7: MOSTRANDO DIÁLOGO OFFLINE...');
-
-          try {
-            await showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (dialogContext) {
-                print('✅ Builder del diálogo ejecutándose');
-                return AlertDialog(
-                  title: Row(
-                    children: [
-                      Icon(Icons.cloud_off, color: Colors.orange, size: 32),
-                      SizedBox(width: 12),
-                      Text('¡Guardado Offline!'),
-                    ],
-                  ),
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'La novedad se guardó localmente y se sincronizará cuando haya conexión.',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                      SizedBox(height: 16),
-                      _buildSummaryItem('Área', _selectedArea ?? ''),
-                      _buildSummaryItem('Motivo', _selectedMotivo ?? ''),
-                      _buildSummaryItem(
-                        'Cuenta',
-                        _accountNumberController.text,
-                      ),
-                      _buildSummaryItem('Medidor', _meterNumberController.text),
-                      _buildSummaryItem('Municipio', _selectedMunicipio ?? ''),
-                      _buildSummaryItem('Imágenes', '$imageCount'),
-                      SizedBox(height: 12),
-                      Container(
-                        padding: EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: Colors.orange.withOpacity(0.3),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.info_outline,
-                              color: Colors.orange,
-                              size: 20,
-                            ),
-                            SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Ver en: Gestionar Novedad → Novedades Offline',
-                                style: TextStyle(
-                                  color: Colors.orange[800],
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        print('🔴 PASO 8: Botón Aceptar presionado');
-                        Navigator.of(dialogContext).pop();
-                        print('✅ Diálogo cerrado');
-                        Navigator.of(context).pop();
-                        print('✅ Página cerrada, volviendo al menú');
-                      },
-                      child: Text('Aceptar'),
-                    ),
-                  ],
-                );
-              },
-            );
-            print('✅✅✅ showDialog() COMPLETADO');
-          } catch (dialogError) {
-            print('❌❌❌ ERROR al mostrar diálogo: $dialogError');
-          }
-        } else {
-          print('❌ Widget NO mounted, no se puede mostrar diálogo');
-        }
-
-        print('════════════════════════════════════════════════════');
-        print('✅ FIN DEL FLUJO OFFLINE');
-        print('════════════════════════════════════════════════════');
-      } else {
-        // NO ES ERROR DE CONEXIÓN - Mostrar error detallado
-        print('❌ Error del servidor - Mostrando al usuario');
-
-        String userMessage = 'Error al crear novedad';
-
-        // Intentar extraer mensaje del error
-        if (e.toString().contains('500')) {
-          userMessage =
-              '❌ Error del servidor (500)\n\n'
-              'Posibles causas:\n'
-              '• Usuario sin permisos para crear novedades\n'
-              '• Error de validación en el servidor\n'
-              '• Problema con la base de datos\n\n'
-              'Por favor contacte al administrador.';
-        } else if (e.toString().contains('403')) {
-          userMessage =
-              '❌ Acceso denegado (403)\n\n'
-              'Su usuario no tiene permisos para crear novedades.\n'
-              'Contacte al administrador del sistema.';
-        } else if (e.toString().contains('401')) {
-          userMessage =
-              '❌ Sesión expirada (401)\n\n'
-              'Por favor inicie sesión nuevamente.';
-        } else {
-          userMessage = 'Error al crear novedad:\n${e.toString()}';
-        }
-
-        if (mounted) {
-          // Mostrar diálogo de error más informativo
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
@@ -775,7 +702,9 @@ class _CreateIncidentPageState extends ConsumerState<CreateIncidentPage> {
                   Text('Error'),
                 ],
               ),
-              content: SingleChildScrollView(child: Text(userMessage)),
+              content: Text(
+                'No se pudo guardar la novedad offline:\n$saveError',
+              ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
@@ -785,18 +714,195 @@ class _CreateIncidentPageState extends ConsumerState<CreateIncidentPage> {
             ),
           );
         }
+        return;
+      }
+
+      // Contar imágenes guardadas
+      final imageCount = _evidenceItems
+          .where(
+            (item) =>
+                item.type == EvidenceType.photo ||
+                item.type == EvidenceType.gallery,
+          )
+          .length;
+
+      print('Número de imágenes: $imageCount');
+      print('Widget mounted? $mounted');
+
+      // Mostrar diálogo de éxito offline
+      if (mounted) {
+        print('🔴 MOSTRANDO DIÁLOGO OFFLINE...');
+
+        try {
+          await showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (dialogContext) {
+              print('✅ Builder del diálogo ejecutándose');
+              return AlertDialog(
+                title: Row(
+                  children: [
+                    Icon(Icons.cloud_off, color: Colors.orange, size: 32),
+                    SizedBox(width: 12),
+                    Text('¡Guardado Offline!'),
+                  ],
+                ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'La novedad se guardó localmente y se sincronizará cuando haya conexión.',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    SizedBox(height: 16),
+                    _buildSummaryItem('Área', _selectedArea ?? ''),
+                    _buildSummaryItem('Motivo', _selectedMotivo ?? ''),
+                    _buildSummaryItem('Cuenta', _accountNumberController.text),
+                    _buildSummaryItem('Medidor', _meterNumberController.text),
+                    _buildSummaryItem('Municipio', _selectedMunicipioName),
+                    _buildSummaryItem('Imágenes', '$imageCount'),
+                    SizedBox(height: 12),
+                    Container(
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Colors.orange.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            color: Colors.orange,
+                            size: 20,
+                          ),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Ver en: Gestionar Novedad → Novedades Offline',
+                              style: TextStyle(
+                                color: Colors.orange[800],
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      print('🔴 Botón Aceptar presionado');
+                      Navigator.of(dialogContext).pop();
+                      print('✅ Diálogo cerrado');
+                      Navigator.of(context).pop();
+                      print('✅ Página cerrada, volviendo al menú');
+                    },
+                    child: Text('Aceptar'),
+                  ),
+                ],
+              );
+            },
+          );
+          print('✅✅✅ showDialog() COMPLETADO');
+        } catch (dialogError) {
+          print('❌❌❌ ERROR al mostrar diálogo: $dialogError');
+        }
+      } else {
+        print('❌ Widget NO mounted, no se puede mostrar diálogo');
+      }
+
+      print('════════════════════════════════════════════════════');
+      print('✅ FIN DEL FLUJO OFFLINE (NetworkException)');
+      print('════════════════════════════════════════════════════');
+    } catch (e) {
+      print('════════════════════════════════════════════════════');
+      print('🔴 ERROR DEL SERVIDOR CAPTURADO');
+      print('Error completo: ${e.toString()}');
+      print('════════════════════════════════════════════════════');
+
+      // Cerrar diálogo de carga
+      if (loadingDialogContext != null) {
+        try {
+          Navigator.of(loadingDialogContext!).pop();
+          print('✅ Diálogo de carga cerrado');
+        } catch (popError) {
+          print('❌ ERROR al cerrar diálogo: $popError');
+        }
+      } else if (mounted) {
+        try {
+          Navigator.of(context).pop();
+          print('✅ Diálogo de carga cerrado (fallback)');
+        } catch (popError) {
+          print('❌ ERROR al cerrar diálogo: $popError');
+        }
+      }
+
+      await Future.delayed(Duration(milliseconds: 100));
+
+      // Mostrar error detallado
+      print('❌ Error del servidor - Mostrando al usuario');
+
+      String userMessage = 'Error al crear novedad';
+
+      // Intentar extraer mensaje del error
+      if (e.toString().contains('500')) {
+        userMessage =
+            '❌ Error del servidor (500)\n\n'
+            'Posibles causas:\n'
+            '• Usuario sin permisos para crear novedades\n'
+            '• Error de validación en el servidor\n'
+            '• Problema con la base de datos\n\n'
+            'Por favor contacte al administrador.';
+      } else if (e.toString().contains('403')) {
+        userMessage =
+            '❌ Acceso denegado (403)\n\n'
+            'Su usuario no tiene permisos para crear novedades.\n'
+            'Contacte al administrador del sistema.';
+      } else if (e.toString().contains('401')) {
+        userMessage =
+            '❌ Sesión expirada (401)\n\n'
+            'Por favor inicie sesión nuevamente.';
+      } else {
+        userMessage = 'Error al crear novedad:\n${e.toString()}';
+      }
+
+      if (mounted) {
+        // Mostrar diálogo de error más informativo
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Row(
+              children: [
+                Icon(Icons.error_outline, color: Colors.red, size: 32),
+                SizedBox(width: 12),
+                Text('Error'),
+              ],
+            ),
+            content: SingleChildScrollView(child: Text(userMessage)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text('Aceptar'),
+              ),
+            ],
+          ),
+        );
       }
     }
   }
 
   Future<void> _saveOffline() async {
-    print('📱 _saveOffline iniciado');
     try {
-      print('📱 Obteniendo usuario actual...');
       // Obtener usuario actual
       final authState = ref.read(authNotifierProvider);
       final currentUserId = authState.user?.id;
-      print('📱 Usuario ID: $currentUserId');
 
       if (currentUserId == null) {
         throw Exception('Usuario no identificado');
@@ -805,26 +911,14 @@ class _CreateIncidentPageState extends ConsumerState<CreateIncidentPage> {
       // Intentar parsear el userId como int, usar 0 si falla
       final userId = int.tryParse(currentUserId) ?? 0;
 
-      if (userId == 0) {
-        print(
-          '⚠️ Advertencia: ID de usuario no numérico ("$currentUserId"), usando ID temporal: 0',
-        );
-      }
-
-      print('📱 Usuario válido: $userId');
-      print('📱 Obteniendo base de datos...');
-
       // Obtener base de datos
       final db = ref.read(databaseProvider);
-      print('📱 Base de datos obtenida');
 
       // Generar ID único para la novedad (usar timestamp negativo para distinguir de IDs del servidor)
       final noveltyId = -DateTime.now().millisecondsSinceEpoch;
-      print('📱 ID generado: $noveltyId');
 
       // Obtener ID numérico del área seleccionada
       final areaId = _areaIds[_selectedArea] ?? 1;
-      print('📱 Área ID: $areaId');
 
       // Parsear lecturas como números
       final activeReading =
@@ -832,17 +926,36 @@ class _CreateIncidentPageState extends ConsumerState<CreateIncidentPage> {
       final reactiveReading =
           double.tryParse(_reactiveReadingController.text.trim()) ?? 0.0;
 
-      // Usar municipio como dirección temporal
-      final address = _selectedMunicipio ?? '';
-      print('📱 Dirección: $address');
+      // IMPORTANTE: Extraer coordenadas GPS (igual que en creación normal)
+      final gpsItem = _evidenceItems.firstWhere(
+        (item) => item.type == EvidenceType.gps,
+        orElse: () => throw Exception('No se encontró ubicación GPS'),
+      );
+      final address = '${gpsItem.latitude},${gpsItem.longitude}';
 
       final now = DateTime.now();
 
-      print('📱 Preparando datos para guardar:');
-      print('  - noveltyId: $noveltyId');
-      print('  - areaId: $areaId');
-      print('  - status: PENDIENTE');
-      print('  - rawJson: {"offline": true, "created_offline": true}');
+      // Obtener rutas de imágenes para guardar (igual que en creación normal)
+      final imageItems = _evidenceItems
+          .where(
+            (item) =>
+                item.type == EvidenceType.photo ||
+                item.type == EvidenceType.gallery,
+          )
+          .toList();
+      final imagePaths = imageItems.map((item) => item.path).toList();
+
+      // Crear JSON con TODOS los datos necesarios para sincronización
+      final rawJsonMap = {
+        'offline': true,
+        'created_offline': true,
+        'locationId': _selectedMunicipioId, // IMPORTANTE: Guardar locationId
+        'image_paths': imagePaths,
+        // Guardar también valores de texto originales para referencia
+        'activeReadingText': _activeReadingController.text.trim(),
+        'reactiveReadingText': _reactiveReadingController.text.trim(),
+      };
+      final rawJsonString = jsonEncode(rawJsonMap);
 
       // Guardar novedad en BD local usando tabla de cache
       await db.upsertNoveltyCache(
@@ -854,7 +967,9 @@ class _CreateIncidentPageState extends ConsumerState<CreateIncidentPage> {
           meterNumber: drift.Value(_meterNumberController.text.trim()),
           activeReading: drift.Value(activeReading),
           reactiveReading: drift.Value(reactiveReading),
-          municipality: drift.Value(_selectedMunicipio ?? ''),
+          municipality: drift.Value(
+            _selectedMunicipioName,
+          ), // Guardar nombre del municipio
           address: drift.Value(address),
           description: drift.Value(_descriptionController.text.trim()),
           observations: drift.Value(_observationsController.text.trim()),
@@ -867,147 +982,13 @@ class _CreateIncidentPageState extends ConsumerState<CreateIncidentPage> {
           closedAt: const drift.Value.absent(),
           cancelledAt: const drift.Value.absent(),
           cachedAt: drift.Value(now),
-          rawJson: const drift.Value(
-            '{"offline": true, "created_offline": true}',
-          ),
+          rawJson: drift.Value(rawJsonString),
         ),
       );
-
-      print('✅✅✅ Novedad guardada en caché local con ID: $noveltyId');
-      print('📱 Verificando guardado...');
-
-      // Verificar que se guardó
-      final saved = await db.getCachedNoveltyById(noveltyId);
-      if (saved != null) {
-        print('✅ VERIFICACIÓN: Novedad encontrada en BD');
-        print('  - ID: ${saved.noveltyId}');
-        print('  - Status: ${saved.status}');
-        print('  - RawJson: ${saved.rawJson}');
-      } else {
-        print('❌ ERROR: No se encontró la novedad en BD');
-      }
-
-      // TODO: Guardar evidencias si es necesario
-      // Por ahora solo guardamos la novedad básica
-    } catch (e, stackTrace) {
+    } catch (e) {
       print('❌ Error en _saveOffline: $e');
-      print('StackTrace: $stackTrace');
       rethrow;
     }
-
-    /* CÓDIGO ORIGINAL COMENTADO
-    print('📱 _saveOffline iniciado');
-    try {
-      print('📱 Obteniendo usuario actual...');
-      // Obtener usuario actual
-      final authState = ref.read(authNotifierProvider);
-      final currentUserId = authState.user?.id;
-      print('📱 Usuario ID: $currentUserId');
-
-      if (currentUserId == null) {
-        throw Exception('Usuario no identificado');
-      }
-
-      // Intentar parsear el userId como int, usar 0 si falla (para compatibilidad)
-      final userId = int.tryParse(currentUserId) ?? 0;
-
-      if (userId == 0) {
-        print(
-          '⚠️ Advertencia: ID de usuario no numérico ("$currentUserId"), usando ID temporal: 0',
-        );
-      }
-
-      print('📱 Usuario válido: $userId');
-      print('📱 Obteniendo base de datos...');
-
-      // Obtener base de datos
-      final db = ref.read(databaseProvider);
-      print('📱 Base de datos obtenida');
-
-      // Generar UUID para la novedad
-      final uuid = const Uuid();
-      final noveltyId = uuid.v4();
-      print('📱 UUID generado: $noveltyId');
-
-      // Obtener ID numérico del área seleccionada
-      final areaId = _areaIds[_selectedArea] ?? 1;
-      print('📱 Área ID: $areaId');
-
-      // Usar municipio como dirección temporal
-      final address = _selectedMunicipio ?? '';
-      print('📱 Dirección: $address');
-
-      // Guardar novedad en BD local
-      await db.insertOfflineIncident(
-        OfflineIncidentsCompanion(
-          id: drift.Value(noveltyId),
-          areaId: drift.Value(areaId),
-          accountNumber: drift.Value(_accountNumberController.text.trim()),
-          meterNumber: drift.Value(_meterNumberController.text.trim()),
-          area: drift.Value(_selectedArea ?? ''),
-          reason: drift.Value(_selectedMotivo ?? ''),
-          motivo: drift.Value(_selectedMotivo ?? ''),
-          municipality: drift.Value(_selectedMunicipio ?? ''),
-          municipio: drift.Value(_selectedMunicipio ?? ''),
-          address: drift.Value(address),
-          description: drift.Value(_descriptionController.text.trim()),
-          activeReading: drift.Value(_activeReadingController.text.trim()),
-          reactiveReading: drift.Value(_reactiveReadingController.text.trim()),
-          observations: drift.Value(_observationsController.text.trim()),
-          createdBy: drift.Value(userId),
-          syncStatus: const drift.Value('pending'),
-        ),
-      );
-
-      // Guardar imágenes locales
-      final imageItems = _evidenceItems
-          .where(
-            (item) =>
-                item.type == EvidenceType.photo ||
-                item.type == EvidenceType.gallery,
-          )
-          .toList();
-
-      // Copiar imágenes a directorio permanente
-      final appDir = await getApplicationDocumentsDirectory();
-      final offlineDir = Directory(
-        p.join(appDir.path, 'offline_incidents', noveltyId),
-      );
-      await offlineDir.create(recursive: true);
-
-      int imageIndex = 0;
-      for (var imageItem in imageItems) {
-        final sourceFile = File(imageItem.path);
-        final fileName = 'image_$imageIndex${p.extension(imageItem.path)}';
-        final destPath = p.join(offlineDir.path, fileName);
-        await sourceFile.copy(destPath);
-
-        await db.insertIncidentImage(
-          OfflineIncidentImagesCompanion(
-            incidentId: drift.Value(noveltyId),
-            localPath: drift.Value(destPath),
-            syncStatus: const drift.Value('pending'),
-          ),
-        );
-
-        imageIndex++;
-      }
-
-      print('✅ Novedad guardada offline exitosamente (ID: $noveltyId)');
-    } catch (e) {
-      print('❌ ERROR AL GUARDAR OFFLINE: ${e.toString()}');
-      print('❌ Stack trace: ${StackTrace.current}');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al guardar offline: ${e.toString()}'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
-          ),
-        );
-      }
-    }
-    */ // FIN DEL CÓDIGO COMENTADO
   }
 
   void _showSuccessDialog(int imageCount, String address) {
@@ -1034,7 +1015,7 @@ class _CreateIncidentPageState extends ConsumerState<CreateIncidentPage> {
             _buildSummaryItem('Motivo', _selectedMotivo ?? ''),
             _buildSummaryItem('Cuenta', _accountNumberController.text),
             _buildSummaryItem('Medidor', _meterNumberController.text),
-            _buildSummaryItem('Municipio', _selectedMunicipio ?? ''),
+            _buildSummaryItem('Municipio', _selectedMunicipioName),
             _buildSummaryItem('Imágenes', '$imageCount'),
             _buildSummaryItem('Coordenadas', address),
           ],

@@ -17,6 +17,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:equatable/equatable.dart';
 
 import '../../../../config/dependency_injection/injection_container.dart';
+import '../../../../core/errors/failures.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../../../reports/domain/usecases/cache_dependencies_usecase.dart';
 import '../../data/datasources/auth_local_datasource.dart';
@@ -197,25 +198,55 @@ class AuthNotifier extends StateNotifier<AuthState> {
         rememberMe: rememberMe,
       );
 
-      AppLogger.debug('Ejecutando login use case...');
+      AppLogger.debug('🔄 Ejecutando login use case...');
+      AppLogger.debug('📡 Esperando respuesta del servidor...');
 
       // Ejecutar login use case
       final result = await _loginUseCase.call(credentials);
+
+      AppLogger.debug('✅ Respuesta recibida del servidor');
 
       result.fold(
         (failure) {
           // Login falló
           AppLogger.loginFailure(email, failure.message);
 
+          // Mejorar mensajes de error para el usuario
+          String userMessage = failure.message;
+          String errorCode = failure.code ?? 'UNKNOWN_ERROR';
+
+          // Personalizar mensajes según el tipo de error
+          if (failure is NetworkFailure) {
+            userMessage =
+                'Sin conexión a internet. Verifica tu conexión e intenta nuevamente.';
+            errorCode = 'NETWORK_ERROR';
+          } else if (failure is TimeoutFailure) {
+            userMessage =
+                'El servidor está tardando en responder. Por favor, espera un momento e intenta nuevamente.';
+            errorCode = 'TIMEOUT_ERROR';
+          } else if (failure is ServerFailure) {
+            if (failure.statusCode == 401) {
+              userMessage =
+                  'Credenciales incorrectas. Verifica tu email y contraseña.';
+              errorCode = 'INVALID_CREDENTIALS';
+            } else if (failure.statusCode == 503) {
+              userMessage =
+                  'El servidor no está disponible. Intenta nuevamente en unos momentos.';
+              errorCode = 'SERVER_UNAVAILABLE';
+            } else {
+              userMessage = 'Error del servidor: ${failure.message}';
+            }
+          }
+
           state = AuthState.error(
-            message: failure.message,
-            code: failure.code,
+            message: userMessage,
+            code: errorCode,
             rememberedEmail: rememberMe ? email : null,
             rememberMe: rememberMe,
           );
 
-          // Limpiar el error automáticamente después de 5 segundos
-          _clearErrorAfterDelay();
+          // NO limpiar el error automáticamente - dejar que el usuario lo cierre manualmente
+          // _clearErrorAfterDelay();
         },
         (user) async {
           // Login exitoso
@@ -274,7 +305,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
 
       state = AuthState.error(
-        message: 'Error inesperado durante el login: $e',
+        message:
+            'Error inesperado: ${e.toString()}. Por favor, intenta nuevamente.',
         code: 'UNEXPECTED_ERROR',
       );
     }
@@ -466,17 +498,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  /// Limpia el error automáticamente después de un tiempo
-  void _clearErrorAfterDelay() {
-    Timer(const Duration(seconds: 15), () {
-      if (state.hasError) {
-        print(
-          '🔍 AuthProvider: Limpiando error automáticamente después de 15 segundos',
-        );
-        clearError();
-      }
-    });
-  }
+  // Método eliminado: _clearErrorAfterDelay()
+  // Los errores ahora se mantienen visibles hasta que el usuario los cierre manualmente
+  // Esto mejora la experiencia de usuario al dar tiempo suficiente para leer el error
 
   /// Actualiza las preferencias de recordar usuario
   void updateRememberPreferences({required bool rememberMe, String? email}) {

@@ -21,11 +21,12 @@ class ApiConstants {
   /// URL base para desarrollo en red local (para dispositivo físico)
   /// IP del hotspot WiFi compartido desde PC
 
-  static const String baseUrlNetwork = 'https://ebsa-nexus-backend-ejzl.onrender.com';
-
+  static const String baseUrlNetwork =
+      'https://ebsa-nexus-backend-ejzl.onrender.com';
 
   /// URL base para producción (configurar cuando esté disponible)
-  static const String baseUrlProduction = 'https://ebsa-nexus-backend-ejzl.onrender.com';
+  static const String baseUrlProduction =
+      'https://ebsa-nexus-backend-ejzl.onrender.com';
 
   /// URL actual basada en el entorno
   /// Se determina dinámicamente según el tipo de dispositivo
@@ -195,8 +196,8 @@ class ApiConstants {
   // ============================================================================
 
   /// Timeout para conexión (en milisegundos)
-  /// Reducido para detectar rápidamente sin conexión
-  static const int connectTimeout = 5000; // 5 segundos
+  /// AUMENTADO a 30 segundos para servidores en la nube (Render) que pueden tardar en arrancar
+  static const int connectTimeout = 30000; // 30 segundos
 
   /// Timeout para recepción (en milisegundos)
   /// Aumentado para permitir descargas de imágenes y respuestas grandes

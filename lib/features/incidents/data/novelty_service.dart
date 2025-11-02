@@ -10,10 +10,12 @@
 // CAPA: DATA LAYER - SERVICES
 
 import 'dart:io';
+import 'dart:async';
 import 'package:dio/dio.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/utils/app_logger.dart';
+import '../../../core/errors/exceptions.dart';
 import 'models/novelty_model.dart';
 
 /// Servicio para gestión de novedades
@@ -31,7 +33,8 @@ class NoveltyService {
   /// - [meterNumber]: Número de medidor
   /// - [activeReading]: Lectura activa
   /// - [reactiveReading]: Lectura reactiva
-  /// - [municipality]: Municipio
+  /// - [locationId]: ID del municipio/ubicación
+  /// - [municipality]: Nombre del municipio (requerido por backend)
   /// - [address]: Dirección (coordenadas GPS: "lat,lon")
   /// - [description]: Descripción de la novedad
   /// - [observations]: Observaciones adicionales
@@ -43,6 +46,7 @@ class NoveltyService {
     required String meterNumber,
     required String activeReading,
     required String reactiveReading,
+    required String locationId,
     required String municipality,
     required String address,
     required String description,
@@ -50,6 +54,41 @@ class NoveltyService {
     required List<File> images,
   }) async {
     try {
+      // Validar que los campos requeridos no estén vacíos
+      if (areaId.isEmpty) {
+        throw ArgumentError('areaId no puede estar vacío');
+      }
+      if (reason.isEmpty) {
+        throw ArgumentError('reason no puede estar vacío');
+      }
+      if (accountNumber.isEmpty) {
+        throw ArgumentError('accountNumber no puede estar vacío');
+      }
+      if (meterNumber.isEmpty) {
+        throw ArgumentError('meterNumber no puede estar vacío');
+      }
+      if (activeReading.isEmpty) {
+        throw ArgumentError('activeReading no puede estar vacío');
+      }
+      if (reactiveReading.isEmpty) {
+        throw ArgumentError('reactiveReading no puede estar vacío');
+      }
+      if (locationId.isEmpty) {
+        throw ArgumentError('locationId no puede estar vacío');
+      }
+      if (municipality.isEmpty) {
+        throw ArgumentError('municipality no puede estar vacío');
+      }
+      if (address.isEmpty) {
+        throw ArgumentError('address no puede estar vacío');
+      }
+      if (description.isEmpty) {
+        throw ArgumentError('description no puede estar vacío');
+      }
+      if (images.isEmpty) {
+        throw ArgumentError('Se requiere al menos una imagen');
+      }
+
       AppLogger.info('🚀 Iniciando creación de novedad');
       AppLogger.debug(
         'URL: ${ApiConstants.currentBaseUrl}${ApiConstants.createNoveltyEndpoint}',
@@ -58,6 +97,7 @@ class NoveltyService {
       AppLogger.debug('  - areaId: $areaId');
       AppLogger.debug('  - reason: $reason');
       AppLogger.debug('  - accountNumber: $accountNumber');
+      AppLogger.debug('  - locationId: $locationId');
       AppLogger.debug('  - municipality: $municipality');
       AppLogger.debug('  - imágenes: ${images.length}');
 
@@ -65,14 +105,19 @@ class NoveltyService {
       final formData = FormData();
 
       // Agregar campos de texto
+      // IMPORTANTE: areaId y locationId deben ser números válidos
       formData.fields.addAll([
-        MapEntry('areaId', areaId),
+        MapEntry('areaId', areaId), // Backend espera Long
         MapEntry('reason', reason),
         MapEntry('accountNumber', accountNumber),
         MapEntry('meterNumber', meterNumber),
         MapEntry('activeReading', activeReading),
         MapEntry('reactiveReading', reactiveReading),
-        MapEntry('municipality', municipality),
+        MapEntry('locationId', locationId), // Backend espera Long
+        MapEntry(
+          'municipality',
+          municipality,
+        ), // Backend espera String (nombre)
         MapEntry('address', address),
         MapEntry('description', description),
       ]);
@@ -102,6 +147,21 @@ class NoveltyService {
       AppLogger.info('📤 Enviando petición al servidor...');
       final startTime = DateTime.now();
 
+      // Log detallado de los datos que se enviarán
+      AppLogger.debug('📋 Datos del FormData:');
+      AppLogger.debug('  Fields:');
+      for (var field in formData.fields) {
+        AppLogger.debug(
+          '    ${field.key}: ${field.value} (${field.value.runtimeType})',
+        );
+      }
+      AppLogger.debug('  Files: ${formData.files.length} imágenes');
+      for (var i = 0; i < formData.files.length; i++) {
+        AppLogger.debug(
+          '    Imagen ${i + 1}: ${formData.files[i].value.filename}',
+        );
+      }
+
       // Realizar petición POST con form-data
       final response = await _apiClient.post(
         ApiConstants.createNoveltyEndpoint,
@@ -127,6 +187,18 @@ class NoveltyService {
               response.data['message'] ??
               response.data['error'] ??
               'Error del servidor (${response.statusCode})';
+        } else if (response.data is String) {
+          errorMessage = response.data;
+        }
+
+        // Para error 400, agregar contexto adicional
+        if (response.statusCode == 400) {
+          errorMessage = 'Datos de entrada inválidos: $errorMessage';
+          AppLogger.error('⚠️ ERROR 400 - Validar que:');
+          AppLogger.error('  - areaId sea un número válido');
+          AppLogger.error('  - locationId sea un número válido (5-11)');
+          AppLogger.error('  - Todos los campos requeridos estén completos');
+          AppLogger.error('  - Las imágenes se estén enviando correctamente');
         }
 
         throw Exception(errorMessage);
@@ -139,33 +211,63 @@ class NoveltyService {
       AppLogger.debug('Response: ${response.data}');
 
       return response;
-    } catch (e) {
-      AppLogger.error('❌ Error al crear novedad', error: e);
+    } on SocketException catch (e) {
+      AppLogger.error('❌ SocketException: Sin conexión a Internet', error: e);
+      throw NetworkException(
+        message: 'Sin conexión a Internet. La novedad se guardará localmente.',
+      );
+    } on TimeoutException catch (e) {
+      AppLogger.error('❌ TimeoutException: Tiempo de espera agotado', error: e);
+      throw NetworkException(
+        message: 'Tiempo de espera agotado. Verifica tu conexión a Internet.',
+      );
+    } on DioException catch (e) {
+      AppLogger.error('❌ DioException al crear novedad', error: e);
 
       // Log detallado del error
-      if (e is DioException) {
-        AppLogger.error('Tipo de error: ${e.type}');
-        AppLogger.error('Status Code: ${e.response?.statusCode}');
-        AppLogger.error('Response data: ${e.response?.data}');
-        AppLogger.error('Request: ${e.requestOptions.path}');
-        AppLogger.error(
-          'Request data type: ${e.requestOptions.data.runtimeType}',
-        );
+      AppLogger.error('Tipo de error: ${e.type}');
+      AppLogger.error('Status Code: ${e.response?.statusCode}');
+      AppLogger.error('Response data: ${e.response?.data}');
+      AppLogger.error('Request: ${e.requestOptions.path}');
+      AppLogger.error(
+        'Request data type: ${e.requestOptions.data.runtimeType}',
+      );
 
-        // Si es error 500 o 403, dar más contexto
-        if (e.response?.statusCode == 500) {
-          AppLogger.error('⚠️ Error 500: Problema en el servidor');
-          AppLogger.error('Posibles causas:');
-          AppLogger.error('  - Permisos insuficientes del usuario');
-          AppLogger.error('  - Validación fallida en el backend');
-          AppLogger.error('  - Error en base de datos');
-          AppLogger.error('Response completa: ${e.response?.data}');
-        } else if (e.response?.statusCode == 403) {
-          AppLogger.error('⚠️ Error 403: Acceso denegado');
-          AppLogger.error('El usuario no tiene permisos para crear novedades');
-        }
+      // Detectar errores de conexión
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        AppLogger.error('⚠️ Error de timeout detectado');
+        throw NetworkException(
+          message: 'Tiempo de espera agotado. Verifica tu conexión.',
+        );
       }
 
+      if (e.type == DioExceptionType.connectionError ||
+          e.error is SocketException) {
+        AppLogger.error('⚠️ Error de conexión detectado');
+        throw NetworkException(
+          message:
+              'Sin conexión a Internet. La novedad se guardará localmente.',
+        );
+      }
+
+      // Si es error 500 o 403, dar más contexto
+      if (e.response?.statusCode == 500) {
+        AppLogger.error('⚠️ Error 500: Problema en el servidor');
+        AppLogger.error('Posibles causas:');
+        AppLogger.error('  - Permisos insuficientes del usuario');
+        AppLogger.error('  - Validación fallida en el backend');
+        AppLogger.error('  - Error en base de datos');
+        AppLogger.error('Response completa: ${e.response?.data}');
+      } else if (e.response?.statusCode == 403) {
+        AppLogger.error('⚠️ Error 403: Acceso denegado');
+        AppLogger.error('El usuario no tiene permisos para crear novedades');
+      }
+
+      rethrow;
+    } catch (e) {
+      AppLogger.error('❌ Error inesperado al crear novedad', error: e);
       rethrow;
     }
   }

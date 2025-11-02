@@ -15,6 +15,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:drift/drift.dart' as drift;
 import '../../../core/database/app_database.dart';
 import '../../../core/utils/app_logger.dart';
+import '../../../core/errors/exceptions.dart';
 import '../../crews/data/datasources/crew_remote_datasource.dart';
 import 'services/novelty_report_service.dart';
 import 'models/novelty_report_model.dart';
@@ -62,68 +63,12 @@ class OfflineSyncService {
 
   /// Obtiene todas las novedades creadas offline (ID negativos)
   Future<List<NoveltyCacheTableData>> getPendingOfflineNovelties() async {
-    try {
-      print('🔍 === INICIO getPendingOfflineNovelties ===');
-      final allNovelties = await _database.getAllCachedNovelties();
-      print('📊 Total de novedades en BD: ${allNovelties.length}');
-
-      if (allNovelties.isEmpty) {
-        print('⚠️ No hay novedades en la base de datos');
-        return [];
-      }
-
-      // Debug: mostrar todas las novedades
-      for (var i = 0; i < allNovelties.length; i++) {
-        final nov = allNovelties[i];
-        print('');
-        print('📄 Novedad ${i + 1}/${allNovelties.length}:');
-        print('  - ID: ${nov.noveltyId}');
-        print('  - Status: ${nov.status}');
-        print('  - Account: ${nov.accountNumber}');
-        print('  - RawJson: ${nov.rawJson}');
-      }
-
-      // FILTRO SIMPLIFICADO: Solo ID negativo
-      // Las novedades offline SIEMPRE tienen ID negativo
-      final filtered = allNovelties.where((novelty) {
-        final isOffline = novelty.noveltyId < 0;
-
-        print('');
-        print('🔍 Evaluando novedad ${novelty.noveltyId}:');
-        print('  - ID < 0: $isOffline');
-        print('  - Incluir: $isOffline');
-
-        return isOffline;
-      }).toList();
-
-      print('');
-      print('✅ Novedades filtradas (offline): ${filtered.length}');
-
-      // Mostrar las que pasaron el filtro
-      for (var i = 0; i < filtered.length; i++) {
-        final nov = filtered[i];
-        print(
-          '✅ Incluida $i: ID=${nov.noveltyId}, Cuenta=${nov.accountNumber}',
-        );
-      }
-
-      print('🔍 === FIN getPendingOfflineNovelties ===');
-
-      return filtered;
-    } catch (e, stackTrace) {
-      print('❌ Error en getPendingOfflineNovelties: $e');
-      print('Stack: $stackTrace');
-      AppLogger.error('Error obteniendo novedades offline', error: e);
-      return [];
-    }
+    final allNovelties = await _database.getAllCachedNovelties();
+    return allNovelties.where((novelty) => novelty.noveltyId < 0).toList();
   }
 
   /// Sincroniza todas las novedades offline pendientes
   Future<Map<String, dynamic>> syncAllOfflineNovelties() async {
-    print('═══════════════════════════════════════════════════');
-    print('🔄 INICIO DE SINCRONIZACIÓN COMPLETA');
-    print('═══════════════════════════════════════════════════');
-    AppLogger.info('🔄 Iniciando sincronización de novedades offline');
 
     int successCount = 0;
     int failedCount = 0;
@@ -182,6 +127,14 @@ class OfflineSyncService {
             errors.add(errorMsg);
             print('❌ Falló la sincronización');
           }
+        } on NetworkException catch (e) {
+          // Si hay error de conexión, abortar el resto
+          failedCount += (offlineNovelties.length - i);
+          final errorMsg = 'Sin conexión a Internet';
+          errors.add(errorMsg);
+          print('❌ Error de conexión - Abortando sincronización');
+          AppLogger.error('Error de conexión durante sincronización', error: e);
+          break; // Salir del loop
         } catch (e) {
           failedCount++;
           final errorMsg = 'Novedad ${novelty.noveltyId}: ${e.toString()}';
@@ -191,6 +144,7 @@ class OfflineSyncService {
             'Error sincronizando novedad ${novelty.noveltyId}',
             error: e,
           );
+          // Continuar con la siguiente novedad
         }
       }
 
@@ -232,6 +186,32 @@ class OfflineSyncService {
     }
   }
 
+  /// Mapeo de nombres de municipios a IDs (según la tabla de BD)
+  static const Map<String, int> _municipioNameToId = {
+    'ARCABUCO': 5,
+    'CHITARAQUE': 6,
+    'GAMBITA': 7,
+    'MONIQUIRA': 8,
+    'SAN JOSE DE PARE': 9,
+    'SANTANA': 10,
+    'TOGUI': 11,
+  };
+
+  /// Convierte el nombre del municipio a su ID
+  String _getMunicipioIdFromName(String municipioName) {
+    final normalizedName = municipioName.trim().toUpperCase();
+    final id = _municipioNameToId[normalizedName];
+
+    if (id == null) {
+      AppLogger.warning(
+        '⚠️ Municipio "$municipioName" no encontrado en el mapeo. Usando ID por defecto: 5 (ARCABUCO)',
+      );
+      return '5'; // ID por defecto
+    }
+
+    return id.toString();
+  }
+
   /// Sincroniza una sola novedad offline al servidor
   Future<bool> _syncSingleNovelty(NoveltyCacheTableData novelty) async {
     try {
@@ -246,23 +226,140 @@ class OfflineSyncService {
       print('  Motivo: ${novelty.reason}');
       print('  Cuenta: ${novelty.accountNumber}');
       print('  Medidor: ${novelty.meterNumber}');
-      print('  Municipio: ${novelty.municipality}');
+      print('  Municipio (nombre): ${novelty.municipality}');
       print('  Dirección: ${novelty.address}');
 
-      // Crear novedad en el servidor
-      print('🌐 Llamando al backend...');
+      // Validar que los campos requeridos no estén vacíos
+      if (novelty.areaId == 0) {
+        print('❌ ERROR: areaId es 0');
+        throw Exception('areaId inválido');
+      }
+      if (novelty.reason.isEmpty) {
+        print('❌ ERROR: reason está vacío');
+        throw Exception('reason no puede estar vacío');
+      }
+      if (novelty.accountNumber.isEmpty) {
+        print('❌ ERROR: accountNumber está vacío');
+        throw Exception('accountNumber no puede estar vacío');
+      }
+      if (novelty.meterNumber.isEmpty) {
+        print('❌ ERROR: meterNumber está vacío');
+        throw Exception('meterNumber no puede estar vacío');
+      }
+
+      // Extraer datos del rawJson
+      String locationId = '';
+      String activeReadingText = novelty.activeReading.toString();
+      String reactiveReadingText = novelty.reactiveReading.toString();
+      List<File> imageFiles = [];
+
+      try {
+        print('📦 Extrayendo datos del rawJson...');
+        final rawJsonMap = jsonDecode(novelty.rawJson) as Map<String, dynamic>;
+        print('  - rawJson parseado correctamente');
+
+        // Extraer locationId (guardado durante la creación offline)
+        if (rawJsonMap.containsKey('locationId')) {
+          locationId = rawJsonMap['locationId']?.toString() ?? '';
+          print('  - locationId encontrado: $locationId');
+        }
+
+        // Si no hay locationId en rawJson, intentar convertir desde nombre
+        if (locationId.isEmpty) {
+          print(
+            '  ⚠️ locationId no encontrado en rawJson, convirtiendo desde nombre...',
+          );
+          locationId = _getMunicipioIdFromName(novelty.municipality);
+          print('  - locationId convertido: $locationId');
+        }
+
+        // Extraer valores de texto de lecturas (si existen)
+        if (rawJsonMap.containsKey('activeReadingText')) {
+          activeReadingText =
+              rawJsonMap['activeReadingText']?.toString() ?? activeReadingText;
+        }
+        if (rawJsonMap.containsKey('reactiveReadingText')) {
+          reactiveReadingText =
+              rawJsonMap['reactiveReadingText']?.toString() ??
+              reactiveReadingText;
+        }
+
+        // Extraer rutas de imágenes
+        if (rawJsonMap.containsKey('image_paths')) {
+          final imagePaths = rawJsonMap['image_paths'];
+          print('📸 Extrayendo imágenes...');
+          print('  - Tipo de image_paths: ${imagePaths.runtimeType}');
+
+          // Convertir a List<String> de manera segura
+          List<String> pathsList = [];
+          if (imagePaths is List) {
+            pathsList = imagePaths.map((path) => path.toString()).toList();
+          }
+
+          print('  - Rutas de imágenes encontradas: ${pathsList.length}');
+
+          // Convertir rutas a File objects
+          for (final path in pathsList) {
+            final file = File(path);
+            if (await file.exists()) {
+              imageFiles.add(file);
+              print('    ✓ Imagen encontrada: $path');
+            } else {
+              print('    ✗ Imagen no encontrada: $path');
+            }
+          }
+
+          print('  - Total de imágenes válidas: ${imageFiles.length}');
+        } else {
+          print('  - No hay image_paths en rawJson');
+        }
+      } catch (e) {
+        print('⚠️ Error al extraer datos del rawJson: $e');
+        print('  Intentando continuar con datos básicos...');
+
+        // Si falla la extracción, usar conversión de nombre como fallback
+        if (locationId.isEmpty) {
+          locationId = _getMunicipioIdFromName(novelty.municipality);
+          print('  - locationId convertido (fallback): $locationId');
+        }
+      }
+
+      // Validar locationId
+      if (locationId.isEmpty || locationId == '0') {
+        print('❌ ERROR: locationId inválido');
+        throw Exception('locationId no puede ser 0 o vacío');
+      }
+
+      print('');
+      print('📋 DATOS FINALES PARA ENVIAR AL BACKEND:');
+      print('  - areaId: ${novelty.areaId}');
+      print('  - reason: ${novelty.reason}');
+      print('  - accountNumber: ${novelty.accountNumber}');
+      print('  - meterNumber: ${novelty.meterNumber}');
+      print('  - activeReading: $activeReadingText');
+      print('  - reactiveReading: $reactiveReadingText');
+      print('  - locationId: $locationId');
+      print('  - municipality: ${novelty.municipality}');
+      print('  - address: ${novelty.address}');
+      print('  - description: ${novelty.description}');
+      print('  - observations: ${novelty.observations}');
+      print('  - images: ${imageFiles.length}');
+
+      // Crear novedad en el servidor (MISMO LLAMADO QUE CREACIÓN NORMAL)
+      print('🌐 Llamando al backend con createNovelty...');
       final response = await _noveltyService.createNovelty(
         areaId: novelty.areaId.toString(),
         reason: novelty.reason,
         accountNumber: novelty.accountNumber,
         meterNumber: novelty.meterNumber,
-        activeReading: novelty.activeReading.toString(),
-        reactiveReading: novelty.reactiveReading.toString(),
-        municipality: novelty.municipality,
-        address: novelty.address,
+        activeReading: activeReadingText, // Usar texto original
+        reactiveReading: reactiveReadingText, // Usar texto original
+        locationId: locationId, // ID del municipio (guardado en rawJson)
+        municipality: novelty.municipality, // NOMBRE del municipio
+        address: novelty.address, // Coordenadas GPS (formato: "lat,lon")
         description: novelty.description,
         observations: novelty.observations,
-        images: [], // TODO: Sincronizar imágenes si existen
+        images: imageFiles, // Imágenes extraídas del rawJson
       );
 
       print('📡 Respuesta del backend:');
@@ -282,16 +379,36 @@ class OfflineSyncService {
         );
         return true;
       } else {
-        AppLogger.error('❌ Error al sincronizar: ${response.statusCode}');
+        final errorMsg = 'Error del servidor (${response.statusCode})';
+        AppLogger.error('❌ $errorMsg');
         print('❌ Response body: ${response.data}');
-        return false;
+        throw Exception(errorMsg);
       }
+    } on NetworkException catch (e) {
+      AppLogger.error('❌ Error de conexión al sincronizar novedad', error: e);
+      print('❌ NetworkException: ${e.message}');
+      throw Exception('Sin conexión a Internet: ${e.message}');
+    } on FormatException catch (e) {
+      AppLogger.error('❌ Error de formato de datos', error: e);
+      print('❌ FormatException: $e');
+      throw Exception('Error en el formato de los datos: ${e.message}');
     } catch (e, stackTrace) {
       AppLogger.error('❌ Error sincronizando novedad', error: e);
       print('❌ EXCEPCIÓN COMPLETA:');
       print('  Error: $e');
       print('  Stack trace: $stackTrace');
-      return false;
+
+      // Intentar extraer un mensaje más amigable
+      String friendlyMessage = e.toString();
+      if (friendlyMessage.contains('type \'List<dynamic>\' is not a subtype')) {
+        friendlyMessage = 'Error en el formato de los datos almacenados';
+      } else if (friendlyMessage.contains('Connection')) {
+        friendlyMessage = 'Error de conexión a Internet';
+      } else if (friendlyMessage.contains('Timeout')) {
+        friendlyMessage = 'Tiempo de espera agotado';
+      }
+
+      throw Exception(friendlyMessage);
     }
   }
 
@@ -374,7 +491,8 @@ class OfflineSyncService {
         print('  - AreaId: ${noveltyData['areaId']}');
         print('  - Cuenta: ${noveltyData['accountNumber']}');
         print('  - Medidor: ${noveltyData['meterNumber']}');
-        print('  - Municipio: ${noveltyData['municipality']}');
+        print('  - LocationId: ${noveltyData['locationId']}');
+        print('  - LocationName: ${noveltyData['locationName']}');
         print('  - CreatedBy: ${noveltyData['createdBy']}');
         print('  - CreatedAt: ${noveltyData['createdAt']}');
         print('  - UpdatedAt: ${noveltyData['updatedAt']}');
@@ -433,7 +551,10 @@ class OfflineSyncService {
         reactiveReading: drift.Value(
           (noveltyData['reactiveReading'] as num).toDouble(),
         ),
-        municipality: drift.Value(noveltyData['municipality'] as String),
+        municipality: drift.Value(
+          noveltyData['locationName'] as String? ??
+              '', // Ahora viene como locationName
+        ),
         address: drift.Value(noveltyData['address'] as String),
         description: drift.Value(noveltyData['description'] as String),
         observations: drift.Value(noveltyData['observations']),

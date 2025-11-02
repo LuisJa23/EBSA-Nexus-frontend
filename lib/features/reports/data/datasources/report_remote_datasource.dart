@@ -78,8 +78,22 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
         throw const NetworkException(message: 'Error de conexión');
       }
 
+      // Extraer mensaje de forma segura según el tipo de body recibido
+      String extractMessage(
+        dynamic data, [
+        String defaultMsg = 'Error del servidor',
+      ]) {
+        if (data == null) return defaultMsg;
+        if (data is Map)
+          return data['message']?.toString() ??
+              data['error']?.toString() ??
+              defaultMsg;
+        if (data is String) return data;
+        return defaultMsg;
+      }
+
       throw ServerException(
-        message: e.response?.data?['message'] ?? 'Error del servidor',
+        message: extractMessage(e.response?.data),
         statusCode: e.response?.statusCode,
       );
     } catch (e) {
@@ -132,8 +146,21 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
         );
       }
 
+      String extractMessage(
+        dynamic data, [
+        String defaultMsg = 'Error del servidor',
+      ]) {
+        if (data == null) return defaultMsg;
+        if (data is Map)
+          return data['message']?.toString() ??
+              data['error']?.toString() ??
+              defaultMsg;
+        if (data is String) return data;
+        return defaultMsg;
+      }
+
       throw ServerException(
-        message: e.response?.data?['message'] ?? 'Error del servidor',
+        message: extractMessage(e.response?.data),
         statusCode: e.response?.statusCode,
       );
     } catch (e) {
@@ -215,8 +242,22 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
       return const NetworkException(message: 'Sin conexión a Internet');
     }
 
+    // Extraer mensaje de forma segura
+    String extractMessage(
+      dynamic data, [
+      String defaultMsg = 'Error del servidor',
+    ]) {
+      if (data == null) return defaultMsg;
+      if (data is Map)
+        return data['message']?.toString() ??
+            data['error']?.toString() ??
+            defaultMsg;
+      if (data is String) return data;
+      return defaultMsg;
+    }
+
     return ServerException(
-      message: e.response?.data?['message'] ?? 'Error del servidor',
+      message: extractMessage(e.response?.data),
       statusCode: e.response?.statusCode,
     );
   }

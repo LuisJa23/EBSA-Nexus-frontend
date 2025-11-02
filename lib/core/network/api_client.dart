@@ -163,19 +163,74 @@ class ApiClient {
 
   /// Convierte DioException a nuestras excepciones personalizadas
   BaseException _handleDioError(DioException error) {
+    _logger.e('🔴 DioException: ${error.type} - ${error.message}');
+
     switch (error.type) {
       case DioExceptionType.connectionTimeout:
-      case DioExceptionType.sendTimeout:
-      case DioExceptionType.receiveTimeout:
+        _logger.w(
+          '⏰ Timeout de conexión - El servidor tardó más de ${ApiConstants.connectTimeout}ms en responder',
+        );
         return TimeoutException(
-          message: 'Tiempo de espera agotado',
+          message:
+              'El servidor está tardando en responder. Esto puede ocurrir cuando el servidor está iniciando. Por favor, espera un momento e intenta nuevamente.',
           timeoutDuration: ApiConstants.connectTimeout,
+        );
+
+      case DioExceptionType.sendTimeout:
+        _logger.w('⏰ Timeout de envío');
+        return TimeoutException(
+          message: 'Se agotó el tiempo de espera al enviar datos',
+          timeoutDuration: ApiConstants.sendTimeout,
+        );
+
+      case DioExceptionType.receiveTimeout:
+        _logger.w('⏰ Timeout de recepción');
+        return TimeoutException(
+          message:
+              'Se agotó el tiempo de espera al recibir respuesta del servidor',
+          timeoutDuration: ApiConstants.receiveTimeout,
         );
 
       case DioExceptionType.badResponse:
         final statusCode = error.response?.statusCode;
-        final message =
-            error.response?.data?['message'] ?? 'Error del servidor';
+        _logger.e('❌ Respuesta mala del servidor - Código: $statusCode');
+
+        // Normalizar extracción de mensaje para evitar errores cuando el
+        // body de la respuesta no es un Map (por ejemplo puede ser una List).
+        final dynamic responseData = error.response?.data;
+        String message = 'Error del servidor';
+
+        try {
+          if (responseData == null) {
+            message = 'Error del servidor';
+          } else if (responseData is String) {
+            message = responseData;
+          } else if (responseData is Map) {
+            if (responseData.containsKey('message') &&
+                responseData['message'] != null) {
+              message = responseData['message'].toString();
+            } else if (responseData.containsKey('error') &&
+                responseData['error'] != null) {
+              message = responseData['error'].toString();
+            } else {
+              message = responseData.toString();
+            }
+          } else if (responseData is List && responseData.isNotEmpty) {
+            // Intentar extraer mensaje del primer elemento si viene como Map
+            final first = responseData[0];
+            if (first is Map && first.containsKey('message')) {
+              message = first['message'].toString();
+            } else {
+              message = responseData.toString();
+            }
+          } else {
+            message = responseData.toString();
+          }
+        } catch (extractError) {
+          // En caso de cualquier excepción al extraer el mensaje, usar fallback
+          _logger.e('⚠️ Error extrayendo mensaje de respuesta: $extractError');
+          message = 'Error del servidor';
+        }
 
         if (statusCode == ApiConstants.httpUnauthorized) {
           return AuthenticationException(message: message);
@@ -190,11 +245,23 @@ class ApiClient {
         }
 
       case DioExceptionType.cancel:
+        _logger.i('❌ Petición cancelada por el usuario');
         return ServerException(message: 'Petición cancelada');
 
       case DioExceptionType.connectionError:
+        _logger.e(
+          '🌐 Error de conexión - Sin acceso a internet o servidor no disponible',
+        );
+        return NetworkException(
+          message:
+              'Sin conexión a internet. Verifica tu conexión y que el servidor esté disponible.',
+        );
+
       default:
-        return NetworkException(message: 'Error de conexión');
+        _logger.e('❓ Error desconocido: ${error.message}');
+        return NetworkException(
+          message: 'Error de conexión: ${error.message ?? "Desconocido"}',
+        );
     }
   }
 }

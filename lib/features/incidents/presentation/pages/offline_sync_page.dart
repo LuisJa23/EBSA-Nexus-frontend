@@ -14,7 +14,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/database/app_database.dart';
-import '../../../../config/database/database_provider.dart';
 import '../../data/offline_sync_service.dart';
 import '../../../../config/dependency_injection/injection_container.dart' as di;
 
@@ -74,6 +73,7 @@ class _OfflineSyncPageState extends ConsumerState<OfflineSyncPage> {
 
     try {
       final novelties = await _syncService!.getPendingOfflineNovelties();
+
       setState(() {
         _offlineNovelties = novelties;
         _isLoading = false;
@@ -88,88 +88,42 @@ class _OfflineSyncPageState extends ConsumerState<OfflineSyncPage> {
 
   /// Sincroniza todas las novedades offline
   Future<void> _syncAllNovelties() async {
-    print('🔵 === INICIO SINCRONIZACIÓN ===');
-    print('🔵 Servicio disponible: ${_syncService != null}');
-    print('🔵 Cantidad de novedades: ${_offlineNovelties.length}');
-
     if (_syncService == null) {
-      print('❌ Servicio NO disponible');
       _showErrorDialog('Error', 'Servicio no disponible');
       return;
     }
 
     if (_offlineNovelties.isEmpty) {
-      print('⚠️ Lista vacía');
       _showInfoDialog('No hay novedades offline para sincronizar');
       return;
     }
 
-    // Cargar reportes pendientes para mostrar información
-    final db = ref.read(databaseProvider);
-    final pendingReports = await db.getPendingSyncReports();
-    final reportsWithOfflineNovelties = pendingReports
-        .where((report) => report.noveltyId < 0)
-        .length;
-
     // Confirmar acción
-    print('🔵 Mostrando confirmación...');
-    String confirmMessage =
-        'Se intentarán sincronizar ${_offlineNovelties.length} novedad(es) con el servidor.';
-
-    if (pendingReports.isNotEmpty) {
-      confirmMessage +=
-          '\n\nTambién hay ${pendingReports.length} reporte(s) pendiente(s):';
-      if (reportsWithOfflineNovelties > 0) {
-        confirmMessage +=
-            '\n• $reportsWithOfflineNovelties vinculado(s) a novedades offline (se sincronizarán después)';
-      }
-      if (pendingReports.length - reportsWithOfflineNovelties > 0) {
-        confirmMessage +=
-            '\n• ${pendingReports.length - reportsWithOfflineNovelties} listo(s) para sincronizar';
-      }
-    }
-
     final confirmed = await _showConfirmDialog(
-      '¿Sincronizar todo el contenido offline?',
-      confirmMessage,
+      '¿Sincronizar novedades offline?',
+      'Se intentarán sincronizar ${_offlineNovelties.length} novedad(es) con el servidor.',
     );
 
-    print('🔵 Usuario confirmó: $confirmed');
-    if (!confirmed) {
-      print('❌ Usuario canceló');
-      return;
-    }
+    if (!confirmed) return;
 
     setState(() => _isSyncing = true);
-    print('🔵 Estado cambiado a sincronizando...');
 
     try {
-      // PASO 1: Sincronizar novedades primero
-      print('🔵 PASO 1: Sincronizando novedades...');
+      // Sincronizar SOLO novedades
       final noveltiesResult = await _syncService!.syncAllOfflineNovelties();
-      print('🔵 Resultado novedades: $noveltiesResult');
-
-      // PASO 2: Sincronizar reportes (solo los que tengan noveltyId > 0)
-      print('🔵 PASO 2: Sincronizando reportes...');
-      final reportsResult = await _syncService!.syncAllOfflineReports();
-      print('🔵 Resultado reportes: $reportsResult');
 
       setState(() => _isSyncing = false);
 
       final noveltiesSuccess = noveltiesResult['success'] as int;
       final noveltiesFailed = noveltiesResult['failed'] as int;
-      final reportsSuccess = reportsResult['success'] as int;
-      final reportsFailed = reportsResult['failed'] as int;
-
       final noveltiesErrors = noveltiesResult['errors'] as List<String>;
-      final reportsErrors = reportsResult['errors'] as List<String>;
 
       // Recargar lista
       await _loadOfflineNovelties();
 
       // Construir mensaje de resultado
       String resultMessage = '';
-      bool hasErrors = noveltiesFailed > 0 || reportsFailed > 0;
+      bool hasErrors = noveltiesFailed > 0;
 
       if (noveltiesSuccess > 0) {
         resultMessage += '✅ Novedades sincronizadas: $noveltiesSuccess\n';
@@ -177,37 +131,22 @@ class _OfflineSyncPageState extends ConsumerState<OfflineSyncPage> {
       if (noveltiesFailed > 0) {
         resultMessage += '❌ Novedades fallidas: $noveltiesFailed\n';
       }
-      if (reportsSuccess > 0) {
-        resultMessage += '✅ Reportes sincronizados: $reportsSuccess\n';
-      }
-      if (reportsFailed > 0) {
-        resultMessage += '❌ Reportes fallidos: $reportsFailed\n';
+
+      // Mostrar errores específicos si los hay
+      if (hasErrors && noveltiesErrors.isNotEmpty) {
+        resultMessage += '\nDetalles de errores:\n';
+        for (var error in noveltiesErrors.take(5)) {
+          resultMessage += '• $error\n';
+        }
+        if (noveltiesErrors.length > 5) {
+          resultMessage += '... y ${noveltiesErrors.length - 5} errores más';
+        }
       }
 
-      // Mostrar resultado
-      if (!hasErrors) {
-        _showSuccessDialog('Sincronización completada', resultMessage.trim());
+      if (hasErrors) {
+        _showErrorDialog('Sincronización completada con errores', resultMessage);
       } else {
-        final errorMessages = <String>[];
-        if (noveltiesErrors.isNotEmpty) {
-          errorMessages.add(
-            'Novedades:\n${noveltiesErrors.take(3).join('\n')}',
-          );
-          if (noveltiesErrors.length > 3) {
-            errorMessages.add('... y ${noveltiesErrors.length - 3} más');
-          }
-        }
-        if (reportsErrors.isNotEmpty) {
-          errorMessages.add('Reportes:\n${reportsErrors.take(3).join('\n')}');
-          if (reportsErrors.length > 3) {
-            errorMessages.add('... y ${reportsErrors.length - 3} más');
-          }
-        }
-
-        _showErrorDialog(
-          'Sincronización parcial',
-          '$resultMessage\nPrimeros errores:\n${errorMessages.join('\n\n')}',
-        );
+        _showSuccessDialog('Sincronización exitosa', resultMessage);
       }
     } catch (e) {
       setState(() => _isSyncing = false);
