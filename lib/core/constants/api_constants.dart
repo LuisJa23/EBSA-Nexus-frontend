@@ -20,10 +20,10 @@ class ApiConstants {
 
   /// URL base para desarrollo en red local (para dispositivo físico)
   /// IP del hotspot WiFi compartido desde PC
-  static const String baseUrlNetwork = 'http://192.168.20.44:8080';
+  static const String baseUrlNetwork = 'https://ebsa-nexus-backend-ejzl.onrender.com';
 
   /// URL base para producción (configurar cuando esté disponible)
-  static const String baseUrlProduction = 'https://api.nexusebsa.com';
+  static const String baseUrlProduction = 'https://ebsa-nexus-backend-ejzl.onrender.com';
 
   /// URL actual basada en el entorno
   /// Se determina dinámicamente según el tipo de dispositivo
