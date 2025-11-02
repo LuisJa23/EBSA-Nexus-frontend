@@ -110,17 +110,32 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<UserModel> login(CredentialsModel credentials) async {
     try {
+      print(
+        '📡 RemoteDataSource: Iniciando llamada de login para ${credentials.email}',
+      );
+
       // Preparar datos para la API
       final requestData = credentials.toApiMap();
+      print(
+        '📤 RemoteDataSource: Enviando request a ${ApiConstants.loginEndpoint}',
+      );
 
-      // Realizar request de login
+      // Realizar request de login - ESPERAR la respuesta del servidor
+      print('⏳ RemoteDataSource: Esperando respuesta del servidor...');
       final response = await _apiClient.post(
         ApiConstants.loginEndpoint,
         data: requestData,
       );
 
+      print(
+        '✅ RemoteDataSource: Respuesta recibida con status ${response.statusCode}',
+      );
+
       // Validar respuesta exitosa
       if (response.statusCode != 200) {
+        print(
+          '❌ RemoteDataSource: Status code no exitoso: ${response.statusCode}',
+        );
         throw ServerException(
           message: 'Error del servidor durante login',
           statusCode: response.statusCode,
@@ -130,14 +145,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       // Parsear respuesta
       final responseData = response.data as Map<String, dynamic>;
 
-      print('🔍 Respuesta de login recibida - campos: ${responseData.keys}');
+      print(
+        '🔍 RemoteDataSource: Respuesta de login recibida - campos: ${responseData.keys}',
+      );
 
       // Verificar que contiene los campos necesarios
       if (!responseData.containsKey('token') ||
           !responseData.containsKey('email') ||
           !responseData.containsKey('username') ||
           !responseData.containsKey('role')) {
-        print('❌ Respuesta de login incompleta');
+        print('❌ RemoteDataSource: Respuesta de login incompleta');
         throw AuthenticationException(
           message: 'Credenciales inválidas',
           code: 'INVALID_CREDENTIALS',
@@ -147,11 +164,13 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       // Crear UserModel desde la respuesta directa del backend
       final token = responseData['token'] as String;
       final user = UserModel.fromLoginResponse(responseData, token);
-      print('✅ Usuario creado: ${user.email} con id: ${user.id}');
+      print(
+        '✅ RemoteDataSource: Usuario creado: ${user.email} con id: ${user.id}',
+      );
 
       // Almacenar token del login
       if (responseData.containsKey('token')) {
-        print('🔐 Preparando almacenamiento del token...');
+        print('🔐 RemoteDataSource: Preparando almacenamiento del token...');
         final token = responseData['token'] as String;
 
         // Verificar que el token sea válido antes de almacenarlo
@@ -162,25 +181,31 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           await _localDataSource.saveUser(user);
           await _localDataSource.updateLastLogin();
 
-          print('✅ Token y usuario almacenados exitosamente');
+          print('✅ RemoteDataSource: Token y usuario almacenados exitosamente');
         } else {
+          print('❌ RemoteDataSource: Token recibido está vacío');
           throw AuthenticationException(
             message: 'Token recibido está vacío',
             code: 'INVALID_TOKEN_RESPONSE',
           );
         }
       } else {
-        print('⚠️ No se encontró token en la respuesta');
+        print('⚠️ RemoteDataSource: No se encontró token en la respuesta');
         throw AuthenticationException(
           message: 'Respuesta de login inválida - sin token',
           code: 'MISSING_TOKEN_IN_RESPONSE',
         );
       }
 
+      print('🎉 RemoteDataSource: Login completado exitosamente');
       return user;
     } on DioException catch (e) {
+      print(
+        '❌ RemoteDataSource: DioException capturada: ${e.type} - ${e.message}',
+      );
       throw _handleDioError(e);
     } catch (e) {
+      print('❌ RemoteDataSource: Excepción inesperada: $e');
       if (e is AuthenticationException || e is ServerException) {
         rethrow;
       }
@@ -523,9 +548,13 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
             }
           }
 
+          final errorCode = (responseData is Map)
+              ? (responseData['error_code'] ?? 'INVALID_CREDENTIALS')
+              : 'INVALID_CREDENTIALS';
+
           return AuthenticationException(
             message: errorMessage,
-            code: responseData?['error_code'] ?? 'INVALID_CREDENTIALS',
+            code: errorCode,
           );
         }
 
@@ -555,8 +584,22 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           );
         }
 
+        // Extraer mensaje de forma segura según el tipo de body
+        String extractMessage(
+          dynamic data, [
+          String defaultMsg = 'Error del servidor',
+        ]) {
+          if (data == null) return defaultMsg;
+          if (data is Map)
+            return data['message']?.toString() ??
+                data['error']?.toString() ??
+                defaultMsg;
+          if (data is String) return data;
+          return defaultMsg;
+        }
+
         return ServerException(
-          message: responseData?['message'] ?? 'Error del servidor',
+          message: extractMessage(responseData),
           statusCode: statusCode,
         );
 

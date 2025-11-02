@@ -106,31 +106,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Guarda o actualiza una novedad en cache
   Future<int> upsertNoveltyCache(NoveltyCacheTableCompanion novelty) async {
-    print('💾 === INICIO upsertNoveltyCache (DB) ===');
-
-    try {
-      // Extraer el ID para logging
-      final noveltyId = novelty.noveltyId.value;
-      print('💾 Insertando/actualizando novedad ID=$noveltyId');
-
-      final result = await into(
-        noveltyCacheTable,
-      ).insertOnConflictUpdate(novelty);
-      print('💾 Resultado: $result');
-
-      // Verificar que se insertó
-      final count = await (select(
-        noveltyCacheTable,
-      )..where((tbl) => tbl.noveltyId.equals(noveltyId))).get();
-      print('💾 Verificación: ${count.length} fila(s) con ID=$noveltyId en BD');
-
-      print('💾 === FIN upsertNoveltyCache ===');
-      return result;
-    } catch (e, stackTrace) {
-      print('💾 ❌ Error en upsertNoveltyCache: $e');
-      print('Stack: $stackTrace');
-      rethrow;
-    }
+    return await into(noveltyCacheTable).insertOnConflictUpdate(novelty);
   }
 
   /// Guarda múltiples novedades en cache
@@ -144,32 +120,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Obtiene todas las novedades en cache
   Future<List<NoveltyCacheTableData>> getAllCachedNovelties() async {
-    print('💾 === INICIO getAllCachedNovelties (DB) ===');
-
-    try {
-      final results = await select(noveltyCacheTable).get();
-      print('💾 Resultados de BD: ${results.length} novedades');
-
-      // Debug: mostrar primeras 5
-      final showCount = results.length > 5 ? 5 : results.length;
-      for (var i = 0; i < showCount; i++) {
-        final nov = results[i];
-        print(
-          '💾 Novedad ${i + 1}: ID=${nov.noveltyId}, Status=${nov.status}, Crew=${nov.crewId}',
-        );
-      }
-
-      if (results.length > 5) {
-        print('💾 ... y ${results.length - 5} más');
-      }
-
-      print('💾 === FIN getAllCachedNovelties ===');
-      return results;
-    } catch (e, stackTrace) {
-      print('💾 ❌ Error en getAllCachedNovelties: $e');
-      print('Stack: $stackTrace');
-      rethrow;
-    }
+    return await select(noveltyCacheTable).get();
   }
 
   /// Obtiene una novedad específica del cache

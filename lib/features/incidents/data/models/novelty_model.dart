@@ -120,7 +120,9 @@ class NoveltyModel {
       meterNumber: json['meterNumber'] as String,
       activeReading: (json['activeReading'] as num).toDouble(),
       reactiveReading: (json['reactiveReading'] as num).toDouble(),
-      municipality: json['municipality'] as String,
+      municipality:
+          json['locationName'] as String? ??
+          '', // Backend ahora envía locationName
       address: json['address'] as String,
       description: json['description'] as String,
       observations: json['observations'] as String?,

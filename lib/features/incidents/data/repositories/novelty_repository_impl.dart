@@ -97,7 +97,31 @@ class NoveltyRepositoryImpl implements NoveltyRepository {
 
       case DioExceptionType.badResponse:
         final statusCode = error.response?.statusCode;
-        final message = error.response?.data?['message'] as String?;
+        // Extraer mensaje de forma segura (response.data puede ser Map, List o String)
+        String? message;
+        final dynamic data = error.response?.data;
+        try {
+          if (data == null) {
+            message = null;
+          } else if (data is String) {
+            message = data;
+          } else if (data is Map && data['message'] != null) {
+            message = data['message'].toString();
+          } else if (data is Map && data['error'] != null) {
+            message = data['error'].toString();
+          } else if (data is List && data.isNotEmpty) {
+            final first = data[0];
+            if (first is Map && first['message'] != null) {
+              message = first['message'].toString();
+            } else {
+              message = data.toString();
+            }
+          } else {
+            message = data.toString();
+          }
+        } catch (_) {
+          message = null;
+        }
 
         if (statusCode == 401) {
           return AuthFailure(message: message ?? 'No autorizado');
@@ -138,7 +162,7 @@ extension _NoveltyResponseExtension on Map<String, dynamic> {
       meterNumber: this['meterNumber'] as String,
       activeReading: this['activeReading'] as String,
       reactiveReading: this['reactiveReading'] as String,
-      municipality: this['municipality'] as String,
+      municipality: this['locationName'] as String? ?? '',
       address: this['address'] as String,
       observations: this['observations'] as String?,
       crewId: this['crewId'] as int?,
