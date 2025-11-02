@@ -41,6 +41,8 @@ import '../../features/users/data/repositories/user_repository_impl.dart';
 import '../../features/users/domain/repositories/user_repository.dart';
 import '../../features/users/domain/usecases/create_user_usecase.dart';
 import '../../features/users/domain/usecases/get_workers_usecase.dart';
+import '../../features/users/domain/usecases/activate_user_usecase.dart';
+import '../../features/users/domain/usecases/deactivate_user_usecase.dart';
 
 // Crews Feature - Data Layer
 import '../../features/crews/data/datasources/crew_remote_datasource.dart';
@@ -218,6 +220,16 @@ Future<void> init() async {
   // Get Workers Use Case
   sl.registerLazySingleton<GetWorkersUseCase>(
     () => GetWorkersUseCase(repository: sl()),
+  );
+
+  // Activate User Use Case
+  sl.registerLazySingleton<ActivateUserUseCase>(
+    () => ActivateUserUseCase(repository: sl()),
+  );
+
+  // Deactivate User Use Case
+  sl.registerLazySingleton<DeactivateUserUseCase>(
+    () => DeactivateUserUseCase(repository: sl()),
   );
 
   // ============================================================================

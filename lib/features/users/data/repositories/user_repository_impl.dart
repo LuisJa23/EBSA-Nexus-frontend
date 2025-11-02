@@ -112,6 +112,54 @@ class UserRepositoryImpl implements UserRepository {
   }
 
   @override
+  Future<Either<Failure, void>> deactivateUser(int userId) async {
+    try {
+      await remoteDataSource.deactivateUser(userId);
+      return const Right(null);
+    } on AuthenticationException catch (e) {
+      return Left(AuthFailure(message: e.message, code: e.code));
+    } on AuthorizationException catch (e) {
+      return Left(AuthorizationFailure(message: e.message, code: e.code));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(message: e.message, code: e.code));
+    } on ServerException catch (e) {
+      return Left(
+        ServerFailure(
+          message: e.message,
+          statusCode: e.statusCode,
+          code: e.code,
+        ),
+      );
+    } catch (e) {
+      return Left(UnknownFailure(message: 'Error al desactivar usuario: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> activateUser(int userId) async {
+    try {
+      await remoteDataSource.activateUser(userId);
+      return const Right(null);
+    } on AuthenticationException catch (e) {
+      return Left(AuthFailure(message: e.message, code: e.code));
+    } on AuthorizationException catch (e) {
+      return Left(AuthorizationFailure(message: e.message, code: e.code));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(message: e.message, code: e.code));
+    } on ServerException catch (e) {
+      return Left(
+        ServerFailure(
+          message: e.message,
+          statusCode: e.statusCode,
+          code: e.code,
+        ),
+      );
+    } catch (e) {
+      return Left(UnknownFailure(message: 'Error al activar usuario: $e'));
+    }
+  }
+
+  @override
   Future<Either<Failure, List<Worker>>> getWorkers() async {
     try {
       final workers = await remoteDataSource.getWorkers();

@@ -69,6 +69,26 @@ abstract class UserRepository {
   /// - [Left(Failure)]: Error en la eliminación
   Future<Either<Failure, void>> deleteUser(int userId);
 
+  /// Desactiva un usuario del sistema
+  ///
+  /// **Parámetros:**
+  /// - [userId]: ID del usuario a desactivar
+  ///
+  /// **Retorna:**
+  /// - [Right(void)]: Usuario desactivado exitosamente
+  /// - [Left(Failure)]: Error en la desactivación
+  Future<Either<Failure, void>> deactivateUser(int userId);
+
+  /// Activa un usuario del sistema
+  ///
+  /// **Parámetros:**
+  /// - [userId]: ID del usuario a activar
+  ///
+  /// **Retorna:**
+  /// - [Right(void)]: Usuario activado exitosamente
+  /// - [Left(Failure)]: Error en la activación
+  Future<Either<Failure, void>> activateUser(int userId);
+
   /// Obtiene lista de trabajadores desde el endpoint público
   ///
   /// **Retorna:**
