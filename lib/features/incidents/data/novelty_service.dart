@@ -14,6 +14,7 @@ import 'package:dio/dio.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/utils/app_logger.dart';
+import 'models/novelty_model.dart';
 
 /// Servicio para gestión de novedades
 class NoveltyService {
@@ -49,6 +50,17 @@ class NoveltyService {
     required List<File> images,
   }) async {
     try {
+      AppLogger.info('🚀 Iniciando creación de novedad');
+      AppLogger.debug(
+        'URL: ${ApiConstants.currentBaseUrl}${ApiConstants.createNoveltyEndpoint}',
+      );
+      AppLogger.debug('Parámetros:');
+      AppLogger.debug('  - areaId: $areaId');
+      AppLogger.debug('  - reason: $reason');
+      AppLogger.debug('  - accountNumber: $accountNumber');
+      AppLogger.debug('  - municipality: $municipality');
+      AppLogger.debug('  - imágenes: ${images.length}');
+
       // Crear FormData
       final formData = FormData();
 
@@ -71,9 +83,13 @@ class NoveltyService {
       }
 
       // Agregar imágenes
+      AppLogger.debug('Agregando ${images.length} imágenes al FormData...');
       for (var i = 0; i < images.length; i++) {
         final file = images[i];
         final fileName = file.path.split('/').last;
+        final fileSize = await file.length();
+
+        AppLogger.debug('  Imagen ${i + 1}: $fileName (${fileSize} bytes)');
 
         formData.files.add(
           MapEntry(
@@ -82,6 +98,9 @@ class NoveltyService {
           ),
         );
       }
+
+      AppLogger.info('📤 Enviando petición al servidor...');
+      final startTime = DateTime.now();
 
       // Realizar petición POST con form-data
       final response = await _apiClient.post(
@@ -93,8 +112,60 @@ class NoveltyService {
         ),
       );
 
+      final duration = DateTime.now().difference(startTime);
+
+      // Verificar que la respuesta sea exitosa
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        AppLogger.error('❌ Respuesta no exitosa del servidor');
+        AppLogger.error('  - Status Code: ${response.statusCode}');
+        AppLogger.error('  - Response: ${response.data}');
+
+        // Extraer mensaje de error del backend si existe
+        String errorMessage = 'Error al crear novedad';
+        if (response.data is Map<String, dynamic>) {
+          errorMessage =
+              response.data['message'] ??
+              response.data['error'] ??
+              'Error del servidor (${response.statusCode})';
+        }
+
+        throw Exception(errorMessage);
+      }
+
+      AppLogger.info(
+        '✅ Novedad creada exitosamente en ${duration.inMilliseconds}ms',
+      );
+      AppLogger.debug('Status Code: ${response.statusCode}');
+      AppLogger.debug('Response: ${response.data}');
+
       return response;
     } catch (e) {
+      AppLogger.error('❌ Error al crear novedad', error: e);
+
+      // Log detallado del error
+      if (e is DioException) {
+        AppLogger.error('Tipo de error: ${e.type}');
+        AppLogger.error('Status Code: ${e.response?.statusCode}');
+        AppLogger.error('Response data: ${e.response?.data}');
+        AppLogger.error('Request: ${e.requestOptions.path}');
+        AppLogger.error(
+          'Request data type: ${e.requestOptions.data.runtimeType}',
+        );
+
+        // Si es error 500 o 403, dar más contexto
+        if (e.response?.statusCode == 500) {
+          AppLogger.error('⚠️ Error 500: Problema en el servidor');
+          AppLogger.error('Posibles causas:');
+          AppLogger.error('  - Permisos insuficientes del usuario');
+          AppLogger.error('  - Validación fallida en el backend');
+          AppLogger.error('  - Error en base de datos');
+          AppLogger.error('Response completa: ${e.response?.data}');
+        } else if (e.response?.statusCode == 403) {
+          AppLogger.error('⚠️ Error 403: Acceso denegado');
+          AppLogger.error('El usuario no tiene permisos para crear novedades');
+        }
+      }
+
       rethrow;
     }
   }
@@ -160,6 +231,22 @@ class NoveltyService {
       );
 
       return response;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Obtiene una novedad por ID y la parsea a modelo
+  Future<NoveltyModel> getNoveltyByIdParsed(int id) async {
+    try {
+      final response = await getNoveltyById(id.toString());
+
+      if (response.statusCode == 200 && response.data != null) {
+        final Map<String, dynamic> data = response.data as Map<String, dynamic>;
+        return NoveltyModel.fromJson(data);
+      } else {
+        throw Exception('Error al obtener novedad');
+      }
     } catch (e) {
       rethrow;
     }
@@ -246,6 +333,73 @@ class NoveltyService {
         'NoveltyService: Error al obtener novedades del usuario',
         error: e,
       );
+
+      // Intentar endpoint alternativo usando búsqueda por creador
+      try {
+        AppLogger.debug(
+          'NoveltyService: Intentando endpoint alternativo con búsqueda...',
+        );
+        final alternativeResponse = await getNovelties(
+          creatorId: int.parse(userId),
+          size: 100, // Traer más resultados
+        );
+
+        AppLogger.info(
+          'NoveltyService: ✅ Endpoint alternativo exitoso - Status: ${alternativeResponse.statusCode}',
+        );
+
+        return alternativeResponse;
+      } catch (altError) {
+        AppLogger.error(
+          'NoveltyService: Error en endpoint alternativo también',
+          error: altError,
+        );
+        rethrow;
+      }
+    }
+  }
+
+  /// Actualiza el estado de una novedad
+  Future<Response> updateNoveltyStatus({
+    required int noveltyId,
+    required String newStatus,
+  }) async {
+    try {
+      AppLogger.info('🔄 Actualizando estado de novedad #$noveltyId');
+      AppLogger.debug('  - Estado nuevo: $newStatus');
+      AppLogger.debug(
+        '  - URL: ${ApiConstants.currentBaseUrl}/api/v1/novelties/$noveltyId/status',
+      );
+
+      final startTime = DateTime.now();
+
+      final response = await _apiClient.patch(
+        '/api/v1/novelties/$noveltyId/status',
+        data: {'status': newStatus},
+      );
+
+      final duration = DateTime.now().difference(startTime);
+      AppLogger.info(
+        '✅ Estado actualizado exitosamente en ${duration.inMilliseconds}ms',
+      );
+      AppLogger.debug('  - Status Code: ${response.statusCode}');
+      AppLogger.debug('  - Response: ${response.data}');
+
+      return response;
+    } catch (e) {
+      AppLogger.error(
+        '❌ Error al actualizar estado de novedad #$noveltyId',
+        error: e,
+      );
+
+      // Log detallado del error
+      if (e is DioException) {
+        AppLogger.error('  - Tipo de error: ${e.type}');
+        AppLogger.error('  - Status Code: ${e.response?.statusCode}');
+        AppLogger.error('  - Response data: ${e.response?.data}');
+        AppLogger.error('  - Request: ${e.requestOptions.path}');
+      }
+
       rethrow;
     }
   }

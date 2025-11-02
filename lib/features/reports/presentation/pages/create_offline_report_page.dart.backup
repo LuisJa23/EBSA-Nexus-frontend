@@ -1,0 +1,549 @@
+// create_offline_report_page.dart
+//
+// Página para crear reportes offline
+//
+// PROPÓSITO:
+// - Crear reportes sin conexión a internet (igual que novelty_report_page pero offline)
+// - Usar datos de la novedad ya asignada
+// - Capturar ubicación GPS del dispositivo
+// - Guardar en SQLite para posterior sincronización
+//
+// CAPA: PRESENTATION LAYER
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:geolocator/geolocator.dart';
+
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/custom_button.dart';
+import '../../../../core/widgets/loading_indicator.dart';
+import '../../../../core/utils/app_logger.dart';
+import '../../../incidents/presentation/providers/novelty_resolution_providers.dart';
+import '../../../incidents/presentation/state/create_report_state.dart';
+import '../providers/offline_reports_provider.dart';
+
+/// Página para crear reportes offline
+/// 
+/// Recibe noveltyId y permite crear el reporte sin conexión
+class CreateOfflineReportPage extends ConsumerStatefulWidget {
+  final String noveltyId;
+
+  const CreateOfflineReportPage({
+    super.key,
+    required this.noveltyId,
+  });
+
+  @override
+  ConsumerState<CreateOfflineReportPage> createState() =>
+      _CreateOfflineReportPageState();
+}
+
+class _CreateOfflineReportPageState
+    extends ConsumerState<CreateOfflineReportPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _reportContentController = TextEditingController();
+  final _observationsController = TextEditingController();
+
+  DateTime? _workStartDate;
+  DateTime? _workEndDate;
+  String _resolutionStatus = 'COMPLETADA';
+  Position? _currentLocation;
+  bool _isLoadingLocation = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadCrewMembers();
+      _getCurrentLocation();
+    });
+  }
+
+  @override
+  void dispose() {
+    _reportContentController.dispose();
+    _observationsController.dispose();
+    super.dispose();
+  }
+
+  void _loadCrewMembers() {
+    final noveltyId = int.tryParse(widget.noveltyId);
+    if (noveltyId != null) {
+      ref.read(createReportProvider.notifier).loadCrewMembers(noveltyId);
+    }
+  }
+
+  /// Obtiene la ubicación GPS actual del dispositivo
+  Future<void> _getCurrentLocation() async {
+    setState(() => _isLoadingLocation = true);
+
+    try {
+      // Verificar si el servicio de ubicación está habilitado
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled && mounted) {
+        _showLocationError('El servicio de ubicación está deshabilitado');
+        return;
+      }
+
+      // Verificar permisos
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied && mounted) {
+          _showLocationError('Permisos de ubicación denegados');
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever && mounted) {
+        _showLocationError(
+          'Permisos de ubicación denegados permanentemente. '
+          'Por favor, habilítalos en la configuración.',
+        );
+        return;
+      }
+
+      // Obtener ubicación
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      setState(() {
+        _currentLocation = position;
+        _isLoadingLocation = false;
+      });
+
+      AppLogger.info(
+        'Ubicación obtenida: '
+        'Lat: ${position.latitude}, Lon: ${position.longitude}, '
+        'Precisión: ${position.accuracy}m',
+      );
+    } catch (e) {
+      AppLogger.error('Error obteniendo ubicación', error: e);
+      if (mounted) {
+        _showLocationError('Error al obtener ubicación: ${e.toString()}');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingLocation = false);
+      }
+    }
+  }
+
+  void _showLocationError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.orange,
+        action: SnackBarAction(
+          label: 'Reintentar',
+          textColor: Colors.white,
+          onPressed: _getCurrentLocation,
+        ),
+      ),
+    );
+  }
+
+    try {
+      // Verificar permisos
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        throw Exception('Permisos de ubicación denegados permanentemente');
+      }
+
+      // Obtener ubicación
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      setState(() {
+        _currentLocation = position;
+        _isLoadingLocation = false;
+      });
+
+      AppLogger.success(
+        'Ubicación obtenida: ${position.latitude}, ${position.longitude}',
+      );
+    } catch (e) {
+      AppLogger.error('Error obteniendo ubicación', error: e);
+      setState(() => _isLoadingLocation = false);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al obtener ubicación: $e'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Guarda el reporte offline
+  Future<void> _submitReport() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    if (_selectedNoveltyId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Selecciona una novedad'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    if (_selectedParticipantIds.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Selecciona al menos un participante'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    if (_currentLocation == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Esperando ubicación GPS...'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final useCase = sl<CreateReportOfflineUseCase>();
+
+      final result = await useCase(
+        noveltyId: _selectedNoveltyId!,
+        workDescription: _workDescriptionController.text.trim(),
+        observations: _observationsController.text.trim().isEmpty
+            ? null
+            : _observationsController.text.trim(),
+        workTime: int.parse(_workTimeController.text.trim()),
+        participantIds: _selectedParticipantIds,
+        latitude: _currentLocation!.latitude,
+        longitude: _currentLocation!.longitude,
+        accuracy: _currentLocation!.accuracy,
+        evidences: _evidences,
+      );
+
+      result.fold(
+        (failure) {
+          AppLogger.error('Error creando reporte', error: failure.message);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error: ${failure.message}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        },
+        (report) {
+          AppLogger.success('Reporte creado offline: ${report.id}');
+
+          // Refrescar providers
+          ref.read(offlineReportsProvider.notifier).refresh();
+          ref.invalidate(autoRefreshPendingCountProvider);
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('✅ Reporte guardado offline'),
+                backgroundColor: Colors.green,
+              ),
+            );
+
+            // Volver atrás
+            Navigator.of(context).pop();
+          }
+        },
+      );
+    } catch (e) {
+      AppLogger.error('Error inesperado', error: e);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error inesperado: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Crear Reporte Offline'),
+        actions: [
+          // Indicador de ubicación
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: _isLoadingLocation
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Icon(
+                    _currentLocation != null
+                        ? Icons.location_on
+                        : Icons.location_off,
+                    color: _currentLocation != null ? Colors.green : Colors.red,
+                  ),
+          ),
+        ],
+      ),
+      body: _isLoadingCache
+          ? const Center(child: LoadingIndicator(message: 'Cargando datos...'))
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Selección de novedad
+                    _buildNoveltyDropdown(),
+                    const SizedBox(height: 16),
+
+                    // Descripción del trabajo
+                    TextFormField(
+                      controller: _workDescriptionController,
+                      decoration: const InputDecoration(
+                        labelText: 'Descripción del Trabajo *',
+                        hintText: 'Describe el trabajo realizado',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.description),
+                      ),
+                      maxLines: 3,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'La descripción es requerida';
+                        }
+                        if (value.trim().length < 10) {
+                          return 'Mínimo 10 caracteres';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Observaciones
+                    TextFormField(
+                      controller: _observationsController,
+                      decoration: const InputDecoration(
+                        labelText: 'Observaciones (Opcional)',
+                        hintText: 'Observaciones adicionales',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.note),
+                      ),
+                      maxLines: 3,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Tiempo de trabajo
+                    TextFormField(
+                      controller: _workTimeController,
+                      decoration: const InputDecoration(
+                        labelText: 'Tiempo de Trabajo (minutos) *',
+                        hintText: 'Ej: 120',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.access_time),
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'El tiempo es requerido';
+                        }
+                        final time = int.tryParse(value.trim());
+                        if (time == null || time <= 0) {
+                          return 'Ingresa un número válido';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Selección de participantes
+                    _buildParticipantsSelector(),
+                    const SizedBox(height: 16),
+
+                    // Captura de evidencias
+                    _buildEvidenceCapture(),
+                    const SizedBox(height: 24),
+
+                    // Botón de guardar
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton.icon(
+                        onPressed: _isSubmitting ? null : _submitReport,
+                        icon: _isSubmitting
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.save),
+                        label: Text(
+                          _isSubmitting
+                              ? 'Guardando...'
+                              : 'Guardar Reporte Offline',
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+    );
+  }
+
+  /// Widget para seleccionar novedad
+  Widget _buildNoveltyDropdown() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Novedad *',
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<int>(
+          value: _selectedNoveltyId,
+          decoration: InputDecoration(
+            hintText: 'Selecciona una novedad',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            prefixIcon: const Icon(Icons.report_problem),
+          ),
+          items: _cachedNovelties.map((novelty) {
+            return DropdownMenuItem<int>(
+              value: novelty['id'] as int,
+              child: Text(novelty['name'] as String),
+            );
+          }).toList(),
+          onChanged: (value) {
+            setState(() => _selectedNoveltyId = value);
+          },
+          validator: (value) {
+            if (value == null) return 'Selecciona una novedad';
+            return null;
+          },
+        ),
+      ],
+    );
+  }
+
+  /// Widget para seleccionar participantes
+  Widget _buildParticipantsSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Participantes *',
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            children: _cachedCrews.map((crew) {
+              final id = crew['id'] as int;
+              final isSelected = _selectedParticipantIds.contains(id);
+
+              return CheckboxListTile(
+                title: Text(crew['name'] as String),
+                value: isSelected,
+                onChanged: (value) {
+                  setState(() {
+                    if (value == true) {
+                      _selectedParticipantIds.add(id);
+                    } else {
+                      _selectedParticipantIds.remove(id);
+                    }
+                  });
+                },
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Widget para captura de evidencias
+  Widget _buildEvidenceCapture() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Evidencias (${_evidences.length})',
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            children: [
+              const Icon(Icons.photo_camera, size: 48, color: Colors.grey),
+              const SizedBox(height: 8),
+              const Text(
+                'Captura de evidencias disponible próximamente',
+                style: TextStyle(color: Colors.grey),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: () {
+                  // TODO: Implementar captura de evidencias
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Función en desarrollo')),
+                  );
+                },
+                icon: const Icon(Icons.add_a_photo),
+                label: const Text('Agregar Foto'),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}

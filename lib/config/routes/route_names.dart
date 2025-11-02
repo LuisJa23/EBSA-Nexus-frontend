@@ -51,6 +51,15 @@ class RouteNames {
   static const String assignSquad = '/manage-incident/assign-squad';
   static const String incidentList = '/incident-list';
   static const String offlineIncidents = '/manage-incident/offline';
+  static const String selectNoveltyForReport = '/select-novelty-for-report';
+  static String noveltyReport(String noveltyId) => '/novelty-report/$noveltyId';
+
+  // ============================================================================
+  // RUTAS DE ANALYTICS / CONSULTAS
+  // ============================================================================
+
+  static const String analytics = '/analytics';
+  static const String analyticsDashboard = '/analytics/dashboard';
 
   // ============================================================================
   // RUTAS DE CUADRILLAS

@@ -10,12 +10,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import '../../../../config/dependency_injection/injection_container.dart' as di;
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/utils/app_logger.dart';
+import '../../../../config/dependency_injection/injection_container.dart';
 import '../../../authentication/domain/entities/user.dart';
 import '../../data/models/novelty_model.dart';
-import '../../data/novelty_service.dart';
+import '../../data/services/novelty_report_service.dart';
+import '../pages/view_novelty_report_page.dart';
 
 class NoveltyCard extends StatefulWidget {
   final NoveltyModel novelty;
@@ -36,72 +38,70 @@ class NoveltyCard extends StatefulWidget {
 }
 
 class _NoveltyCardState extends State<NoveltyCard> {
-  bool _isUpdating = false;
+  final NoveltyReportService _reportService = sl<NoveltyReportService>();
+  bool _hasReport = false;
+  bool _checkingReport = false;
 
-  Future<void> _updateStatus(String newStatus) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Completar Novedad'),
-        content: const Text(
-          '¿Estás seguro de que deseas marcar esta novedad como completada?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('No'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
-            child: const Text('Sí'),
-          ),
-        ],
-      ),
-    );
+  @override
+  void initState() {
+    super.initState();
+    // Solo verificar si la novedad está COMPLETADA o EN_CURSO
+    if (widget.novelty.status == 'COMPLETADA' ||
+        widget.novelty.status == 'EN_CURSO') {
+      _checkIfReportExists();
+    }
+  }
 
-    if (confirmed != true) return;
+  /// Verificar si ya existe un reporte para esta novedad
+  Future<void> _checkIfReportExists() async {
+    if (_checkingReport) return;
 
-    setState(() => _isUpdating = true);
+    setState(() {
+      _checkingReport = true;
+    });
 
     try {
-      final noveltyService = di.sl<NoveltyService>();
-      await noveltyService.updateNoveltyStatus(
-        noveltyId: widget.novelty.id.toString(),
-        status: newStatus,
+      final report = await _reportService.getReportByNoveltyId(
+        widget.novelty.id,
       );
-
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Novedad completada exitosamente'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-        widget.onStatusChanged?.call();
+        setState(() {
+          _hasReport = report != null;
+          _checkingReport = false;
+        });
       }
     } catch (e) {
+      // Si hay error al verificar (404, red, etc.), asumir que no hay reporte
+      // y permitir la creación. El backend validará finalmente.
+      AppLogger.debug('⚠️ Error verificando reporte existente en card: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al actualizar estado: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isUpdating = false);
+        setState(() {
+          _hasReport = false;
+          _checkingReport = false;
+        });
       }
     }
   }
 
+  /// Navegar al formulario de reporte para completar la novedad
+  /// El backend cambia el estado a COMPLETADA automáticamente al crear el reporte
+  void _completeNovelty() {
+    // Navegar a la página de creación de reporte
+    context.push('/novelty-report/${widget.novelty.id}');
+  }
+
+  /// Navegar a la vista del reporte
+  void _viewReport() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ViewNoveltyReportPage(novelty: widget.novelty),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final canUpdateStatus =
-        widget.userRole == UserRole.fieldWorker &&
-        widget.novelty.status == 'EN_CURSO';
-
     return Card(
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 16),
@@ -194,19 +194,23 @@ class _NoveltyCardState extends State<NoveltyCard> {
                 ],
               ),
 
-              // Botones de acción para jefe de cuadrilla
-              if (canUpdateStatus) ...[
+              // Botón para novedades EN_CURSO: Completar (crear reporte)
+              // Solo si es fieldWorker, está EN_CURSO y NO tiene reporte ya
+              if (widget.userRole == UserRole.fieldWorker &&
+                  widget.novelty.status == 'EN_CURSO' &&
+                  !_hasReport &&
+                  !_checkingReport) ...[
                 const SizedBox(height: 12),
                 const Divider(),
                 const SizedBox(height: 8),
+
+                // Botón principal: Completar (online)
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    onPressed: _isUpdating
-                        ? null
-                        : () => _updateStatus('COMPLETADA'),
+                    onPressed: _completeNovelty,
                     icon: const Icon(Icons.check_circle, size: 18),
-                    label: const Text('Completar'),
+                    label: const Text('Completar Reporte'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.success,
                       foregroundColor: Colors.white,
@@ -214,30 +218,65 @@ class _NoveltyCardState extends State<NoveltyCard> {
                     ),
                   ),
                 ),
+
+                const SizedBox(height: 8),
+
+                // Botón secundario: Crear reporte offline
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      // Navegar a la página de crear reporte offline
+                      context.push(
+                        '/reports/offline/create/${widget.novelty.id}',
+                      );
+                    },
+                    icon: const Icon(Icons.cloud_off, size: 18),
+                    label: const Text('Crear Offline'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      side: BorderSide(color: AppColors.primary),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
               ],
 
-              // Botón de hacer reporte para novedades completadas
+              // Botón para novedades COMPLETADAS o EN_CURSO con reporte: Ver Reporte
               if (widget.userRole == UserRole.fieldWorker &&
-                  widget.novelty.status == 'COMPLETADA') ...[
+                  (_hasReport || widget.novelty.status == 'COMPLETADA') &&
+                  !_checkingReport) ...[
                 const SizedBox(height: 12),
                 const Divider(),
                 const SizedBox(height: 8),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    onPressed: () {
-                      // Navegar a la página de reporte
-                      context.push('/novelty-report/${widget.novelty.id}');
-                    },
-                    icon: const Icon(Icons.description, size: 18),
-                    label: const Text('Hacer Reporte'),
+                    onPressed: _viewReport,
+                    icon: const Icon(Icons.visibility, size: 18),
+                    label: const Text('Ver Reporte'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: AppColors.info,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                   ),
                 ),
+              ],
+
+              // Indicador de carga mientras verifica si existe reporte
+              if (_checkingReport) ...[
+                const SizedBox(height: 12),
+                const Divider(),
+                const SizedBox(height: 8),
+                const Center(
+                  child: SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+                const SizedBox(height: 8),
               ],
             ],
           ),
@@ -312,44 +351,6 @@ class _NoveltyCardState extends State<NoveltyCard> {
           ),
         ),
       ],
-    );
-  }
-}
-
-extension NoveltyServiceExtension on NoveltyService {
-  /// Provides a compatibility implementation for `updateNoveltyStatus`.
-  /// At runtime this will try to delegate to common method names (if present)
-  /// such as `updateStatus` or `updateNovelty`; otherwise it throws an
-  /// UnimplementedError with guidance to implement the method in the service.
-  Future<void> updateNoveltyStatus({
-    required String noveltyId,
-    required String status,
-  }) async {
-    // Try to delegate to commonly named methods on the actual implementation.
-    // The `dynamic` calls avoid compile-time errors and allow delegation if
-    // the concrete class exposes such methods.
-    try {
-      final dynamic self = this;
-      // Try method named `updateStatus`
-      try {
-        await self.updateStatus(noveltyId: noveltyId, status: status);
-        return;
-      } catch (_) {}
-      // Try method named `updateNovelty` (different signature)
-      try {
-        await self.updateNovelty(noveltyId, status);
-        return;
-      } catch (_) {}
-    } catch (_) {
-      // fall through to throw below
-    }
-
-    throw UnimplementedError(
-      'NoveltyService.updateNoveltyStatus is not implemented. '
-      'Please implement updateNoveltyStatus in '
-      'lib/features/incidents/data/novelty_service.dart or expose a compatible '
-      'method (e.g. updateStatus or updateNovelty) on the NoveltyService '
-      'implementation.',
     );
   }
 }

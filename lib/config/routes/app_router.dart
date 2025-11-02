@@ -18,9 +18,12 @@ import '../../features/incidents/presentation/pages/create_incident_page.dart';
 import '../../features/incidents/presentation/pages/assign_squad_page.dart';
 import '../../features/incidents/presentation/pages/novelty_detail_page.dart';
 import '../../features/incidents/presentation/pages/novelty_report_page.dart';
+import '../../features/incidents/presentation/pages/select_novelty_for_report_page.dart';
 import '../../features/incidents/presentation/pages/incident_list_page.dart';
 import '../../features/incidents/presentation/pages/offline_incidents_page.dart';
 import '../../features/reports/presentation/pages/create_report_page.dart';
+import '../../features/reports/presentation/pages/create_offline_report_page.dart';
+import '../../features/reports/presentation/pages/select_novelty_for_offline_report_page.dart';
 import '../../features/users/presentation/pages/manage_users_page.dart';
 import '../../features/users/presentation/pages/create_user_page.dart';
 import '../../features/users/presentation/pages/list_users_page.dart';
@@ -28,6 +31,7 @@ import '../../features/crews/presentation/pages/manage_crews_page.dart';
 import '../../features/crews/presentation/pages/create_crew_page.dart';
 import '../../features/crews/presentation/pages/list_crews_page.dart';
 import '../../features/crews/presentation/pages/crew_detail_page.dart';
+import '../../features/analytics/presentation/pages/analytics_dashboard_page.dart';
 import 'route_names.dart';
 
 /// Provider global del router
@@ -252,6 +256,16 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
 
+          /// Analytics Dashboard
+          GoRoute(
+            path: RouteNames.analyticsDashboard,
+            name: 'analytics-dashboard',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const AnalyticsDashboardPage(),
+            ),
+          ),
+
           /// Detalle de Novedad (Ruta independiente)
           GoRoute(
             path: '/novelty-detail/:noveltyId',
@@ -276,6 +290,39 @@ final routerProvider = Provider<GoRouter>((ref) {
                 child: NoveltyReportPage(noveltyId: noveltyId),
               );
             },
+          ),
+
+          /// Crear Reporte Offline
+          GoRoute(
+            path: '/reports/offline/create/:noveltyId',
+            name: 'create-offline-report',
+            pageBuilder: (context, state) {
+              final noveltyId = state.pathParameters['noveltyId']!;
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: CreateOfflineReportPage(noveltyId: noveltyId),
+              );
+            },
+          ),
+
+          /// Seleccionar Novedad para Reporte
+          GoRoute(
+            path: '/select-novelty-for-report',
+            name: 'select-novelty-for-report',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const SelectNoveltyForReportPage(),
+            ),
+          ),
+
+          /// Seleccionar Novedad para Reporte Offline
+          GoRoute(
+            path: '/select-novelty-for-offline-report',
+            name: 'select-novelty-for-offline-report',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const SelectNoveltyForOfflineReportPage(),
+            ),
           ),
 
           /// Novedades Offline
@@ -488,6 +535,8 @@ String _getTitleForRoute(String path) {
   if (path == RouteNames.createIncident) return 'Crear Incidente';
   if (path == RouteNames.assignSquad) return 'Asignar Cuadrilla';
   if (path == RouteNames.incidentList) return 'Consultas';
+  if (path == RouteNames.selectNoveltyForReport) return 'Seleccionar Novedad';
+  if (path.startsWith('/novelty-report/')) return 'Crear Reporte';
   if (path == RouteNames.createReport) return 'Hacer Reporte';
 
   // Rutas de administración de usuarios
@@ -499,6 +548,10 @@ String _getTitleForRoute(String path) {
   if (path == RouteNames.manageCrews) return 'Gestionar Cuadrillas';
   if (path == RouteNames.createCrew) return 'Crear Cuadrilla';
   if (path == RouteNames.listCrews) return 'Lista de Cuadrillas';
+
+  // Rutas de analytics
+  if (path == RouteNames.analyticsDashboard) return 'Analytics Dashboard';
+  if (path == RouteNames.analytics) return 'Estadísticas';
 
   // Por defecto
   return 'EBSA Nexus';

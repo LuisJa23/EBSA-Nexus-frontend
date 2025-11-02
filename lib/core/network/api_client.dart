@@ -44,10 +44,7 @@ class ApiClient {
 
     // Headers por defecto
     _dio.options.headers = {
-      ApiConstants.authorizationHeader.replaceAll(
-        'Content-Type',
-        'content-type',
-      ): ApiConstants.contentTypeJson,
+      'Content-Type': ApiConstants.contentTypeJson,
       'Accept': ApiConstants.acceptJson,
       'User-Agent': 'NexusEBSA/1.0.0',
     };

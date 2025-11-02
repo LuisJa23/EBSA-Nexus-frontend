@@ -63,8 +63,13 @@ class _NoveltyDetailPageState extends State<NoveltyDetailPage> {
 
       if (response.statusCode == 200) {
         final data = response.data;
+        print('🔍 DEBUG NoveltyDetail - Respuesta del servidor: $data');
+        final novelty = NoveltyModel.fromJson(data);
+        print(
+          '🔍 DEBUG NoveltyDetail - Novedad parseada - ID: ${novelty.id}, CrewId: ${novelty.crewId}',
+        );
         setState(() {
-          _novelty = NoveltyModel.fromJson(data);
+          _novelty = novelty;
           _isLoading = false;
         });
       } else {
@@ -131,16 +136,44 @@ class _NoveltyDetailPageState extends State<NoveltyDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    // 🔍 DEBUG: Verificar por qué no aparece el botón
+    if (_novelty != null) {
+      print('🔍 DEBUG NoveltyDetail - Novedad ID: ${_novelty!.id}');
+      print('🔍 DEBUG NoveltyDetail - Status: ${_novelty!.status}');
+      print('🔍 DEBUG NoveltyDetail - CrewId: ${_novelty!.crewId}');
+      print(
+        '🔍 DEBUG NoveltyDetail - Mostrar botón: ${_shouldShowAssignButton()}',
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Detalle de Novedad'),
         centerTitle: true,
       ),
       body: _buildBody(),
-      bottomNavigationBar: _novelty != null && _novelty!.crewId == null
+      bottomNavigationBar: _shouldShowAssignButton()
           ? _buildAssignButton()
           : null,
     );
+  }
+
+  /// Determina si se debe mostrar el botón de asignar cuadrilla
+  /// El botón se muestra si:
+  /// - La novedad está cargada
+  /// - La novedad NO tiene cuadrilla asignada (crewId es null)
+  /// - El estado de la novedad permite asignación (CREADA)
+  bool _shouldShowAssignButton() {
+    if (_novelty == null) return false;
+
+    final hasNoCrewAssigned = _novelty!.crewId == null;
+    final isCreatedStatus = _novelty!.status == 'CREADA';
+
+    print(
+      '🔍 DEBUG _shouldShowAssignButton - hasNoCrewAssigned: $hasNoCrewAssigned, isCreatedStatus: $isCreatedStatus',
+    );
+
+    return hasNoCrewAssigned && isCreatedStatus;
   }
 
   Widget _buildBody() {
@@ -665,6 +698,34 @@ class _NoveltyDetailPageState extends State<NoveltyDetailPage> {
                 ),
               ],
             ),
+
+            // Mostrar información de cuadrilla asignada si existe
+            if (_novelty!.crewId != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.info.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.info.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.group, size: 20, color: AppColors.info),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Esta novedad ya tiene una cuadrilla asignada',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.info,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -871,12 +932,48 @@ class _AssignCrewBottomSheetState extends State<_AssignCrewBottomSheet> {
       );
 
       if (mounted) {
+        // Mostrar mensaje de éxito
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Cuadrilla asignada correctamente'),
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'Cuadrilla asignada correctamente',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Se han enviado notificaciones a todos los miembros',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
             backgroundColor: AppColors.success,
+            duration: const Duration(seconds: 4),
+            behavior: SnackBarBehavior.floating,
           ),
         );
+
+        // Nota: Las notificaciones son creadas automáticamente por el backend
+        // y serán visibles para los miembros de la cuadrilla cuando actualicen
+        // su lista de notificaciones (polling cada 30 segundos o manualmente)
+
         widget.onAssigned();
       }
     } catch (e) {

@@ -10,23 +10,34 @@
 // CAPA: PRESENTATION LAYER
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../config/routes/route_names.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/home_action_card.dart';
+import '../../../authentication/domain/entities/user.dart';
+import '../../../authentication/presentation/providers/auth_provider.dart';
 
 /// Página para gestión de incidentes/novedades del sistema
 ///
 /// Muestra opciones para crear y listar incidentes.
 /// Reutiliza el diseño de HomeActionCard para mantener
 /// consistencia visual con el resto de la aplicación.
-class ManageIncidentPage extends StatelessWidget {
+class ManageIncidentPage extends ConsumerWidget {
   const ManageIncidentPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authNotifierProvider);
+    final user = authState.user;
+
+    // Verificar permisos según rol
+    final isAdmin = user?.role == UserRole.admin;
+    final isAreaManager = user?.role == UserRole.areaManager;
+    final hasFullAccess = isAdmin || isAreaManager;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Gestionar Novedad'), centerTitle: true),
       body: SingleChildScrollView(
@@ -36,7 +47,7 @@ class ManageIncidentPage extends StatelessWidget {
           children: [
             _buildHeader(),
             const SizedBox(height: 32),
-            _buildOptionsCards(context),
+            _buildOptionsCards(context, hasFullAccess),
           ],
         ),
       ),
@@ -59,7 +70,7 @@ class ManageIncidentPage extends StatelessWidget {
   }
 
   /// Construye las tarjetas de opciones
-  Widget _buildOptionsCards(BuildContext context) {
+  Widget _buildOptionsCards(BuildContext context, bool hasFullAccess) {
     return Column(
       children: [
         // Opción 1: Crear Incidente
@@ -71,14 +82,16 @@ class ManageIncidentPage extends StatelessWidget {
         ),
         const SizedBox(height: 16),
 
-        // Opción 2: Asignar Cuadrilla
-        HomeActionCard(
-          icon: Icons.group_work,
-          title: 'Asignar Cuadrilla',
-          subtitle: 'Asignar Novedad a Cuadrilla',
-          onTap: () => context.push(RouteNames.assignSquad),
-        ),
-        const SizedBox(height: 16),
+        // Opción 2: Asignar Cuadrilla (Solo Admin y Jefe de Área)
+        if (hasFullAccess) ...[
+          HomeActionCard(
+            icon: Icons.group_work,
+            title: 'Asignar Cuadrilla',
+            subtitle: 'Asignar Novedad a Cuadrilla',
+            onTap: () => context.push(RouteNames.assignSquad),
+          ),
+          const SizedBox(height: 16),
+        ],
 
         // Opción 3: Lista de Incidentes
         HomeActionCard(
@@ -89,7 +102,7 @@ class ManageIncidentPage extends StatelessWidget {
         ),
         const SizedBox(height: 16),
 
-        // Opción 3: Novedades Offline
+        // Opción 4: Novedades Offline
         HomeActionCard(
           icon: Icons.cloud_off,
           title: 'Novedades Offline',

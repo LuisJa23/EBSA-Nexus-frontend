@@ -214,6 +214,51 @@ class _NoveltyCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  // Indicador de asignación de cuadrilla
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: novelty.crewId != null
+                          ? AppColors.success.withOpacity(0.1)
+                          : AppColors.warning.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: novelty.crewId != null
+                            ? AppColors.success
+                            : AppColors.warning,
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          novelty.crewId != null
+                              ? Icons.check_circle
+                              : Icons.pending,
+                          size: 14,
+                          color: novelty.crewId != null
+                              ? AppColors.success
+                              : AppColors.warning,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          novelty.crewId != null ? 'Asignada' : 'Pendiente',
+                          style: AppTextStyles.caption.copyWith(
+                            color: novelty.crewId != null
+                                ? AppColors.success
+                                : AppColors.warning,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   const Spacer(),
                   Icon(
                     Icons.arrow_forward_ios,
@@ -299,6 +344,38 @@ class _NoveltyCard extends StatelessWidget {
                       ),
                     ),
                   ],
+                ),
+              ],
+
+              // Información de cuadrilla asignada
+              if (novelty.crewId != null) ...[
+                const SizedBox(height: 8),
+                const Divider(),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: AppColors.success.withOpacity(0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.group, size: 18, color: AppColors.success),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          novelty.assignment?.crewName ?? 'Cuadrilla asignada',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.success,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ],

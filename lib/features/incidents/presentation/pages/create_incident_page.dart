@@ -14,20 +14,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uuid/uuid.dart';
 import 'package:drift/drift.dart' as drift;
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as p;
 
 import '../../../../config/dependency_injection/injection_container.dart' as di;
 import '../../../../config/database/database_provider.dart';
-import '../../../../config/database/app_database.dart';
+import '../../../authentication/presentation/providers/auth_provider.dart';
 import '../../../incidents/data/novelty_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../../core/widgets/evidence_capture_widget.dart';
-import '../../../authentication/presentation/providers/auth_provider.dart';
+import '../../../../core/database/app_database.dart';
 
 /// Página para crear reportes de incidentes
 ///
@@ -739,15 +736,52 @@ class _CreateIncidentPageState extends ConsumerState<CreateIncidentPage> {
         print('✅ FIN DEL FLUJO OFFLINE');
         print('════════════════════════════════════════════════════');
       } else {
-        // NO ES ERROR DE CONEXIÓN - Mostrar error
-        print('❌ Mostrando error al usuario');
-        // Otros errores - mostrar mensaje
+        // NO ES ERROR DE CONEXIÓN - Mostrar error detallado
+        print('❌ Error del servidor - Mostrando al usuario');
+
+        String userMessage = 'Error al crear novedad';
+
+        // Intentar extraer mensaje del error
+        if (e.toString().contains('500')) {
+          userMessage =
+              '❌ Error del servidor (500)\n\n'
+              'Posibles causas:\n'
+              '• Usuario sin permisos para crear novedades\n'
+              '• Error de validación en el servidor\n'
+              '• Problema con la base de datos\n\n'
+              'Por favor contacte al administrador.';
+        } else if (e.toString().contains('403')) {
+          userMessage =
+              '❌ Acceso denegado (403)\n\n'
+              'Su usuario no tiene permisos para crear novedades.\n'
+              'Contacte al administrador del sistema.';
+        } else if (e.toString().contains('401')) {
+          userMessage =
+              '❌ Sesión expirada (401)\n\n'
+              'Por favor inicie sesión nuevamente.';
+        } else {
+          userMessage = 'Error al crear novedad:\n${e.toString()}';
+        }
+
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error al crear novedad: ${e.toString()}'),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 5),
+          // Mostrar diálogo de error más informativo
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Row(
+                children: [
+                  Icon(Icons.error_outline, color: Colors.red, size: 32),
+                  SizedBox(width: 12),
+                  Text('Error'),
+                ],
+              ),
+              content: SingleChildScrollView(child: Text(userMessage)),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text('Aceptar'),
+                ),
+              ],
             ),
           );
         }
@@ -756,6 +790,112 @@ class _CreateIncidentPageState extends ConsumerState<CreateIncidentPage> {
   }
 
   Future<void> _saveOffline() async {
+    print('📱 _saveOffline iniciado');
+    try {
+      print('📱 Obteniendo usuario actual...');
+      // Obtener usuario actual
+      final authState = ref.read(authNotifierProvider);
+      final currentUserId = authState.user?.id;
+      print('📱 Usuario ID: $currentUserId');
+
+      if (currentUserId == null) {
+        throw Exception('Usuario no identificado');
+      }
+
+      // Intentar parsear el userId como int, usar 0 si falla
+      final userId = int.tryParse(currentUserId) ?? 0;
+
+      if (userId == 0) {
+        print(
+          '⚠️ Advertencia: ID de usuario no numérico ("$currentUserId"), usando ID temporal: 0',
+        );
+      }
+
+      print('📱 Usuario válido: $userId');
+      print('📱 Obteniendo base de datos...');
+
+      // Obtener base de datos
+      final db = ref.read(databaseProvider);
+      print('📱 Base de datos obtenida');
+
+      // Generar ID único para la novedad (usar timestamp negativo para distinguir de IDs del servidor)
+      final noveltyId = -DateTime.now().millisecondsSinceEpoch;
+      print('📱 ID generado: $noveltyId');
+
+      // Obtener ID numérico del área seleccionada
+      final areaId = _areaIds[_selectedArea] ?? 1;
+      print('📱 Área ID: $areaId');
+
+      // Parsear lecturas como números
+      final activeReading =
+          double.tryParse(_activeReadingController.text.trim()) ?? 0.0;
+      final reactiveReading =
+          double.tryParse(_reactiveReadingController.text.trim()) ?? 0.0;
+
+      // Usar municipio como dirección temporal
+      final address = _selectedMunicipio ?? '';
+      print('📱 Dirección: $address');
+
+      final now = DateTime.now();
+
+      print('📱 Preparando datos para guardar:');
+      print('  - noveltyId: $noveltyId');
+      print('  - areaId: $areaId');
+      print('  - status: PENDIENTE');
+      print('  - rawJson: {"offline": true, "created_offline": true}');
+
+      // Guardar novedad en BD local usando tabla de cache
+      await db.upsertNoveltyCache(
+        NoveltyCacheTableCompanion(
+          noveltyId: drift.Value(noveltyId),
+          areaId: drift.Value(areaId),
+          reason: drift.Value(_selectedMotivo ?? ''),
+          accountNumber: drift.Value(_accountNumberController.text.trim()),
+          meterNumber: drift.Value(_meterNumberController.text.trim()),
+          activeReading: drift.Value(activeReading),
+          reactiveReading: drift.Value(reactiveReading),
+          municipality: drift.Value(_selectedMunicipio ?? ''),
+          address: drift.Value(address),
+          description: drift.Value(_descriptionController.text.trim()),
+          observations: drift.Value(_observationsController.text.trim()),
+          status: const drift.Value('PENDIENTE'), // Estado inicial
+          createdBy: drift.Value(userId),
+          crewId: const drift.Value.absent(), // Sin cuadrilla asignada aún
+          createdAt: drift.Value(now),
+          updatedAt: drift.Value(now),
+          completedAt: const drift.Value.absent(),
+          closedAt: const drift.Value.absent(),
+          cancelledAt: const drift.Value.absent(),
+          cachedAt: drift.Value(now),
+          rawJson: const drift.Value(
+            '{"offline": true, "created_offline": true}',
+          ),
+        ),
+      );
+
+      print('✅✅✅ Novedad guardada en caché local con ID: $noveltyId');
+      print('📱 Verificando guardado...');
+
+      // Verificar que se guardó
+      final saved = await db.getCachedNoveltyById(noveltyId);
+      if (saved != null) {
+        print('✅ VERIFICACIÓN: Novedad encontrada en BD');
+        print('  - ID: ${saved.noveltyId}');
+        print('  - Status: ${saved.status}');
+        print('  - RawJson: ${saved.rawJson}');
+      } else {
+        print('❌ ERROR: No se encontró la novedad en BD');
+      }
+
+      // TODO: Guardar evidencias si es necesario
+      // Por ahora solo guardamos la novedad básica
+    } catch (e, stackTrace) {
+      print('❌ Error en _saveOffline: $e');
+      print('StackTrace: $stackTrace');
+      rethrow;
+    }
+
+    /* CÓDIGO ORIGINAL COMENTADO
     print('📱 _saveOffline iniciado');
     try {
       print('📱 Obteniendo usuario actual...');
@@ -867,6 +1007,7 @@ class _CreateIncidentPageState extends ConsumerState<CreateIncidentPage> {
         );
       }
     }
+    */ // FIN DEL CÓDIGO COMENTADO
   }
 
   void _showSuccessDialog(int imageCount, String address) {

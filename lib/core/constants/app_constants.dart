@@ -156,4 +156,47 @@ class AppConstants {
 
   /// Patrón para validar teléfono colombiano
   static const String phonePattern = r'^(\+57|0057|57)?[1-9][0-9]{9}$';
+
+  // ============================================================================
+  // CONFIGURACIÓN DE ANALYTICS
+  // ============================================================================
+
+  /// Períodos disponibles para filtros de analytics
+  static const String analyticsPeriodDaily = 'daily';
+  static const String analyticsPeriodWeekly = 'weekly';
+  static const String analyticsPeriodMonthly = 'monthly';
+
+  /// Lista de períodos de analytics
+  static const List<String> analyticsPeriods = [
+    analyticsPeriodDaily,
+    analyticsPeriodWeekly,
+    analyticsPeriodMonthly,
+  ];
+
+  /// Límite de registros para top performers
+  static const int analyticsTopPerformersLimit = 5;
+
+  /// Límite de registros para tendencias
+  static const int analyticsTrendsLimit = 30;
+
+  /// Colores para gráficos de estado
+  static const Map<String, int> analyticsStatusColors = {
+    'pending': 0xFFFFC107, // Amarillo
+    'in_progress': 0xFF2196F3, // Azul
+    'resolved': 0xFF4CAF50, // Verde
+    'rejected': 0xFFE53935, // Rojo
+  };
+
+  /// Rango de fechas por defecto (días)
+  static const int analyticsDefaultDateRangeDays = 30;
+
+  // ============================================================================
+  // NAVEGACIÓN DE ANALYTICS
+  // ============================================================================
+
+  /// Ruta del dashboard de analytics
+  static const String analyticsRoute = '/analytics/dashboard';
+
+  /// Nombre de la página de analytics para AppBar
+  static const String analyticsPageTitle = 'Analytics Dashboard';
 }

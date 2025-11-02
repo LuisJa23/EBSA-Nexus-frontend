@@ -8,6 +8,8 @@ import '../../../../config/routes/route_names.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/home_action_card.dart';
+import '../../../reports/presentation/pages/manage_reports_page.dart';
+import '../../../reports/presentation/providers/pending_count_provider.dart';
 import '../../domain/entities/user.dart';
 import '../providers/auth_provider.dart';
 
@@ -26,7 +28,7 @@ class HomePage extends ConsumerWidget {
         children: [
           _buildWelcomeHeader(),
           const SizedBox(height: 32),
-          _buildActionCards(context, user),
+          _buildActionCards(context, ref, user),
         ],
       ),
     );
@@ -54,7 +56,7 @@ class HomePage extends ConsumerWidget {
     );
   }
 
-  Widget _buildActionCards(BuildContext context, User? user) {
+  Widget _buildActionCards(BuildContext context, WidgetRef ref, User? user) {
     // Debug: Imprimir información del usuario
     print('🔍 DEBUG Home - User: ${user?.email}');
     print('🔍 DEBUG Home - Role: ${user?.role}');
@@ -79,22 +81,17 @@ class HomePage extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
 
-        // 2. Hacer Reporte (Todos los roles)
-        HomeActionCard(
-          icon: Icons.description,
-          title: 'Hacer Reporte',
-          subtitle: 'Hacer reporte de Novedad',
-          onTap: () => context.push(RouteNames.createReport),
-        ),
+        // 2. Gestionar Reportes (Todos los roles) - NUEVO
+        _buildManageReportsCard(context, ref),
 
-        // 3. Consultas (Solo Admin y Jefe de Área)
+        // 3. Consultas / Analytics (Solo Admin y Jefe de Área)
         if (hasFullAccess) ...[
           const SizedBox(height: 16),
           HomeActionCard(
-            icon: Icons.bar_chart,
-            title: 'Consultas',
-            subtitle: 'Consultar Novedades asignadas',
-            onTap: () => context.push(RouteNames.incidentList),
+            icon: Icons.analytics,
+            title: 'Análisis y Estadísticas',
+            subtitle: 'Dashboard con métricas y gráficas',
+            onTap: () => context.push(RouteNames.analyticsDashboard),
           ),
         ],
 
@@ -109,15 +106,67 @@ class HomePage extends ConsumerWidget {
           ),
         ],
 
-        // 5. Gestionar Cuadrillas
+        // 5. Cuadrillas (Todos los roles)
         const SizedBox(height: 16),
         HomeActionCard(
           icon: Icons.groups,
-          title: 'Gestionar Cuadrillas',
-          subtitle: 'Administración de cuadrillas',
+          title: hasFullAccess ? 'Gestionar Cuadrillas' : 'Ver Cuadrillas',
+          subtitle: hasFullAccess
+              ? 'Administración de cuadrillas'
+              : 'Consultar cuadrillas del sistema',
           onTap: () => context.push(RouteNames.manageCrews),
         ),
       ],
+    );
+  }
+
+  /// Widget para el card de Gestionar Reportes con badge de pendientes
+  Widget _buildManageReportsCard(BuildContext context, WidgetRef ref) {
+    final pendingCountAsync = ref.watch(autoRefreshPendingCountProvider);
+
+    return pendingCountAsync.when(
+      data: (pendingCount) {
+        final title = pendingCount > 0
+            ? 'Gestionar Reportes ($pendingCount)'
+            : 'Gestionar Reportes';
+
+        return HomeActionCard(
+          icon: Icons.folder_special,
+          title: title,
+          subtitle: 'Crear y sincronizar reportes offline',
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ManageReportsPage()),
+            );
+          },
+        );
+      },
+      loading: () {
+        // Mientras carga, mostrar sin contador
+        return HomeActionCard(
+          icon: Icons.folder_special,
+          title: 'Gestionar Reportes',
+          subtitle: 'Crear y sincronizar reportes offline',
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ManageReportsPage()),
+            );
+          },
+        );
+      },
+      error: (_, __) {
+        // En caso de error, mostrar sin contador
+        return HomeActionCard(
+          icon: Icons.folder_special,
+          title: 'Gestionar Reportes',
+          subtitle: 'Crear y sincronizar reportes offline',
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ManageReportsPage()),
+            );
+          },
+        );
+      },
     );
   }
 }
