@@ -15,6 +15,8 @@ import '../../../../config/dependency_injection/injection_container.dart' as di;
 import '../../../../core/errors/failures.dart';
 import '../../domain/entities/worker.dart';
 import '../../domain/usecases/get_workers_usecase.dart';
+import '../../domain/usecases/activate_user_usecase.dart';
+import '../../domain/usecases/deactivate_user_usecase.dart';
 import '../state/workers_state.dart';
 
 /// Provider del use case desde DI
@@ -22,19 +24,41 @@ final getWorkersUseCaseProvider = Provider<GetWorkersUseCase>((ref) {
   return di.sl<GetWorkersUseCase>();
 });
 
+/// Provider del use case de activar usuario
+final activateUserUseCaseProvider = Provider<ActivateUserUseCase>((ref) {
+  return di.sl<ActivateUserUseCase>();
+});
+
+/// Provider del use case de desactivar usuario
+final deactivateUserUseCaseProvider = Provider<DeactivateUserUseCase>((ref) {
+  return di.sl<DeactivateUserUseCase>();
+});
+
 /// Provider del StateNotifier de trabajadores
 final workersProvider = StateNotifierProvider<WorkersNotifier, WorkersState>((
   ref,
 ) {
   final getWorkersUseCase = ref.watch(getWorkersUseCaseProvider);
-  return WorkersNotifier(getWorkersUseCase);
+  final activateUserUseCase = ref.watch(activateUserUseCaseProvider);
+  final deactivateUserUseCase = ref.watch(deactivateUserUseCaseProvider);
+  return WorkersNotifier(
+    getWorkersUseCase,
+    activateUserUseCase,
+    deactivateUserUseCase,
+  );
 });
 
 /// StateNotifier para manejar el estado y lógica de trabajadores
 class WorkersNotifier extends StateNotifier<WorkersState> {
   final GetWorkersUseCase _getWorkersUseCase;
+  final ActivateUserUseCase _activateUserUseCase;
+  final DeactivateUserUseCase _deactivateUserUseCase;
 
-  WorkersNotifier(this._getWorkersUseCase) : super(const WorkersInitial());
+  WorkersNotifier(
+    this._getWorkersUseCase,
+    this._activateUserUseCase,
+    this._deactivateUserUseCase,
+  ) : super(const WorkersInitial());
 
   // ============================================================================
   // GETTERS DE CONVENIENCIA
@@ -158,6 +182,72 @@ class WorkersNotifier extends StateNotifier<WorkersState> {
       (workers) =>
           state = WorkersLoaded(workers: workers, filteredWorkers: workers),
     );
+  }
+
+  /// Desactiva un usuario y recarga la lista
+  Future<bool> deactivateUser(int userId) async {
+    final result = await _deactivateUserUseCase(userId);
+
+    return result.fold(
+      (failure) {
+        // Notificar error pero mantener el estado actual
+        return false;
+      },
+      (_) async {
+        // Recargar la lista silenciosamente sin cambiar a loading
+        await _reloadWorkersQuietly();
+        return true;
+      },
+    );
+  }
+
+  /// Activa un usuario y recarga la lista
+  Future<bool> activateUser(int userId) async {
+    final result = await _activateUserUseCase(userId);
+
+    return result.fold(
+      (failure) {
+        // Notificar error pero mantener el estado actual
+        return false;
+      },
+      (_) async {
+        // Recargar la lista silenciosamente sin cambiar a loading
+        await _reloadWorkersQuietly();
+        return true;
+      },
+    );
+  }
+
+  /// Recarga los trabajadores sin mostrar estado de loading
+  Future<void> _reloadWorkersQuietly() async {
+    // Guardar el estado actual de filtros si existe
+    if (state is WorkersLoaded) {
+      final currentState = state as WorkersLoaded;
+      final currentSearchQuery = currentState.searchQuery;
+      final currentWorkType = currentState.selectedWorkType;
+
+      // Obtener datos actualizados
+      final result = await _getWorkersUseCase();
+
+      result.fold((failure) => _handleFailure(failure), (workers) {
+        // Aplicar los mismos filtros que tenía antes
+        final filteredWorkers = _filterWorkers(
+          workers: workers,
+          searchQuery: currentSearchQuery,
+          workType: currentWorkType,
+        );
+
+        state = WorkersLoaded(
+          workers: workers,
+          filteredWorkers: filteredWorkers,
+          searchQuery: currentSearchQuery,
+          selectedWorkType: currentWorkType,
+        );
+      });
+    } else {
+      // Si no hay estado cargado, hacer carga normal
+      await loadWorkers();
+    }
   }
 
   // ============================================================================

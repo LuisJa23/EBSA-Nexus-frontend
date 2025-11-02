@@ -31,6 +31,12 @@ abstract class UserRemoteDataSource {
   /// Obtiene un usuario por ID
   Future<UserModel> getUserById(int userId);
 
+  /// Desactiva un usuario
+  Future<void> deactivateUser(int userId);
+
+  /// Activa un usuario
+  Future<void> activateUser(int userId);
+
   /// Obtiene lista de trabajadores desde el endpoint público
   Future<List<WorkerModel>> getWorkers();
 }
@@ -213,6 +219,40 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
             .toList();
       } else {
         throw ServerException(message: 'Error al obtener trabajadores');
+      }
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    } catch (e) {
+      throw ServerException(message: 'Error inesperado: $e');
+    }
+  }
+
+  @override
+  Future<void> deactivateUser(int userId) async {
+    try {
+      final response = await dio.patch(
+        '${ApiConstants.usersEndpoint}/$userId/deactivate',
+      );
+
+      if (response.statusCode != 204 && response.statusCode != 200) {
+        throw ServerException(message: 'Error al desactivar usuario');
+      }
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    } catch (e) {
+      throw ServerException(message: 'Error inesperado: $e');
+    }
+  }
+
+  @override
+  Future<void> activateUser(int userId) async {
+    try {
+      final response = await dio.patch(
+        '${ApiConstants.usersEndpoint}/$userId/activate',
+      );
+
+      if (response.statusCode != 204 && response.statusCode != 200) {
+        throw ServerException(message: 'Error al activar usuario');
       }
     } on DioException catch (e) {
       throw _handleDioError(e);

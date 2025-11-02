@@ -355,25 +355,145 @@ class _ListUsersPageState extends ConsumerState<ListUsersPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(worker.fullName),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildDetailRow('Usuario:', worker.username),
-            _buildDetailRow('Email:', worker.email),
-            _buildDetailRow('Documento:', worker.documentNumber),
-            _buildDetailRow('Teléfono:', worker.phone),
-            _buildDetailRow('Tipo de trabajo:', worker.workTypeLocalized),
-            _buildDetailRow('Estado:', worker.isActive ? 'Activo' : 'Inactivo'),
-            _buildDetailRow('UUID:', worker.uuid),
-          ],
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildDetailRow('Usuario:', worker.username),
+              _buildDetailRow('Email:', worker.email),
+              _buildDetailRow('Documento:', worker.documentNumber),
+              _buildDetailRow('Teléfono:', worker.phone),
+              _buildDetailRow('Tipo de trabajo:', worker.workTypeLocalized),
+              _buildDetailRow(
+                'Estado:',
+                worker.isActive ? 'Activo' : 'Inactivo',
+              ),
+              _buildDetailRow('UUID:', worker.uuid),
+            ],
+          ),
         ),
         actions: [
+          // Botón de activar/desactivar
+          if (worker.isActive)
+            TextButton.icon(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await _deactivateUser(worker);
+              },
+              icon: const Icon(Icons.block, color: Colors.red),
+              label: const Text(
+                'Desactivar',
+                style: TextStyle(color: Colors.red),
+              ),
+            )
+          else
+            TextButton.icon(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await _activateUser(worker);
+              },
+              icon: const Icon(Icons.check_circle, color: Colors.green),
+              label: const Text(
+                'Activar',
+                style: TextStyle(color: Colors.green),
+              ),
+            ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('Cerrar'),
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _deactivateUser(worker) async {
+    // Mostrar confirmación
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmar desactivación'),
+        content: Text(
+          '¿Estás seguro de que deseas desactivar a ${worker.fullName}?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Desactivar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    // Llamar al provider (sin dialog de loading)
+    final success = await ref
+        .read(workersProvider.notifier)
+        .deactivateUser(worker.id);
+
+    // Mostrar resultado
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? 'Usuario desactivado exitosamente'
+              : 'Error al desactivar usuario',
+        ),
+        backgroundColor: success ? Colors.green : Colors.red,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  Future<void> _activateUser(worker) async {
+    // Mostrar confirmación
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmar activación'),
+        content: Text(
+          '¿Estás seguro de que deseas activar a ${worker.fullName}?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.green),
+            child: const Text('Activar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    // Llamar al provider (sin dialog de loading)
+    final success = await ref
+        .read(workersProvider.notifier)
+        .activateUser(worker.id);
+
+    // Mostrar resultado
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? 'Usuario activado exitosamente'
+              : 'Error al activar usuario',
+        ),
+        backgroundColor: success ? Colors.green : Colors.red,
+        duration: const Duration(seconds: 2),
       ),
     );
   }
