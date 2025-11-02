@@ -84,11 +84,13 @@ class _SelectNoveltyForReportPageState
   }
 
   Future<void> _handleRefresh() async {
+    // Capturar providers ANTES de cualquier operación asíncrona
     final authState = ref.read(authNotifierProvider);
+    final notifier = ref.read(assignmentsProvider.notifier);
     final userId = authState.user?.id;
 
     if (userId != null) {
-      await ref.read(assignmentsProvider.notifier).refreshNovelties(userId);
+      await notifier.refreshNovelties(userId);
     }
   }
 

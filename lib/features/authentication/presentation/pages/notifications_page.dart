@@ -26,12 +26,19 @@ class NotificationsPage extends ConsumerStatefulWidget {
 
 class _NotificationsPageState extends ConsumerState<NotificationsPage> {
   String _filter = 'all'; // 'all', 'unread', 'read'
+  int? _cachedUserId; // Guardar userId para usar en dispose
 
   @override
   void initState() {
     super.initState();
     // Cargar notificaciones al iniciar la página
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Cachear el userId para usar en dispose
+      final authState = ref.read(authNotifierProvider);
+      if (authState.user != null) {
+        _cachedUserId = _parseUserId(authState.user!.id);
+      }
+
       _loadNotifications();
       _startPolling();
     });
@@ -64,11 +71,13 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
   }
 
   void _stopPolling() {
-    final authState = ref.read(authNotifierProvider);
-    if (authState.user != null) {
-      final userId = _parseUserId(authState.user!.id);
-      if (userId != null) {
-        ref.read(notificationPollingServiceProvider(userId)).stop();
+    // Usar userId cacheado en lugar de leer ref después de dispose
+    if (_cachedUserId != null) {
+      try {
+        ref.read(notificationPollingServiceProvider(_cachedUserId!)).stop();
+      } catch (e) {
+        // Si falla, no hacer nada (widget ya disposed)
+        print('Info: No se pudo detener polling, widget ya disposed');
       }
     }
   }

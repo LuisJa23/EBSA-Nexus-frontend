@@ -409,6 +409,9 @@ class _ListUsersPageState extends ConsumerState<ListUsersPage> {
   }
 
   Future<void> _deactivateUser(worker) async {
+    // Capturar el notifier ANTES de cualquier operación asíncrona
+    final notifier = ref.read(workersProvider.notifier);
+
     // Mostrar confirmación
     final confirm = await showDialog<bool>(
       context: context,
@@ -433,10 +436,8 @@ class _ListUsersPageState extends ConsumerState<ListUsersPage> {
 
     if (confirm != true) return;
 
-    // Llamar al provider (sin dialog de loading)
-    final success = await ref
-        .read(workersProvider.notifier)
-        .deactivateUser(worker.id);
+    // Llamar al provider usando el notifier capturado
+    final success = await notifier.deactivateUser(worker.id);
 
     // Mostrar resultado
     if (!mounted) return;
@@ -454,6 +455,9 @@ class _ListUsersPageState extends ConsumerState<ListUsersPage> {
   }
 
   Future<void> _activateUser(worker) async {
+    // Capturar el notifier ANTES de cualquier operación asíncrona
+    final notifier = ref.read(workersProvider.notifier);
+
     // Mostrar confirmación
     final confirm = await showDialog<bool>(
       context: context,
@@ -478,10 +482,8 @@ class _ListUsersPageState extends ConsumerState<ListUsersPage> {
 
     if (confirm != true) return;
 
-    // Llamar al provider (sin dialog de loading)
-    final success = await ref
-        .read(workersProvider.notifier)
-        .activateUser(worker.id);
+    // Llamar al provider usando el notifier capturado
+    final success = await notifier.activateUser(worker.id);
 
     // Mostrar resultado
     if (!mounted) return;
