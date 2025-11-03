@@ -216,7 +216,9 @@ class _SelectNoveltyForOfflineReportPageState
               meterNumber: drift.Value(novelty.meterNumber),
               activeReading: drift.Value(novelty.activeReading),
               reactiveReading: drift.Value(novelty.reactiveReading),
-              municipality: drift.Value(novelty.municipality ?? 'No especificado'),
+              municipality: drift.Value(
+                novelty.municipality ?? 'No especificado',
+              ),
               address: drift.Value(novelty.address),
               description: drift.Value(novelty.description),
               observations: drift.Value(novelty.observations),

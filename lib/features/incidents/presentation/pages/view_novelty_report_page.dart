@@ -238,7 +238,10 @@ class _ViewNoveltyReportPageState extends ConsumerState<ViewNoveltyReportPage> {
             _buildInfoRow('Cuenta', widget.novelty.accountNumber),
             _buildInfoRow('Medidor', widget.novelty.meterNumber),
             _buildInfoRow('Dirección', widget.novelty.address),
-            _buildInfoRow('Municipio', widget.novelty.municipality ?? 'No especificado'),
+            _buildInfoRow(
+              'Municipio',
+              widget.novelty.municipality ?? 'No especificado',
+            ),
             _buildInfoRow('Descripción', widget.novelty.description),
             const SizedBox(height: 8),
             _buildStatusChip(widget.novelty.status),
