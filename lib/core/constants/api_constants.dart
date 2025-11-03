@@ -22,11 +22,11 @@ class ApiConstants {
   /// IP del hotspot WiFi compartido desde PC
 
   static const String baseUrlNetwork =
-      'https://ebsa-nexus-backend-ejzl.onrender.com';
+      'http://18.219.27.125:8080';
 
   /// URL base para producción (configurar cuando esté disponible)
   static const String baseUrlProduction =
-      'https://ebsa-nexus-backend-ejzl.onrender.com';
+      'http://18.219.27.125:8080';
 
   /// URL actual basada en el entorno
   /// Se determina dinámicamente según el tipo de dispositivo

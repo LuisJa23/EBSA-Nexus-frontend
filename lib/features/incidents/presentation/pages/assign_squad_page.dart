@@ -308,7 +308,7 @@ class _NoveltyCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      novelty.municipality,
+                      novelty.municipality ?? 'No especificado',
                       style: AppTextStyles.bodySmall,
                       overflow: TextOverflow.ellipsis,
                     ),

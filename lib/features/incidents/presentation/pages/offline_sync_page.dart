@@ -354,7 +354,10 @@ class _OfflineSyncPageState extends ConsumerState<OfflineSyncPage> {
             _buildInfoRow('Motivo', novelty.reason),
             _buildInfoRow('Cuenta', novelty.accountNumber),
             _buildInfoRow('Medidor', novelty.meterNumber),
-            _buildInfoRow('Municipio', novelty.municipality),
+            _buildInfoRow(
+              'Municipio',
+              novelty.municipality ?? 'No especificado',
+            ),
             _buildInfoRow('Dirección', novelty.address),
             if (novelty.description.isNotEmpty)
               _buildInfoRow('Descripción', novelty.description),
