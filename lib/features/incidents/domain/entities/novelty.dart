@@ -21,7 +21,7 @@ class Novelty extends Equatable {
   final String meterNumber;
   final String activeReading;
   final String reactiveReading;
-  final String municipality;
+  final String? municipality;
   final String address;
   final String? observations;
   final int? crewId;
@@ -44,7 +44,7 @@ class Novelty extends Equatable {
     required this.meterNumber,
     required this.activeReading,
     required this.reactiveReading,
-    required this.municipality,
+    this.municipality,
     required this.address,
     this.observations,
     this.crewId,

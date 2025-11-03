@@ -264,11 +264,11 @@ class OfflineSyncService {
         }
 
         // Si no hay locationId en rawJson, intentar convertir desde nombre
-        if (locationId.isEmpty) {
+        if (locationId.isEmpty && novelty.municipality != null) {
           print(
             '  ⚠️ locationId no encontrado en rawJson, convirtiendo desde nombre...',
           );
-          locationId = _getMunicipioIdFromName(novelty.municipality);
+          locationId = _getMunicipioIdFromName(novelty.municipality!);
           print('  - locationId convertido: $locationId');
         }
 

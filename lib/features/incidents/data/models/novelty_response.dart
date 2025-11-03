@@ -21,7 +21,7 @@ class NoveltyResponse {
   final String meterNumber;
   final String activeReading;
   final String reactiveReading;
-  final String municipality;
+  final String? municipality;
   final String address;
   final String? observations;
   final int? crewId;
@@ -44,7 +44,7 @@ class NoveltyResponse {
     required this.meterNumber,
     required this.activeReading,
     required this.reactiveReading,
-    required this.municipality,
+    this.municipality,
     required this.address,
     this.observations,
     this.crewId,
@@ -71,7 +71,7 @@ class NoveltyResponse {
       // El backend devuelve double, convertir a String
       activeReading: (json['activeReading'] as num).toString(),
       reactiveReading: (json['reactiveReading'] as num).toString(),
-      municipality: json['municipality'] as String,
+      municipality: json['locationName'] as String?,
       address: json['address'] as String,
       observations: json['observations'] as String?,
       crewId: json['crewId'] as int?,

@@ -16,7 +16,7 @@ class NoveltyModel {
   final String meterNumber;
   final double activeReading;
   final double reactiveReading;
-  final String municipality;
+  final String? municipality;
   final String address;
   final String description;
   final String? observations;
@@ -40,7 +40,7 @@ class NoveltyModel {
     required this.meterNumber,
     required this.activeReading,
     required this.reactiveReading,
-    required this.municipality,
+    this.municipality,
     required this.address,
     required this.description,
     this.observations,
@@ -120,9 +120,7 @@ class NoveltyModel {
       meterNumber: json['meterNumber'] as String,
       activeReading: (json['activeReading'] as num).toDouble(),
       reactiveReading: (json['reactiveReading'] as num).toDouble(),
-      municipality:
-          json['locationName'] as String? ??
-          '', // Backend ahora envía locationName
+      municipality: json['locationName'] as String?,
       address: json['address'] as String,
       description: json['description'] as String,
       observations: json['observations'] as String?,

@@ -143,7 +143,7 @@ class _NoveltyCardState extends State<NoveltyCard> {
               _buildInfoRow(
                 Icons.location_city,
                 'Municipio',
-                widget.novelty.municipality,
+                widget.novelty.municipality ?? 'No especificado',
               ),
               const SizedBox(height: 8),
               _buildInfoRow(

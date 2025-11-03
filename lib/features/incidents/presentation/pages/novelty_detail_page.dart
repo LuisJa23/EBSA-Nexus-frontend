@@ -589,7 +589,7 @@ class _NoveltyDetailPageState extends State<NoveltyDetailPage> {
                         Text('Municipio', style: AppTextStyles.caption),
                         const SizedBox(height: 4),
                         Text(
-                          _novelty!.municipality,
+                          _novelty!.municipality ?? 'No especificado',
                           style: AppTextStyles.bodyMedium.copyWith(
                             fontWeight: FontWeight.w500,
                           ),
