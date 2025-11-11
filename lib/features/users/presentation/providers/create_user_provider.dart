@@ -49,6 +49,14 @@ class CreateUserNotifier extends StateNotifier<CreateUserState> {
     String? workType,
     String? workRoleName,
   }) async {
+    print('🔵 [CreateUserProvider] Iniciando creación de usuario...');
+    print('   firstName: $firstName');
+    print('   lastName: $lastName');
+    print('   email: $email');
+    print('   roleName: $roleName');
+    print('   workType: $workType');
+    print('   workRoleName: $workRoleName');
+
     // Guardar datos del formulario para persistirlos
     final formData = {
       'firstName': firstName,
@@ -64,6 +72,7 @@ class CreateUserNotifier extends StateNotifier<CreateUserState> {
 
     // Cambiar a loading Y limpiar errores previos (nueva petición)
     state = state.copyWithLoading(formData: formData);
+    print('🔵 [CreateUserProvider] Estado cambiado a loading');
 
     // Crear DTO
     final dto = UserCreationDto.fromForm(
@@ -77,14 +86,20 @@ class CreateUserNotifier extends StateNotifier<CreateUserState> {
       workType: workType,
       workRoleName: workRoleName,
     );
+    print('🔵 [CreateUserProvider] DTO creado: $dto');
 
     // Ejecutar use case
+    print('🔵 [CreateUserProvider] Llamando al use case...');
     final result = await _createUserUseCase(dto);
 
     result.fold(
       (failure) {
+        print('❌ [CreateUserProvider] Error recibido: ${failure.message}');
+        print('   Tipo de failure: ${failure.runtimeType}');
+        
         // Extraer errores de campos del servidor
         final serverErrors = _extractServerErrors(failure);
+        print('   Errores de campos: $serverErrors');
 
         // Si hay errores específicos de campos, NO mostrar mensaje general
         // Solo mostrar mensaje general si:
@@ -99,10 +114,13 @@ class CreateUserNotifier extends StateNotifier<CreateUserState> {
           serverErrors: serverErrors,
           formData: formData,
         );
+        print('❌ [CreateUserProvider] Estado cambiado a error');
       },
       (user) {
+        print('✅ [CreateUserProvider] Usuario creado exitosamente: ${user.email}');
         // Éxito (limpia formData)
         state = state.copyWithSuccess(user);
+        print('✅ [CreateUserProvider] Estado cambiado a success');
       },
     );
   }

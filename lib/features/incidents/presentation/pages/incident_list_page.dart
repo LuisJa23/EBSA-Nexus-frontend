@@ -11,6 +11,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -300,12 +301,6 @@ class _IncidentListPageState extends ConsumerState<IncidentListPage> {
 
   /// Navega a la página de detalle
   void _navigateToDetail(int noveltyId) {
-    // TODO: Implementar navegación a detalle
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Ver detalle de novedad #$noveltyId'),
-        backgroundColor: AppColors.primary,
-      ),
-    );
+    context.push('/novelty-detail/$noveltyId');
   }
 }

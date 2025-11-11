@@ -200,7 +200,7 @@ class User extends Equatable {
 
   /// Verifica si el usuario tiene permisos administrativos
   bool get hasAdminPermissions {
-    return isActive && role == UserRole.admin;
+    return isActive && (role == UserRole.admin || role == UserRole.areaManager);
   }
 
   /// Verifica si el usuario puede ver todos los reportes
@@ -239,9 +239,9 @@ class User extends Equatable {
   /// Verifica si el usuario tiene asignaciones activas de trabajo
   /// TODO: En una implementación completa, esto debería consultar las asignaciones reales
   bool get hasActiveAssignment {
-    // Por ahora, todos los usuarios activos tienen asignación
+    // Por ahora, todos los usuarios activos tienen asignación excepto admin y areaManager
     // En el futuro esto consultaría una tabla de asignaciones
-    return isActive && role != UserRole.admin;
+    return isActive && role != UserRole.admin && role != UserRole.areaManager;
   }
 
   @override
@@ -345,7 +345,7 @@ enum UserRole {
 
   /// Verifica si este rol tiene permisos administrativos
   bool get hasAdminPermissions {
-    return this == UserRole.admin;
+    return this == UserRole.admin || this == UserRole.areaManager;
   }
 }
 //

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/widgets/custom_bottom_navbar.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../features/authentication/domain/entities/user.dart';
 import '../../features/authentication/presentation/pages/home_page.dart';
 import '../../features/authentication/presentation/pages/login_page.dart';
 import '../../features/authentication/presentation/pages/splash_page.dart';
@@ -345,7 +346,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
 
-          /// Gestionar Usuarios (Solo Admin)
+          /// Gestionar Usuarios (Admin y Jefe de Área)
           GoRoute(
             path: RouteNames.manageUsers,
             name: 'manage-users',
@@ -359,6 +360,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: RouteNames.createUser,
             name: 'create-user',
+            redirect: (context, state) {
+              final user = ref.read(authNotifierProvider).user;
+              if (user?.role != UserRole.admin) {
+                print('🚫 Acceso denegado a crear usuario - Solo Admin');
+                return RouteNames.home;
+              }
+              return null;
+            },
             pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
               child: const CreateUserPage(),

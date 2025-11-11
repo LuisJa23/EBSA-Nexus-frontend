@@ -29,15 +29,23 @@ class UserRepositoryImpl implements UserRepository {
 
   @override
   Future<Either<Failure, User>> createUser(UserCreationDto dto) async {
+    print('🟡 [UserRepositoryImpl] Creando usuario...');
+    print('   DTO: $dto');
+    
     try {
       // Convertir DTO a modelo
       final model = UserCreationModel.fromDto(dto);
+      print('🟡 [UserRepositoryImpl] Modelo creado, llamando al data source...');
 
       // Llamar al data source remoto
       final user = await remoteDataSource.createUser(model);
+      print('✅ [UserRepositoryImpl] Usuario creado: ${user.email}');
 
       return Right(user);
     } on ValidationException catch (e) {
+      print('❌ [UserRepositoryImpl] ValidationException: ${e.message}');
+      print('   field: ${e.field}');
+      print('   fieldErrors: ${e.fieldErrors}');
       return Left(
         ValidationFailure(
           message: e.message,
@@ -46,14 +54,19 @@ class UserRepositoryImpl implements UserRepository {
         ),
       );
     } on AuthenticationException catch (e) {
+      print('❌ [UserRepositoryImpl] AuthenticationException: ${e.message}');
       return Left(AuthFailure(message: e.message, code: e.code));
     } on AuthorizationException catch (e) {
+      print('❌ [UserRepositoryImpl] AuthorizationException: ${e.message}');
       return Left(AuthorizationFailure(message: e.message, code: e.code));
     } on NetworkException catch (e) {
+      print('❌ [UserRepositoryImpl] NetworkException: ${e.message}');
       return Left(NetworkFailure(message: e.message, code: e.code));
     } on TimeoutException catch (e) {
+      print('❌ [UserRepositoryImpl] TimeoutException: ${e.message}');
       return Left(TimeoutFailure(message: e.message, code: e.code));
     } on ServerException catch (e) {
+      print('❌ [UserRepositoryImpl] ServerException: ${e.message}');
       return Left(
         ServerFailure(
           message: e.message,
@@ -62,6 +75,7 @@ class UserRepositoryImpl implements UserRepository {
         ),
       );
     } catch (e) {
+      print('❌ [UserRepositoryImpl] Error inesperado: $e');
       return Left(UnknownFailure(message: 'Error inesperado: $e'));
     }
   }

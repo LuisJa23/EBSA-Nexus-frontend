@@ -36,9 +36,13 @@ class CreateUserUseCase {
   /// - [Left(ServerFailure)]: Errores del servidor (duplicados, etc.)
   /// - [Left(NetworkFailure)]: Errores de conexión
   Future<Either<Failure, User>> call(UserCreationDto dto) async {
+    print('🟢 [CreateUserUseCase] Validando DTO...');
+    print('   DTO: $dto');
+    
     // Validaciones básicas antes de enviar
     final validationErrors = _validateDto(dto);
     if (validationErrors.isNotEmpty) {
+      print('❌ [CreateUserUseCase] Errores de validación local: $validationErrors');
       return Left(
         ValidationFailure(
           message: 'Errores de validación en el formulario',
@@ -47,8 +51,16 @@ class CreateUserUseCase {
       );
     }
 
+    print('✅ [CreateUserUseCase] Validación local exitosa, delegando al repositorio...');
     // Delegar al repositorio
-    return await repository.createUser(dto);
+    final result = await repository.createUser(dto);
+    
+    result.fold(
+      (failure) => print('❌ [CreateUserUseCase] Repositorio retornó error: ${failure.message}'),
+      (user) => print('✅ [CreateUserUseCase] Repositorio retornó usuario: ${user.email}'),
+    );
+    
+    return result;
   }
 
   /// Valida el DTO localmente
